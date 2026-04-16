@@ -158,4 +158,7 @@ Will be updated as needed as project evolves
 ### Phase 5
 - Other micro-services
 
+## Documentation
+- [Auth System Design](/docs/auth-system.md)
+
 ---
