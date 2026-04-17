@@ -1,5 +1,7 @@
 # Auth System Design
 
+`Programming Language Used: Java 24.0.2`
+
 ## Goals
 - Secure user authentication
 - First device registration & verification
