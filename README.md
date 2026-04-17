@@ -44,20 +44,21 @@ Keeps selected folders synchronized across multiple devices with automatic updat
 ## Folder Structure
 `Changes are possible as the project evolves`
 ```
+mdcs-monolith/
     apps/
-        pom.xml
         cli/
             pom.xml
-            src/main/java/cli/Main.java
+            src/main/java/cli/Main.java # (Console app entry point)
         gui/
             pom.xml
-            src/main/java/gui/Main.java
+            src/main/java/gui/Main.java # (GUI app entry point)
         server/
 
     core/
-        user_auth/
-        device_auth/
-        command_exec/
+        src/main/java/
+            user_auth/
+            device_auth/
+            command_exec/
         pom.xml
 
     services/
@@ -72,10 +73,11 @@ Keeps selected folders synchronized across multiple devices with automatic updat
         device_mesh/
         
     shared/
-        logger/
-        utils/
-        configs/
-        network/
+        src/main/java/
+            logger/
+            utils/
+            configs/
+            network/
         pom.xml
 
     assets/
