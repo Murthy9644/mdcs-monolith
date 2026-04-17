@@ -44,19 +44,22 @@ Keeps selected folders synchronized across multiple devices with automatic updat
 ## Folder Structure
 `Changes are possible as the project evolves`
 ```
-mdcs-monolith/
     apps/
+        pom.xml
         cli/
-        server/
+            pom.xml
+            src/main/java/cli/Main.java
         gui/
+            pom.xml
+            src/main/java/gui/Main.java
+        server/
+
     core/
         user_auth/
         device_auth/
-        device_mesh/
         command_exec/
-        local_server/
-        client/
-    assets/
+        pom.xml
+
     services/
         clipboard/
         file_share/
@@ -64,11 +67,18 @@ mdcs-monolith/
         protocols/
         application_access/
         scheduler/
+        local_server/
+        client/
+        device_mesh/
+        
     shared/
         logger/
         utils/
         configs/
         network/
+        pom.xml
+
+    assets/
 ```
 
 ## Architecture Overview
@@ -160,5 +170,6 @@ Will be updated as needed as project evolves
 
 ## Documentation
 - [Auth System Design](/docs/auth-system.md)
+- [Build Commands](/docs/build-commands.md)
 
 ---
