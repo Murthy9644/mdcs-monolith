@@ -1,7 +1,9 @@
 package cli;
 
 public class Main {
+
     public static void main(String[] args) {
-        System.out.println("Hello from cli");
+        App app = new App();
+        app.start();
     }
 }

@@ -12,4 +12,8 @@
         <module>apps/cli</module>
         <module>apps/gui</module>
     </modules>
+
+    <properties>
+        <maven.compiler.release>24</maven.compiler.release>
+    </properties>
 </project>
