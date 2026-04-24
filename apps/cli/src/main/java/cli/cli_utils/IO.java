@@ -1,6 +1,5 @@
 package cli.cli_utils;
 
-import java.io.Console;
 import java.util.Scanner;
 
 public class IO{
@@ -51,20 +50,6 @@ public class IO{
     }
 
     public String ask(String type, String prompt){
-
-        if (type.equals("hidden")){
-            Console console = System.console();
-            String fprompt = Colors.GRAY + prompt + Colors.RESET;
-
-            if (console != null) {
-                char pswd_chars[] = console.readPassword(fprompt);
-                return new String(pswd_chars).trim();
-            }
-
-            else
-                return ask("muted", "password: ");
-        }
-
         say(type, prompt);
         return input.nextLine();
     }

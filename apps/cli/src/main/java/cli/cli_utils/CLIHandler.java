@@ -12,8 +12,8 @@ public class CLIHandler {
         String conf_password;
 
         while (true){
-            password = io.ask("hidden", "create password: ");
-            conf_password = io.ask("hidden", "confirm password: ");
+            password = io.ask("muted", "create password: ");
+            conf_password = io.ask("muted", "confirm password: ");
 
             if (password.equals(conf_password)) break;
             else
@@ -28,12 +28,17 @@ public class CLIHandler {
 
     public void handleSignin(){
         String email = io.ask("muted", "email: ");
-        String password = io.ask("hidden", "password: ");
+        String password = io.ask("muted", "password: ");
 
         boolean success = UserAuth.signin(email, password);
 
         if (success) io.say("success", "authenticated successfully\n");
         else io.say("error", "authentication failed\n");
+    }
+
+    public void handleRestart() {
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
     }
 
     public CLIHandler(IO inou){

@@ -8,6 +8,7 @@ public class App {
     private CLIHandler handler;
 
     public void start() {
+        io.say("heading", "MDCS v1.0.0\n");
         String command;
 
         while (true) {
@@ -20,6 +21,10 @@ public class App {
 
                 case "signin":
                     handler.handleSignin();
+                    break;
+
+                case "restart":
+                    handler.handleRestart();
                     break;
 
                 default:

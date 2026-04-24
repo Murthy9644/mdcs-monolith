@@ -48,7 +48,13 @@ mdcs-monolith/
     apps/
         cli/
             pom.xml
-            src/main/java/cli/Main.java # (Console app entry point)
+            src/main/java/cli/
+                cli_utils/
+                    CLIHandler.java
+                    Colors.java
+                    IO.java
+                Main.java # (Console app entry point)
+                App.java
         gui/
             pom.xml
             src/main/java/gui/Main.java # (GUI app entry point)
@@ -57,7 +63,9 @@ mdcs-monolith/
     core/
         src/main/java/
             user_auth/
+                UserAuth.java
             device_auth/
+                DeviceAuth.java
             command_exec/
         pom.xml
 
