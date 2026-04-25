@@ -27,6 +27,9 @@ public class App {
                     handler.handleRestart();
                     break;
 
+                case "exit":
+                    return;
+
                 default:
                     io.say("error", "unknown command\n");
             }

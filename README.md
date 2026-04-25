@@ -57,8 +57,29 @@ mdcs-monolith/
                 App.java
         gui/
             pom.xml
-            src/main/java/gui/Main.java # (GUI app entry point)
+            src/main/java/gui/
+                Main.java # (GUI app entry point)
         server/
+            api/
+                auth/
+                    controller.go
+                    middleware.go
+                    routes.go
+                shared/
+                    error.go
+                    request.go
+                    response.go
+                router.go
+            configs/
+                configs.go
+            core/
+                auth/
+                    services.go
+                    validation.go
+            storage/
+                db.go
+            go.mod
+            main.go
 
     core/
         src/main/java/
@@ -66,7 +87,11 @@ mdcs-monolith/
                 UserAuth.java
             device_auth/
                 DeviceAuth.java
-            command_exec/
+            file_io/
+                DataClasses.java
+                FileIO.java
+            utils/
+                SystemUtils.java
         pom.xml
 
     services/
@@ -179,7 +204,8 @@ Will be updated as needed as project evolves
 - Other micro-services
 
 ## Documentation
-- [Auth System Design](/docs/auth-system.md)
+- [Application Data Store](/docs/system_design/state-store_files.md)
+- [Auth System Design](/docs/system_design/auth-system.md)
 - [Build Commands](/docs/build-commands.md)
 
 ---
