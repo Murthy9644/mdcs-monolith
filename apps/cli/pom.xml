@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.mdcs</groupId>
         <artifactId>mdcs-monolith</artifactId>
-        <version>1.0.0</version>
+        <version>0.1.0</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 

@@ -24,7 +24,7 @@ public class UserAuth{
 
             HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
             
-            return true;
+            return res.toString().equals("hello");
         } catch (Exception e){
             e.printStackTrace();
 

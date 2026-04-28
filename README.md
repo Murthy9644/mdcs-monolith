@@ -29,8 +29,8 @@ Keeps selected folders synchronized across multiple devices with automatic updat
 - device_auth &rarr; Control device registration/login
 - device_mesh &rarr; Find/ping devices over the network
 - command_exec &rarr; Execute user commands & map to respective services
-- logging &rarr; Generate logs
-- local_server &rarr; User level local server to communicate with other devices
+- logger &rarr; Generate logs
+- host &rarr; User level local server to communicate with other devices
 - client &rarr; Separate command listener that constantly listens for commands from other servers
 
 ### Feature Modules (Micro-services):
@@ -41,80 +41,7 @@ Keeps selected folders synchronized across multiple devices with automatic updat
 - application_access &rarr; Access the applications on device(s) from other device(s)
 - scheduler &rarr; Schedule or sequentialize applications over devices
 
-## Folder Structure
-`Changes are possible as the project evolves`
-```
-mdcs-monolith/
-    apps/
-        cli/
-            pom.xml
-            src/main/java/cli/
-                cli_utils/
-                    CLIHandler.java
-                    Colors.java
-                    IO.java
-                Main.java # (Console app entry point)
-                App.java
-        gui/
-            pom.xml
-            src/main/java/gui/
-                Main.java # (GUI app entry point)
-        server/
-            api/
-                auth/
-                    controller.go
-                    middleware.go
-                    routes.go
-                shared/
-                    error.go
-                    request.go
-                    response.go
-                router.go
-            configs/
-                configs.go
-            core/
-                auth/
-                    services.go
-                    validation.go
-            storage/
-                db.go
-            go.mod
-            main.go
-
-    core/
-        src/main/java/
-            user_auth/
-                UserAuth.java
-            device_auth/
-                DeviceAuth.java
-            file_io/
-                DataClasses.java
-                FileIO.java
-            utils/
-                SystemUtils.java
-        pom.xml
-
-    services/
-        clipboard/
-        file_share/
-        folder_sync/
-        protocols/
-        application_access/
-        scheduler/
-        local_server/
-        client/
-        device_mesh/
-        
-    shared/
-        src/main/java/
-            logger/
-            utils/
-            configs/
-            network/
-        pom.xml
-
-    assets/
-```
+// Write file io, utils from core into shared
 
 ## Architecture Overview
 Follows Two-Layered architecture
@@ -139,7 +66,7 @@ Target Device
 ```
 
 ### Communication Model
-- CLI → Services  
+- Core → Services  
   - Process execution / IPC (initially)
 
 - Service ↔ Service (same device)  
@@ -204,7 +131,8 @@ Will be updated as needed as project evolves
 - Other micro-services
 
 ## Documentation
-- [Application Data Store](/docs/system_design/state-store_files.md)
+- [Folder Strucutre](/docs/architecture/folder-structure.md)
+- [Application Data Store](/docs/architecture/state-store_files.md)
 - [Auth System Design](/docs/system_design/auth-system.md)
 - [Build Commands](/docs/build-commands.md)
 
