@@ -1,9 +1,12 @@
 package cli.cli_utils;
 
+import java.util.Properties;
+
 import user_auth.UserAuth;
 
 public class CLIHandler {
-    IO io;
+    ConsoleIO io;
+    Properties APP, VERSIONS;
     
     public void handleSignup(){
         String username = io.ask("muted", "username: ");
@@ -41,7 +44,9 @@ public class CLIHandler {
         System.out.flush();
     }
 
-    public CLIHandler(IO inou){
-        io = inou;
+    public CLIHandler(ConsoleIO inou, Properties APP, Properties VERSIONS){
+        this.io = inou;
+        this.APP = APP;
+        this.VERSIONS = VERSIONS;
     }
 }

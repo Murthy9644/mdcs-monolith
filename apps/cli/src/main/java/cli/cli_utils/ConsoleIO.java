@@ -2,7 +2,7 @@ package cli.cli_utils;
 
 import java.util.Scanner;
 
-public class IO{
+public class ConsoleIO{
     private Scanner input;
 
     public void say(String type, String text){
@@ -54,7 +54,7 @@ public class IO{
         return input.nextLine();
     }
 
-    public IO(){
+    public ConsoleIO(){
         input = new Scanner(System.in);
     }
 }
