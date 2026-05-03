@@ -25,6 +25,7 @@ Keeps selected folders synchronized across multiple devices with automatic updat
 
 ## Functional Decomposition
 ### Internal Modules (Dependencies):
+- bootstrap &rarr; Manage app launch protocols (file system check, update check, version check etc)
 - user_auth &rarr; Control user sign(in/up)
 - device_auth &rarr; Control device registration/login
 - device_mesh &rarr; Find/ping devices over the network
@@ -40,8 +41,6 @@ Keeps selected folders synchronized across multiple devices with automatic updat
 - protocols &rarr; Turn on/off the protocols across devices
 - application_access &rarr; Access the applications on device(s) from other device(s)
 - scheduler &rarr; Schedule or sequentialize applications over devices
-
-// Write file io, utils from core into shared
 
 ## Architecture Overview
 Follows Two-Layered architecture

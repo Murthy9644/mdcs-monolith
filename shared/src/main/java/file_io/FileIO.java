@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,7 +15,8 @@ public class FileIO{
 
     // For reading files into objects
     // Required object properties: file.path (expected to exist)
-    public static <F> F fileRead(Class<F> file) throws Exception{
+    public static <F> F fileRead(Class<F> file) 
+    throws IOException, NoSuchFieldException, IllegalAccessException{
         Field path_Field = file.getDeclaredField("path");
         String path = (String) path_Field.get(null);
 
@@ -22,20 +24,20 @@ public class FileIO{
     }
 
     // General reader
-    public static String fileRead(String path) throws Exception{
-        
-        return Files.readString(Path.of(path));
-    }
+    public static String fileRead(String path) 
+    throws IOException{ return Files.readString(Path.of(path)); }
 
     // For writing files from objects
     // Required object properties: file.path (expected to exist)
-    public static <T extends HasPath> void fileWrite(T file) throws Exception{
+    public static <T extends HasPath> void fileWrite(T file)
+    throws Exception{
         String path = file.getPath();
         mapper.writeValue(new File(path), file);
     }
 
     // General writer (methods: append, write)
-    public static void fileWrite(String path, String content, String method) throws Exception{
+    public static void fileWrite(String path, String content, String method)
+    throws Exception{
 
         if (method.equals("append")){
             Files.writeString(
