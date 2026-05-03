@@ -2,47 +2,65 @@ package logger;
 
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import file_io.FileIO;
 import utils.SystemUtils;
 
 public class Log{
+    public HashMap<String, ArrayList<String>> logs;
 
-    // Set path based on the log type
-    private static String findPath(String level){
-        String path = Paths.get(SystemUtils.getAppDataDirectory(), "logs").toString();
-        String file_path;
+    private static String levelToFile(String level){
+        switch (level.toLowerCase()) {
+            case "error": return "Error";
 
-        switch (level.toLowerCase()){
-            case "error":
-                file_path = Paths.get(path, "Error.log").toString();
-                break;
+            case "info": return "App";
 
-            case "info":
-                file_path = Paths.get(path, "App.log").toString();
-                break;
-
-            case "network":
-                file_path = Paths.get(path, "Network.log").toString();
-                break;
-
-            default:
-                file_path = Paths.get(path, "App.log").toString();
+            case "network": return "Network";
+        
+            default: return "App";
         }
-
-        return file_path;
     }
 
-    // Write log into respected file
-    public static void write(String level, String module, String message) throws Exception{
+    // Set path based on the log type
+    private static Path findPath(String doc_name){
+        String path = Paths.get(SystemUtils.getAppDataDirectory(), "logs").toString();
+
+        return Paths.get(path, doc_name + ".log");
+    }
+
+    // Format log entry
+    public void format(String level, String module, String message){
         LocalDateTime time = LocalDateTime.now();
 
         String line = String.format(
             "[ %s ] [ %s ] [ %s ] %s\n",
-            time.toString(), level, module, message
+            time.toString(), level.toUpperCase(), module, message
         );
+        
+        this.logs.get(levelToFile(level)).add(line);
+    }
 
-        String path = findPath(level);
-        FileIO.fileWrite(path, line, "append");
+    // Write logs into respected file
+    public void write(){
+        
+        for (String divison : this.logs.keySet()){
+            String content = "", path = findPath(divison);
+
+            for (String entry : this.logs.get(divison)) content += entry;
+
+            if (!content.isEmpty())
+                FileIO.fileWrite(path, content, "append");
+
+            this.logs.get(divison).clear();
+        }
+    }
+
+    public Log(){
+        this.logs = new HashMap<>();
+        this.logs.put("App", new ArrayList<>());
+        this.logs.put("Network", new ArrayList<>());
+        this.logs.put("Error", new ArrayList<>());
     }
 }
