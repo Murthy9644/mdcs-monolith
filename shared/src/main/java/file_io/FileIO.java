@@ -1,5 +1,7 @@
 package file_io;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 
@@ -12,6 +14,15 @@ import java.nio.file.StandardOpenOption;
 
 public class FileIO{
     private static ObjectMapper mapper = new ObjectMapper().enable(INDENT_OUTPUT);
+
+    // Does the file exists?
+    public static <F> boolean exists(Class<F> file)
+    throws IllegalAccessException, NoSuchFieldException{
+        Field path_field = file.getDeclaredField("path");
+        Path path = (Path) path_field.get(null);
+
+        return Files.exists(path);
+    }
 
     // For reading files into objects
     // Required object properties: file.path (expected to exist)
@@ -37,7 +48,7 @@ public class FileIO{
 
     // General writer (methods: append, write)
     public static void fileWrite(String path, String content, String method)
-    throws Exception{
+    throws IOException{
 
         if (method.equals("append")){
             Files.writeString(
@@ -49,4 +60,17 @@ public class FileIO{
             Files.writeString(Path.of(path), content, StandardOpenOption.CREATE);
         }
     }
+
+    // To get JsonNode
+    public static <F> JsonNode getJsonNode(Class<F> file)
+    throws NoSuchFieldException, IllegalAccessException, IOException{
+        Field path_field = file.getDeclaredField("path");
+        String path = (String) path_field.get(null);
+        
+        return mapper.readTree(new File(path));
+    }
+
+    // Get file as class object from JsonNode
+    public static <F> F getTreeValue(JsonNode node, Class<F> file)
+    throws JsonProcessingException{ return mapper.treeToValue(node, file); }
 }

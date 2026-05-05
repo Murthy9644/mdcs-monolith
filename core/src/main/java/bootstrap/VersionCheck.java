@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Properties;
 
 public class VersionCheck {
-    private static Properties APP, VERSIONS;
+    private static Properties VERSIONS;
     private static HashMap<String, String> response;
 
     private static boolean versionFormat(){
@@ -24,16 +24,31 @@ public class VersionCheck {
 
         return true;
     }
+
+    private static boolean moduleCompatibity(){
+
+        return true;
+    }
+
+    private static boolean updateCheck(){
+
+        return true;
+    }
     
     public static boolean validate(
-        Properties a_inc, 
         Properties v_inc, 
         HashMap<String, String> res
     ){
-        APP = a_inc;
         VERSIONS = v_inc;
         response = res;
 
-        return versionFormat();
+        if (
+            versionFormat() 
+            && moduleCompatibity()
+            && updateCheck()
+        )
+            return true;
+
+        return false;
     }
 }

@@ -1,5 +1,7 @@
 package logger;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -43,15 +45,16 @@ public class Log{
     }
 
     // Write logs into respected file
-    public void write(){
+    public void write() throws IOException{
         
         for (String divison : this.logs.keySet()){
-            String content = "", path = findPath(divison);
+            String content = "";
+            Path path = findPath(divison);
 
             for (String entry : this.logs.get(divison)) content += entry;
 
             if (!content.isEmpty())
-                FileIO.fileWrite(path, content, "append");
+                FileIO.fileWrite(path.toString(), content, "append");
 
             this.logs.get(divison).clear();
         }
