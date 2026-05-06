@@ -4,10 +4,6 @@ import java.nio.file.Paths;
 
 import utils.SystemUtils;
 
-interface HasPath{
-    String getPath();
-}
-
 // Maintains blue print of file structures mapped to java classes
 
 public class DataClasses{
@@ -21,6 +17,10 @@ public class DataClasses{
             this.name = name;
             this.type = type;
         }
+    }
+
+    public interface HasPath{
+        String getPath();
     }
 
     // Template for Accounts.json file

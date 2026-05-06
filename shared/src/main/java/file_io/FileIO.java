@@ -3,6 +3,8 @@ package file_io;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 
 import java.io.File;
@@ -38,9 +40,16 @@ public class FileIO{
     public static String fileRead(String path) 
     throws IOException{ return Files.readString(Path.of(path)); }
 
+    // For writing from generics
+    public static <T extends DataClasses.HasPath> void createAndWrite(Class<T> file)
+    throws Exception{
+        T obj = file.getDeclaredConstructor().newInstance();
+        fileWrite(obj);
+    }
+
     // For writing files from objects
     // Required object properties: file.path (expected to exist)
-    public static <T extends HasPath> void fileWrite(T file)
+    public static <T extends DataClasses.HasPath> void fileWrite(T file)
     throws Exception{
         String path = file.getPath();
         mapper.writeValue(new File(path), file);
@@ -71,6 +80,15 @@ public class FileIO{
     }
 
     // Get file as class object from JsonNode
-    public static <F> F getTreeValue(JsonNode node, Class<F> file)
+    public static <F> F getTreeValue(Class<F> file, JsonNode node)
     throws JsonProcessingException{ return mapper.treeToValue(node, file); }
+
+    // Write to file from ObjectNode
+    public static <F> void writeJsonNode(Class<F> file, ObjectNode node)
+    throws Exception{
+        Field path_field = file.getDeclaredField("path");
+        String path = (String) path_field.get(null);
+
+        mapper.writerWithDefaultPrettyPrinter().writeValue(new File(path), node);
+    }
 }

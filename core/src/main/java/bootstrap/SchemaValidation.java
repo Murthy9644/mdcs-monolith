@@ -8,38 +8,119 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import file_io.DataClasses;
 import file_io.FileIO;
-import file_io.DataClasses.FieldRules;
 
 public class SchemaValidation {
-    private static HashMap<String, String> response;
-    private static HashMap<Class<?>, List<DataClasses.FieldRules>> schema_design = new HashMap<>();
 
-    public static boolean checkSchema(){
-        try{
-            for (Class<?> data_class : schema_design.keySet()){
-                JsonNode node = FileIO.getJsonNode(data_class);
+    public static <T extends DataClasses.HasPath> boolean attemptRecovery(Class<T> file){
 
-                for (FieldRules rule : schema_design.get(data_class)){
+        return false;
+    }
+
+    public static boolean checkSchema(
+        HashMap<Class<? extends DataClasses.HasPath>,
+        List<DataClasses.FieldRules>> schema_design,
+        HashMap<String, String> response
+    )
+    throws Exception{
+        response.put("body", "");
+        boolean schema_validity = true;
+
+        for (Class<? extends DataClasses.HasPath> data_class : schema_design.keySet()){
+            boolean invalid_schema = false;
+            ObjectNode node;
+
+            try{
+                JsonNode raw = FileIO.getJsonNode(data_class);
+                
+                if (raw == null || !raw.isObject()) throw new IOException();
+
+                node = (ObjectNode) raw;
+
+                for (DataClasses.FieldRules rule : schema_design.get(data_class)){
                     JsonNode field = node.get(rule.name);
 
-                    if (field == null) return false;
+                    switch (rule.type) {
+                        case "int":
+                            if (field == null || field.isNull() || !field.isInt()){
+                                invalid_schema = true;
+                                node.put(rule.name, 0);
+                            }
+                            break;
 
-                    // Work under progress !
+                        case "string":
+                            if (field == null || field.isNull() || !field.isTextual()){
+                                invalid_schema = true;
+                                node.put(rule.name, "");
+                            }
+                            break;
+
+                        case "boolean":
+                            if (field == null || field.isNull() || !field.isBoolean()){
+                                invalid_schema = true;
+                                node.put(rule.name, false);
+                            }
+                            break;
+                    }
                 }
+            } catch (IOException e){ // Format is invalid (couldn't load file)
+                response.put("body", data_class.getName());
+
+                // Attempt backup (will be added later)
+
+                if (!attemptRecovery(data_class)){ // Placeholder for backup logic
+                    // Create defaults
+                    try{
+                        FileIO.createAndWrite(data_class);
+
+                        response.put("app_status", "continue");
+                        response.put("status", "INVALID_FILE_FORMAT");
+                        response.put("message", "Default file created");
+                    } catch (Exception _){
+                        response.put("app_status", "terminate");
+                        response.put("status", "FILE_PARSE|CREATION_FAILURE");
+                        response.put("message", "App startup aborted");
+                    }
+                } else{
+                    response.put("app_status", "continue");
+                    response.put("status", "INVALID_FILE_FORMAT");
+                    response.put("message", "Backup file restored");
+                }
+
+                return false; // Acknowledge failure
             }
 
-            return true;
-        } catch (Exception e){ return false; }
+            if (invalid_schema){
+                response.put("app_status", "continue");
+                response.put("status", "INVALID_FILE_SCHEMA");
+                response.put(
+                    "body",
+                    (response.get("body").isEmpty())
+                    ? data_class.getName()
+                    : response.get("body") + "<>" + data_class.getName()
+                );
+
+                try{ FileIO.writeJsonNode(data_class, node); }
+                catch (Exception e) {
+                    response.put("app_status", "terminate");
+                    response.put("status", "FILE_WRITE_FAILURE");
+                }
+
+                schema_validity = false;
+            }
+        }
+
+        return schema_validity;
     }
     
     public static boolean validate(HashMap<String, String> res)
-    throws IOException, IllegalAccessException, NoSuchFieldException{
-        response = res;
+    throws Exception{
+        HashMap<Class<? extends DataClasses.HasPath>, List<DataClasses.FieldRules>> schema_design = new HashMap<>();
 
-        List<Class<?>> data_classes = List.of(
+        List<Class<? extends DataClasses.HasPath>> data_classes = List.of(
             DataClasses.Accounts.class,
             DataClasses.Device.class,
             DataClasses.ModulePaths.class,
@@ -47,7 +128,7 @@ public class SchemaValidation {
             DataClasses.Data.class
         );
 
-        for (Class<?> c : data_classes){
+        for (Class<? extends DataClasses.HasPath> c : data_classes){
             schema_design.putIfAbsent(c, new ArrayList<>());
             Field class_fields[] = c.getDeclaredFields();
 
@@ -64,16 +145,16 @@ public class SchemaValidation {
             }
         }
 
-        boolean status = checkSchema();
+        boolean status = checkSchema(schema_design, res);
         schema_design.clear();
 
-        if (!status){
-            res.put("app_state", "continue");
-            res.put("status", "INVALID_SCHEMA_FORMAT");
-
-            return false;
+        if (status){
+            res.put("app_status", "continue");
+            res.put("status", "check");
+            res.put("body", "null");
+            res.put("message", "Schema validated successfully");
         }
 
-        return true;
+        return status;
     }
 }
