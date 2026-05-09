@@ -78,11 +78,12 @@ public class SchemaValidation {
 
                         response.put("app_status", "continue");
                         response.put("status", "INVALID_FILE_FORMAT");
+                        response.put("body", data_class.getName());
                         response.put("message", "Default file created");
                     } catch (Exception _){
                         response.put("app_status", "terminate");
-                        response.put("status", "FILE_PARSE|CREATION_FAILURE");
-                        response.put("message", "App startup aborted");
+                        response.put("status", "INVALID_FILE_FORMAT");
+                        response.put("message", "Application startup aborted after recovery attempt failed");
                     }
                 } else{
                     response.put("app_status", "continue");
@@ -102,11 +103,14 @@ public class SchemaValidation {
                     ? data_class.getName()
                     : response.get("body") + "<>" + data_class.getName()
                 );
+                response.put("message", "Defaulting invalid data");
 
                 try{ FileIO.writeJsonNode(data_class, node); }
                 catch (Exception e) {
                     response.put("app_status", "terminate");
                     response.put("status", "FILE_WRITE_FAILURE");
+                    response.put("body", data_class.getName());
+                    response.put("message", "Application startup aborted");
                 }
 
                 schema_validity = false;
@@ -147,13 +151,6 @@ public class SchemaValidation {
 
         boolean status = checkSchema(schema_design, res);
         schema_design.clear();
-
-        if (status){
-            res.put("app_status", "continue");
-            res.put("status", "check");
-            res.put("body", "null");
-            res.put("message", "Schema validated successfully");
-        }
 
         return status;
     }

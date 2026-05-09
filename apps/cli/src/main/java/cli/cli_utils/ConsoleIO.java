@@ -5,54 +5,48 @@ import java.util.Scanner;
 public class ConsoleIO{
     private Scanner input;
 
-    public void say(String type, String text){
-        String print_text;
-        
-        switch (type) {
-            case "primary":
-                print_text = Colors.WHITE + text + Colors.RESET;
-                break;
-
-            case "success":
-                print_text = Colors.GREEN + text + Colors.RESET;
-                break;
-
-            case "error":
-                print_text = Colors.RED + text + Colors.RESET;
-                break;
-
-            case "warning":
-                print_text = Colors.YELLOW + text + Colors.RESET;
-                break;
-
-            case "muted":
-                print_text = Colors.GRAY + text + Colors.RESET;
-                break;
-
-            case "highlight":
-                print_text = Colors.CYAN + text + Colors.RESET;
-                break;
-
-            case "heading":
-                print_text = Colors.BOLD + Colors.WHITE + text + Colors.RESET;
-                break;
-
-            case "specifier":
-                print_text = Colors.BRIGHT_PURPLE + text + Colors.RESET;
-                break;
-        
-            default:
-                print_text = text;
-                break;
-        }
-
-        System.out.print(print_text);
+    public void error(String text){
+        String log_level = "[ " + Colors.RED + "ERROR " + Colors.RESET + "] ";
+        System.out.print(log_level + text);
     }
 
-    public String ask(String type, String prompt){
-        say(type, prompt);
-        return input.nextLine();
+    public void success(String text){
+        String log_level = "[ " + Colors.GREEN + "SUCCESS " + Colors.RESET + "] ";
+        System.out.print(log_level + text);
     }
+
+    public void warn(String text){
+        String log_level = "[ " + Colors.YELLOW + "WARN " + Colors.RESET + "] ";
+        System.out.print(log_level + text);
+    }
+
+    public void info(String text){
+        String log_level = "[ " + Colors.CYAN + "INFO " + Colors.RESET + "] ";
+        System.out.print(log_level + text);
+    }
+
+    public void critical(String text){
+        String log_level = "[ " + Colors.BOLD + Colors.RED + "CRITICAL " + Colors.RESET + "] ";
+        System.out.print(log_level + text);
+    }
+
+    public void muted(String text){ System.out.print(Colors.GRAY + text); }
+
+    public void print(String text){ System.out.print(text); }
+
+    public void highlight(String text){
+        System.out.print(Colors.BG_BRIGHT_WHITE + Colors.BLACK + text);
+    }
+
+    public void heading(String text){
+        System.out.print(Colors.BOLD + Colors.WHITE + text + Colors.RESET);
+    }
+
+    public void specifier(String text){
+        System.out.print(Colors.BRIGHT_PURPLE + text + Colors.RESET);
+    }
+
+    public String ask(){ return input.nextLine(); }
 
     public ConsoleIO(){
         input = new Scanner(System.in);

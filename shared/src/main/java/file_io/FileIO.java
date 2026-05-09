@@ -17,6 +17,10 @@ import java.nio.file.StandardOpenOption;
 public class FileIO{
     private static ObjectMapper mapper = new ObjectMapper().enable(INDENT_OUTPUT);
 
+    // To convert a String to JSON format
+    public static String toJson(Object object)
+    throws JsonProcessingException{ return mapper.writeValueAsString(object); }
+
     // Does the file exists?
     public static <F> boolean exists(Class<F> file)
     throws IllegalAccessException, NoSuchFieldException{

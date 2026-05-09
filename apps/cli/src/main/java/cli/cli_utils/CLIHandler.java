@@ -9,34 +9,35 @@ public class CLIHandler {
     Properties APP, VERSIONS;
     
     public void handleSignup(){
-        String username = io.ask("muted", "username: ");
-        String email = io.ask("muted", "email: ");
+        io.muted("username: "); String username = io.ask();
+        io.muted("email: "); String email = io.ask();
+
         String password;
         String conf_password;
 
         while (true){
-            password = io.ask("muted", "create password: ");
-            conf_password = io.ask("muted", "confirm password: ");
+            io.muted("create password: "); password = io.ask();
+            io.muted("confirm password: "); conf_password = io.ask();
 
             if (password.equals(conf_password)) break;
             else
-                io.say("error", "passwords do not match\n");
+                io.error("passwords do not match\n");
         }
 
         boolean success = UserAuth.signup(username, email, password);
 
-        if (success) io.say("success", "registered successfully\n");
-        else io.say("error", "registration failed\n");
+        if (success) io.success("registered successfully\n");
+        else io.error("registration failed\n");
     }
 
     public void handleSignin(){
-        String email = io.ask("muted", "email: ");
-        String password = io.ask("muted", "password: ");
+        io.muted("email: "); String email = io.ask();
+        io.muted("password: "); String password = io.ask();
 
         boolean success = UserAuth.signin(email, password);
 
-        if (success) io.say("success", "authenticated successfully\n");
-        else io.say("error", "authentication failed\n");
+        if (success) io.success("authenticated successfully\n");
+        else io.error("authentication failed\n");
     }
 
     public void handleRestart() {

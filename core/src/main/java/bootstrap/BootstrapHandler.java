@@ -16,9 +16,9 @@ public class BootstrapHandler{
             && SchemaValidation.validate(response)
         ){
             response.put("app_state", "continue");
-            response.put("status", "check");
+            response.put("status", "CHECK");
             response.put("body", null);
-            response.put("message", "System bootstrap completed successfully");
+            response.put("message", "Bootstrap completed successfully");
         }
 
         return response;

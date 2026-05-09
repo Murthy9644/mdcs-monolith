@@ -25,13 +25,13 @@ def codeStrings(command, module):
 
     match command:
         case "compile":
-            string = "mvn clean install -DskipTests"
+            string = "mvn -q clean install -DskipTests"
 
         case "exec":
-            string = f"mvn -pl apps/{module} exec:java -Dexec.mainClass={module}.Main"
+            string = f"mvn -q -pl apps/{module} exec:java -Dexec.mainClass={module}.Main"
 
         case "build":
-            string = f"mvn -pl apps/{module} -am clean package"
+            string = f"mvn -q -pl apps/{module} -am clean package"
 
     return string
 
@@ -41,10 +41,10 @@ class Build:
         exitcode = os.system(codeStrings(self.command, self.module))
 
         if exitcode == 0:
-            print(colorama.Fore.GREEN + "Job successful: exit status code 0")
+            print(colorama.Fore.GREEN + "\nJob successful: exit status code 0")
 
         else: 
-            print(colorama.Fore.RED + f"Job failed: exit status code {exitcode}")
+            print(colorama.Fore.RED + f"\nJob failed: exit status code {exitcode}")
 
     def __init__(self):
 
@@ -59,7 +59,7 @@ class Build:
             try: self.module = sys.argv[2]
 
             except IndexError: 
-                print(colorama.Fore.LIGHTYELLOW_EX + "module not specified: defaulting to cli")
+                print(colorama.Fore.LIGHTYELLOW_EX + "module not specified: defaulting to cli\n")
                 self.module = "cli"
 
         except IndexError:
