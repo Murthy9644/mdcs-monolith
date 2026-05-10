@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 public class FileIO{
@@ -27,17 +28,19 @@ public class FileIO{
     public static <F> boolean exists(Class<F> file)
     throws IllegalAccessException, NoSuchFieldException{
         Field path_field = file.getDeclaredField("path");
-        Path path = (Path) path_field.get(null);
+        path_field.setAccessible(true);
+        String path = (String) path_field.get(null);
 
-        return Files.exists(path);
+        return Files.exists(Paths.get(path));
     }
 
     // For reading files into objects
     // Required object properties: file.path (expected to exist)
     public static <F> F fileRead(Class<F> file) 
     throws IOException, NoSuchFieldException, IllegalAccessException{
-        Field path_Field = file.getDeclaredField("path");
-        String path = (String) path_Field.get(null);
+        Field path_field = file.getDeclaredField("path");
+        path_field.setAccessible(true);
+        String path = (String) path_field.get(null);
 
         return mapper.readValue(new File(path), file);
     }
@@ -80,6 +83,7 @@ public class FileIO{
     public static <F> JsonNode getJsonNode(Class<F> file)
     throws NoSuchFieldException, IllegalAccessException, IOException{
         Field path_field = file.getDeclaredField("path");
+        path_field.setAccessible(true);
         String path = (String) path_field.get(null);
         
         return mapper.readTree(new File(path));
@@ -93,6 +97,7 @@ public class FileIO{
     public static <F> void writeJsonNode(Class<F> file, ObjectNode node)
     throws Exception{
         Field path_field = file.getDeclaredField("path");
+        path_field.setAccessible(true);
         String path = (String) path_field.get(null);
 
         mapper.writerWithDefaultPrettyPrinter().writeValue(new File(path), node);

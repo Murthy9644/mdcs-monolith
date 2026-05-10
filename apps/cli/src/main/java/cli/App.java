@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Properties;
 
 import bootstrap.BootstrapHandler;
+import cli.cli_utils.AuthPipe;
 import cli.cli_utils.CLIHandler;
 import cli.cli_utils.ConfigLoader;
 import cli.cli_utils.ConsoleIO;
@@ -78,6 +79,16 @@ public class App {
 
             io.info(res.get("message") + "\n");
 
+            if (res.get("user_state").equals("USER_AUTH_REQUIRED")){
+                AuthPipe pipe = new AuthPipe(io);
+                pipe.start();
+            } else if (
+                res.get("user_state").equals("USER_LOGGED_IN")
+                && !AuthPipe.verifyAuthToken()
+            ){
+                AuthPipe pipe = new AuthPipe(io);
+                pipe.start();
+            }
         } catch (Exception e){
             e.printStackTrace();
 
@@ -87,9 +98,13 @@ public class App {
         return true;
     }
 
+    // private void commandParser(String ...token){
+    //     //
+    // }
+
     public void start() {
         String header_string = APP.getProperty("app.name");
-        header_string += " " + VERSIONS.getProperty("app.version") + "\n";
+        header_string += " v" + VERSIONS.getProperty("app.version") + "\n";
         io.heading(header_string);
 
         if (!bootstrap()) return;
@@ -101,23 +116,13 @@ public class App {
             command = io.ask();
 
             switch (command){
-                case "signup":
-                    handler.handleSignup();
-                    break;
-
-                case "signin":
-                    handler.handleSignin();
-                    break;
-
                 case "refresh":
                     handler.handleRestart();
                     break;
 
-                case "exit":
-                    return;
+                case "exit": return;
 
-                default:
-                    io.error("unknown command\n");
+                default: io.error("unknown command\n");
             }
         }
     }

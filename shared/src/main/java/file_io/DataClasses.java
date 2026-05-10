@@ -27,7 +27,7 @@ public class DataClasses{
     public static class Accounts implements HasPath{   
 
         // File location
-        public static final String path = Paths.get(
+        private static final String path = Paths.get(
             SystemUtils.getAppDataDirectory(), 
             "entities", "Accounts.json"
         ).toString();
@@ -66,7 +66,7 @@ public class DataClasses{
     public static class Device implements HasPath{
 
         // File location
-        public static final String path = Paths.get(
+        private static final String path = Paths.get(
             SystemUtils.getAppDataDirectory(), 
             "entities", "Device.json"
         ).toString();
@@ -103,7 +103,7 @@ public class DataClasses{
     public static class Configs implements HasPath{
 
         // File location
-        public static final String path = Paths.get(
+        private static final String path = Paths.get(
             SystemUtils.getAppDataDirectory(), 
             "application", "Configs.json"
         ).toString();
@@ -115,7 +115,7 @@ public class DataClasses{
     public static class ModulePaths implements HasPath{
 
         // File location
-        public static final String path = Paths.get(
+        private static final String path = Paths.get(
             SystemUtils.getAppDataDirectory(), 
             "application", "ModulePaths.json"
         ).toString();
@@ -164,7 +164,7 @@ public class DataClasses{
     public static class Data implements HasPath{
 
         // File location
-        public static final String path = Paths.get(
+        private static final String path = Paths.get(
             SystemUtils.getAppDataDirectory(), 
             "application", "Data.json"
         ).toString();
