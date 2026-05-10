@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import utils.SystemUtils;
+
 import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 
 import java.io.File;
@@ -94,5 +96,13 @@ public class FileIO{
         String path = (String) path_field.get(null);
 
         mapper.writerWithDefaultPrettyPrinter().writeValue(new File(path), node);
+    }
+
+    public static void createAppFileDirs(){
+        String app_dir = SystemUtils.getAppDataDirectory();
+
+        new File(app_dir, "entities").mkdirs();
+        new File(app_dir, "application").mkdirs();
+        new File(app_dir, "logs").mkdirs();
     }
 }

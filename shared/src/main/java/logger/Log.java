@@ -32,26 +32,58 @@ public class Log{
         return Paths.get(path, doc_name + ".log");
     }
 
-    // Format log entry
-    public void format(String level, String module, String message){
+    public void error(String module, String message){
         LocalDateTime time = LocalDateTime.now();
 
         String line = String.format(
-            "[ %s ] [ %s ] [ %s ] %s\n",
-            time.toString(), level.toUpperCase(), module, message
+            "[ %s ] [ ERROR ] [ %s ] %s", 
+            time.toString(), module, message
         );
-        
-        this.logs.get(levelToFile(level)).add(line);
+
+        this.logs.get(levelToFile("error")).add(line);
+    }
+
+    public void info(String module, String message){
+        LocalDateTime time = LocalDateTime.now();
+
+        String line = String.format(
+            "[ %s ] [ INFO ] [ %s ] %s", 
+            time.toString(), module, message
+        );
+
+        this.logs.get(levelToFile("info")).add(line);
+    }
+
+    public void warn(String module, String message){
+        LocalDateTime time = LocalDateTime.now();
+
+        String line = String.format(
+            "[ %s ] [ WARN ] [ %s ] %s", 
+            time.toString(), module, message
+        );
+
+        this.logs.get(levelToFile("warn")).add(line);
+    }
+
+    public void network(String module, String message){
+        LocalDateTime time = LocalDateTime.now();
+
+        String line = String.format(
+            "[ %s ] [ NETWORK ] [ %s ] %s", 
+            time.toString(), module, message
+        );
+
+        this.logs.get(levelToFile("network")).add(line);
     }
 
     // Write logs into respected file
-    public void write() throws IOException{
+    public void flush() throws IOException{
         
         for (String divison : this.logs.keySet()){
             String content = "";
             Path path = findPath(divison);
 
-            for (String entry : this.logs.get(divison)) content += entry;
+            for (String entry : this.logs.get(divison)) content += (entry + "\n");
 
             if (!content.isEmpty())
                 FileIO.fileWrite(path.toString(), content, "append");

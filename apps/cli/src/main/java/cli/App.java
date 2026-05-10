@@ -60,7 +60,7 @@ public class App {
                     break;
 
                 case "INVALID_FILE_FORMAT":
-                    String ack = "Failed to parse file : " + res.get("body") + "\n";
+                    String ack = "Failed to parse file: " + res.get("body") + "\n";
 
                     if (res.get("app_state").equals("terminate"))
                         io.critical(ack);
@@ -70,12 +70,13 @@ public class App {
                     break;
             }
 
-            io.info(res.get("message") + "\n");
-
             if (res.get("app_state").equals("terminate")){
+                io.critical(res.get("message") + "\n");
 
                 return false;
             }
+
+            io.info(res.get("message") + "\n");
 
         } catch (Exception e){
             e.printStackTrace();
@@ -108,7 +109,7 @@ public class App {
                     handler.handleSignin();
                     break;
 
-                case "restart":
+                case "refresh":
                     handler.handleRestart();
                     break;
 

@@ -6,22 +6,22 @@ public class ConsoleIO{
     private Scanner input;
 
     public void error(String text){
-        String log_level = "[ " + Colors.RED + "ERROR " + Colors.RESET + "] ";
+        String log_level = "[ " + Colors.RED + "ERROR " + Colors.RESET + "]    ";
         System.out.print(log_level + text);
     }
 
     public void success(String text){
-        String log_level = "[ " + Colors.GREEN + "SUCCESS " + Colors.RESET + "] ";
+        String log_level = "[ " + Colors.GREEN + "SUCCESS " + Colors.RESET + "]  ";
         System.out.print(log_level + text);
     }
 
     public void warn(String text){
-        String log_level = "[ " + Colors.YELLOW + "WARN " + Colors.RESET + "] ";
+        String log_level = "[ " + Colors.YELLOW + "WARN " + Colors.RESET + "]     ";
         System.out.print(log_level + text);
     }
 
     public void info(String text){
-        String log_level = "[ " + Colors.CYAN + "INFO " + Colors.RESET + "] ";
+        String log_level = "[ " + Colors.CYAN + "INFO " + Colors.RESET + "]     ";
         System.out.print(log_level + text);
     }
 
@@ -30,7 +30,7 @@ public class ConsoleIO{
         System.out.print(log_level + text);
     }
 
-    public void muted(String text){ System.out.print(Colors.GRAY + text); }
+    public void muted(String text){ System.out.print(Colors.GRAY + text + Colors.RESET); }
 
     public void print(String text){ System.out.print(text); }
 

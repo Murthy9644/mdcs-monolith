@@ -12,8 +12,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import file_io.DataClasses;
 import file_io.FileIO;
+import logger.Log;
 
 public class SchemaValidation {
+    private static Log logger;
 
     public static <T extends DataClasses.HasPath> boolean attemptRecovery(Class<T> file){
 
@@ -28,6 +30,7 @@ public class SchemaValidation {
     throws Exception{
         response.put("body", "");
         boolean schema_validity = true;
+        logger.info("bootstrap", "Checking file schemas and format");
 
         for (Class<? extends DataClasses.HasPath> data_class : schema_design.keySet()){
             boolean invalid_schema = false;
@@ -67,61 +70,82 @@ public class SchemaValidation {
                     }
                 }
             } catch (IOException e){ // Format is invalid (couldn't load file)
-                response.put("body", data_class.getName());
+                logger.error("bootstrap", "Invalid file format: " + data_class.getSimpleName());
+                response.put("body", data_class.getSimpleName());
 
                 // Attempt backup (will be added later)
 
                 if (!attemptRecovery(data_class)){ // Placeholder for backup logic
                     // Create defaults
+                    logger.error("bootstrap", "Failed to restore backup file: " + data_class.getSimpleName());
+
                     try{
                         FileIO.createAndWrite(data_class);
 
-                        response.put("app_status", "continue");
+                        response.put("app_state", "continue");
                         response.put("status", "INVALID_FILE_FORMAT");
-                        response.put("body", data_class.getName());
                         response.put("message", "Default file created");
-                    } catch (Exception _){
-                        response.put("app_status", "terminate");
+
+                        logger.info("bootstrap", "Created default file: " + data_class.getSimpleName());
+                    } catch (Exception e1){
+                        response.put("app_state", "terminate");
                         response.put("status", "INVALID_FILE_FORMAT");
                         response.put("message", "Application startup aborted after recovery attempt failed");
+
+                        logger.error("bootstrap", "Failed to create file: " + data_class.getSimpleName());
+
+                        return false;
                     }
                 } else{
-                    response.put("app_status", "continue");
+                    logger.info("bootstrap", "Backup file restored: " + data_class.getSimpleName());
+
+                    response.put("app_state", "continue");
                     response.put("status", "INVALID_FILE_FORMAT");
                     response.put("message", "Backup file restored");
                 }
 
-                return false; // Acknowledge failure
+                schema_validity = false; // Acknowledge failure
+                node = null;
             }
 
             if (invalid_schema){
-                response.put("app_status", "continue");
+                logger.error("bootstrap", "Invalid file schema: " + data_class.getSimpleName());
+
+                response.put("app_state", "continue");
                 response.put("status", "INVALID_FILE_SCHEMA");
                 response.put(
                     "body",
                     (response.get("body").isEmpty())
-                    ? data_class.getName()
-                    : response.get("body") + "<>" + data_class.getName()
+                    ? data_class.getSimpleName()
+                    : response.get("body") + "<>" + data_class.getSimpleName()
                 );
                 response.put("message", "Defaulting invalid data");
 
-                try{ FileIO.writeJsonNode(data_class, node); }
-                catch (Exception e) {
-                    response.put("app_status", "terminate");
+                try{
+                    FileIO.writeJsonNode(data_class, node);
+
+                    logger.info("bootstrap", "Defaulted invalid data: " + data_class.getSimpleName());
+                } catch (Exception e) {
+                    response.put("app_state", "terminate");
                     response.put("status", "FILE_WRITE_FAILURE");
-                    response.put("body", data_class.getName());
+                    response.put("body", data_class.getSimpleName());
                     response.put("message", "Application startup aborted");
+
+                    logger.error("bootstrap", "Failed to write file: " + data_class.getSimpleName());
                 }
 
                 schema_validity = false;
             }
         }
 
+        logger.info("bootstrap", "Schemas and format validation passed");
+
         return schema_validity;
     }
     
-    public static boolean validate(HashMap<String, String> res)
+    public static boolean validate(HashMap<String, String> res, Log logger_inc)
     throws Exception{
+        logger = logger_inc;
         HashMap<Class<? extends DataClasses.HasPath>, List<DataClasses.FieldRules>> schema_design = new HashMap<>();
 
         List<Class<? extends DataClasses.HasPath>> data_classes = List.of(
@@ -148,6 +172,9 @@ public class SchemaValidation {
                 );
             }
         }
+
+        // Make sure directories exist already
+        FileIO.createAppFileDirs();
 
         boolean status = checkSchema(schema_design, res);
         schema_design.clear();
