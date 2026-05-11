@@ -49,6 +49,7 @@ public class AuthPipe {
         this.io.print("\nSelect:\n");
         this.io.print("1. Signup (If new to MDCS)\n");
         this.io.print("2. Signin (If already have an account)\n");
+        this.io.print("3. exit\n");
         
         while (true){
             try{
@@ -58,6 +59,8 @@ public class AuthPipe {
                 if (choice == 1) handleSignup();
 
                 else if (choice == 2) handleSignin();
+
+                else if (choice == 3) System.exit(0);
 
                 else{
                     this.io.info("Invalid choice. Select 1 or 2\n");

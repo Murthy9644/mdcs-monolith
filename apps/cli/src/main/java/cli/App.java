@@ -16,20 +16,20 @@ public class App {
     private Properties APP, VERSIONS;
 
     private boolean bootstrap(){
-        io.info("Application bootstrap started\n");
+        this.io.info("Initializing application bootstrap\n");
         
         try{
-            HashMap<String, String> res = BootstrapHandler.run(APP, VERSIONS);
+            HashMap<String, String> res = BootstrapHandler.run(this.APP, this.VERSIONS);
 
             switch (res.get("status")) {
                 case "INVALID_VERSION_FORMAT":
-                    io.critical("Invalid version format: " + res.get("body") + "\n");
-                    io.print("Expected format: MAJOR.MINOR.PATCH (eg., 1.2.3)\n");
+                    this.io.critical("Invalid version format: " + res.get("body") + "\n");
+                    this.io.print("Expected format: MAJOR.MINOR.PATCH (eg., 1.2.3)\n");
                     
                     break;
 
                 case "INCOMPATIBLE_MODULE":
-                    io.critical(
+                    this.io.critical(
                         "Module compatibility check failed: "
                         + res.get("body").split("<>")[0]
                         + " ("
@@ -40,23 +40,23 @@ public class App {
                     break;
 
                 case "UPDATE_CHECK_FAILED":
-                    io.error("Failed to check for updates\n");
+                    this.io.error("Failed to check for updates\n");
 
                     break;
 
                 case "INVALID_FILE_SCHEMA":
-                    io.error("Invalid data values for:\n\n");
+                    this.io.error("Invalid data values for:\n\n");
 
                     for (String s : res.get("body").split("<>"))
-                        io.print(s + "\n");
+                        this.io.print(s + "\n");
 
-                    io.print("\n");
+                    this.io.print("\n");
 
                     break;
 
                 case "FILE_WRITE_FAILURE":
-                    io.critical("Failed to write to the file: ");
-                    io.print(res.get("body") + "\n");
+                    this.io.critical("Failed to write to the file: ");
+                    this.io.print(res.get("body") + "\n");
 
                     break;
 
@@ -64,20 +64,20 @@ public class App {
                     String ack = "Failed to parse file: " + res.get("body") + "\n";
 
                     if (res.get("app_state").equals("terminate"))
-                        io.critical(ack);
+                        this.io.critical(ack);
                     else
-                        io.error(ack);
+                        this.io.error(ack);
 
                     break;
             }
 
             if (res.get("app_state").equals("terminate")){
-                io.critical(res.get("message") + "\n");
+                this.io.critical(res.get("message") + "\n");
 
                 return false;
             }
 
-            io.info(res.get("message") + "\n");
+            this.io.info(res.get("message") + "\n");
 
             if (res.get("user_state").equals("USER_AUTH_REQUIRED")){
                 AuthPipe pipe = new AuthPipe(io);
@@ -98,46 +98,46 @@ public class App {
         return true;
     }
 
-    // private void commandParser(String ...token){
-    //     //
-    // }
-
-    public void start() {
-        String header_string = APP.getProperty("app.name");
-        header_string += " v" + VERSIONS.getProperty("app.version") + "\n";
-        io.heading(header_string);
-
-        if (!bootstrap()) return;
-        
+    private void commandInterface(){
         String command;
 
         while (true) {
-            io.specifier("> ");
-            command = io.ask();
+            this.io.specifier("> ");
+            command = this.io.ask();
 
             switch (command){
                 case "refresh":
-                    handler.handleRestart();
+                    this.handler.handleRestart();
                     break;
 
                 case "exit": return;
 
-                default: io.error("unknown command\n");
+                default: this.io.error("Invalid command. Use 'help' for more info.\n");
             }
         }
     }
 
+    public void start() {
+        String header_string = this.APP.getProperty("app.name");
+        header_string += " V" + this.VERSIONS.getProperty("app.version") + "\n";
+        this.io.heading(header_string);
+
+        if (!this.bootstrap()) return;
+
+        this.commandInterface();
+    }
+
     public App(){
-        io = new ConsoleIO();
+        this.io = new ConsoleIO();
 
         try{
-            APP = new ConfigLoader("application.properties").property;
-            VERSIONS = new ConfigLoader("versions.properties").property;
+            this.APP = new ConfigLoader("application.properties").property;
+            this.VERSIONS = new ConfigLoader("versions.properties").property;
         } catch (IOException e){
-            io.error("File not found: couldn't find or load config files\n");
+            this.io.error("File not found: couldn't find or load config files\n");
             System.exit(0);
         }
         
-        handler = new CLIHandler(io, APP, VERSIONS);
+        this.handler = new CLIHandler(io, this.APP, this.VERSIONS);
     }
 }
