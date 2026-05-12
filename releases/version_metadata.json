@@ -6,10 +6,11 @@
         "critical_update": false
     },
 
-    "modules": {
-        "cli": "1.0.0",
-        "logger": "1.0.0",
-        "schema": "1.0.0"
+    "plugins": {
+        "clipboard": {
+            "available_version": "1.0.0",
+            "minimum_supported_version": "1.0.0"
+        }
     },
 
     "changes": [

@@ -16,8 +16,8 @@ public class BootstrapHandler{
         logger.info("bootstrap", "Starting application bootstrap");
         
         if (
-            VersionCheck.validate(VERSIONS, response, logger)
-            && SchemaValidation.validate(response, logger)
+            SchemaValidation.validate(response, logger)
+            && VersionCheck.validate(VERSIONS, response, logger)
         ){
             response.put("app_state", "continue");
             response.put("status", "CHECK");

@@ -20,9 +20,13 @@ import java.nio.file.StandardOpenOption;
 public class FileIO{
     private static ObjectMapper mapper = new ObjectMapper().enable(INDENT_OUTPUT);
 
-    // To convert a String to JSON format
+    // To convert an Object to JSON format
     public static String toJson(Object object)
     throws JsonProcessingException{ return mapper.writeValueAsString(object); }
+
+    // To convert a JSON String to an Object
+    public static <F> F toObject(String string, Class<F> clazz)
+    throws JsonProcessingException{ return mapper.readValue(string, clazz); }
 
     // Does the file exists?
     public static <F> boolean exists(Class<F> file)

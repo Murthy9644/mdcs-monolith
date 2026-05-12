@@ -29,10 +29,10 @@ Keeps selected folders synchronized across multiple devices with automatic updat
 - user_auth &rarr; Control user sign(in/up)
 - device_auth &rarr; Control device registration/login
 - device_mesh &rarr; Find/ping devices over the network
-- command_exec &rarr; Execute user commands & map to respective services
+- command_router &rarr; Sanitize commands & map to respective services within the device
 - logger &rarr; Generate logs
-- host &rarr; User level local server to communicate with other devices
-- client &rarr; Separate command listener that constantly listens for commands from other servers
+- host &rarr; User level local server that constantly listens for commands from other devices
+- client &rarr; To send commands to other devices
 
 ### Feature Modules (Micro-services):
 - clipboard &rarr; Maintain common clipboard across devices

@@ -1,6 +1,8 @@
 package file_io;
 
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 import utils.SystemUtils;
 
@@ -170,5 +172,25 @@ public class DataClasses{
         ).toString();
 
         public String getPath(){ return path; }
+    }
+
+    // Template for plugin internal strucutre
+    public static class Plugin{
+        public String path;
+        public String installed_version;
+    }
+
+    // Template for Plugins.json
+    public static class Plugins implements HasPath{
+
+        // File location
+        private static final String path = Paths.get(
+            SystemUtils.getAppDataDirectory(), 
+            "plugins", "Plugin.json"
+        ).toString();
+
+        public String getPath(){ return path; }
+
+        public Map<String, Plugin> plugins = new HashMap<>();
     }
 }

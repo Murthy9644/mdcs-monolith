@@ -24,17 +24,20 @@ This directory contains all locally persisted application data, including user i
 ## Folder Structure
 ```
 MDCS/
-    entities/
-        Accounts.json
-        Device.json
     application/
         Configs.json
         ModulePaths.json
         Data.json
+    entities/
+        Accounts.json
+        Device.json
     logs/
         App.log
         Error.log
         Network.log
+    plugins/
+        # plugins will write their data into their respected folders here
+        services.json
 ```
 
 ## Files
@@ -110,19 +113,22 @@ Stores versioning of application and modules
 
 **Fields**
 - app.version
-- app.cli.version
-- app.gui.version
-- module.clipboard.version
-- module.file_share.version
-- module.folder_sync.version
-- module.protocols.version
-- module.application_access.version
-- module.scheduler.version
-- module.host.version
-- module.client.version
-- module.mesh.version
-- logger.version
-- schema.version
+- plugins version that are supported by current app version
+
+### 11. Plugins.json
+Stores the available plugins and their path, version
+
+**Structure**
+```json
+{
+    "plugins": {
+            "plugin-name": {
+            "path": "...",
+            "installed_version": "..."
+        }
+    }
+}
+```
 
 ## Logs File Structure
 ```

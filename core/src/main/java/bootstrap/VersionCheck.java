@@ -2,12 +2,15 @@ package bootstrap;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import file_io.DataClasses;
 import file_io.FileIO;
 import logger.Log;
+import network.ResponseClasses;
 import network.ServerRequest;
 
 public class VersionCheck {
@@ -38,41 +41,46 @@ public class VersionCheck {
         return true;
     }
 
-    private static boolean moduleCompatibity(){
-        logger.info("bootstrap", "Checking module compatibility");
-        String app_version_scheme[] = VERSIONS.getProperty("app.version").split("\\.");
-
-        for (String key : VERSIONS.stringPropertyNames()) {
-            String major = VERSIONS.getProperty(key).split("\\.")[0];
-
-            if (!major.equals(app_version_scheme[0])) {
-                response.put("app_state", "terminate");
-                response.put("status", "INCOMPATIBLE_MODULE");
-                response.put("body", key + "<>" + VERSIONS.getProperty(key));
-                response.put("message", "Application startup aborted");
-
-                logger.error("bootstrap", "Incompatible module version (" + key + ")");
-
-                return false;
-            }
-        }
-
-        logger.info("bootstrap", "Module compatibility verified");
-
-        return true;
-    }
-
-    private static boolean updateCheck(){
-        
+    private static boolean updateCheck()
+    throws Exception{        
         logger.info("bootstrap", "Checking for updates");
 
         try{
-            String json_body = FileIO.toJson(VERSIONS);
-            ServerRequest.post(
+            // Read plugins metadata
+            Map<String, DataClasses.Plugin> plugin_metadata = FileIO.fileRead(DataClasses.Plugins.class).plugins;
+
+            // Final object to send to server
+            Map<String, Map<String, String>> body = new HashMap<>();
+
+            // Put app version
+            Map<String, String> app_version = new HashMap<>();
+            app_version.put("current_version", VERSIONS.getProperty("app.version"));
+
+            body.put("app", app_version);
+
+            // Put plugins version
+            body.put("plugins", new HashMap<>());
+
+            for (String plugin_name : plugin_metadata.keySet())
+                body.get("plugins").put(
+                    plugin_name, 
+                    plugin_metadata.get(plugin_name).installed_version
+                );
+
+            // Convert to json format string
+            String json_body = FileIO.toJson(body);
+
+            // Sending request to server
+            String response = ServerRequest.post(
                 "http://localhost:1097/mdcs/version/check",
                 new String[]{"Content-Type", "application/json"},
                 json_body
             );
+
+            ResponseClasses.UpdateResponse res = FileIO.toObject(response, ResponseClasses.UpdateResponse.class);
+
+            // Work under Progress
+
         } catch (JsonProcessingException e){
             response.put("app_state", "terminate");
             response.put("status", "INVALID_VERSION_FORMAT");
@@ -107,14 +115,13 @@ public class VersionCheck {
         Properties v_inc, 
         HashMap<String, String> res,
         Log logger_inc
-    ){
+    ) throws Exception{
         VERSIONS = v_inc;
         response = res;
         logger = logger_inc;
 
         if (
-            versionFormat() 
-            && moduleCompatibity()
+            versionFormat()
             && updateCheck()
         )
             return true;
