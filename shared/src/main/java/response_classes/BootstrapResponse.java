@@ -1,5 +1,7 @@
 package response_classes;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +22,8 @@ public class BootstrapResponse{
         INVALID_FILE_FORMAT,
         INVALID_FILE_SCHEMA,
         FILE_WRITE_FAILURE,
-        CRITICAL_UPDATE
+        CRITICAL_UPDATE,
+        INVALID_UPDATE_RESPONSE
     }
 
     // Enums for user state
@@ -53,9 +56,9 @@ public class BootstrapResponse{
         public String app_avail_ver;
 
         // Plugin updates
-        public Map<String, PluginInfo> plugin_ver; // Plugin name -> [current ver, available ver]
+        public Map<String, PluginInfo> plugin_ver = new HashMap<>(); // Plugin name -> [current ver, available ver]
 
-        public List<String> changes;
+        public List<String> changes = new ArrayList<>();
     }
 
     // Main response class
@@ -63,7 +66,7 @@ public class BootstrapResponse{
         public AppState app_state;
         public UserState user_state;
         public Status status;
-        public List<String> body;
+        public List<String> body = new ArrayList<>();
         public String message;
         public UpdateInfo update_info;
     }

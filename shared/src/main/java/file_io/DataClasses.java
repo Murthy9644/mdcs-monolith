@@ -178,6 +178,7 @@ public class DataClasses{
     public static class Plugin{
         public String path;
         public String installed_version;
+        public boolean is_compatible;
     }
 
     // Template for Plugins.json
@@ -191,6 +192,6 @@ public class DataClasses{
 
         public String getPath(){ return path; }
 
-        public Map<String, Plugin> plugins = new HashMap<>();
+        public Map<String, Plugin> plugins = new HashMap<>(); // plugin name -> Plugin
     }
 }

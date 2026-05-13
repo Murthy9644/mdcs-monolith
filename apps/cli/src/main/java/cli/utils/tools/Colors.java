@@ -1,4 +1,4 @@
-package cli.cli_utils;
+package cli.utils.tools;
 
 /*
 Color usage template:

@@ -1,4 +1,4 @@
-package cli.cli_utils;
+package cli.utils.tools;
 
 import java.io.IOException;
 import java.io.InputStream;

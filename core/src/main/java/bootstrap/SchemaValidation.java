@@ -111,16 +111,6 @@ public class SchemaValidation {
             if (invalid_schema){
                 logger.error("bootstrap", "Invalid file schema: " + data_class.getSimpleName());
 
-                response.put("app_state", "continue");
-                response.put("status", "INVALID_FILE_SCHEMA");
-                response.put(
-                    "body",
-                    (response.get("body").isEmpty())
-                    ? data_class.getSimpleName()
-                    : response.get("body") + "<>" + data_class.getSimpleName()
-                );
-                response.put("message", "Defaulting invalid data");
-
                 bsres.app_state = BootstrapResponse.AppState.CONTINUE;
                 bsres.status = BootstrapResponse.Status.INVALID_FILE_SCHEMA;
                 bsres.body.add(data_class.getSimpleName());
@@ -158,7 +148,8 @@ public class SchemaValidation {
             DataClasses.Device.class,
             DataClasses.ModulePaths.class,
             DataClasses.Configs.class,
-            DataClasses.Data.class
+            DataClasses.Data.class,
+            DataClasses.Plugins.class
         );
 
         for (Class<? extends DataClasses.HasPath> c : data_classes){

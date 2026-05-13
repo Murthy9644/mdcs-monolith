@@ -1,6 +1,8 @@
-package cli.cli_utils;
+package cli.utils;
 
 import java.util.Properties;
+
+import cli.utils.tools.ConsoleIO;
 
 public class CLIHandler {
     ConsoleIO io;

@@ -1,6 +1,5 @@
 package bootstrap;
 
-import java.util.HashMap;
 import java.util.Properties;
 
 import logger.Log;
@@ -9,7 +8,7 @@ import response_classes.BootstrapResponse;
 public class BootstrapHandler{
     private static Properties VERSIONS;
     
-    public static HashMap<String, String> run(Properties APP_inc, Properties VERSIONS_inc)
+    public static BootstrapResponse.GeneralResponse run(Properties APP_inc, Properties VERSIONS_inc)
     throws Exception{
         VERSIONS = VERSIONS_inc;
         BootstrapResponse.GeneralResponse bsres = new BootstrapResponse.GeneralResponse();
@@ -32,6 +31,6 @@ public class BootstrapHandler{
         logger.info("bootstrap", "Bootstrap completed successfully");
         logger.flush();
 
-        return response;
+        return bsres;
     }
 }

@@ -24,7 +24,7 @@ public class VersionCheck {
         for (String key : VERSIONS.stringPropertyNames()) {
             String version = VERSIONS.getProperty(key);
 
-            if (!version.matches("^[0-9]+.[0-9]+.[0-9]$")) {
+            if (!version.matches("^[0-9]+\\.[0-9]+\\.[0-9]$")) {
                 bsres.app_state = BootstrapResponse.AppState.TERMINATE;
                 bsres.status = BootstrapResponse.Status.INVALID_VERSION_FORMAT;
                 bsres.body.add(version);
@@ -47,7 +47,10 @@ public class VersionCheck {
 
         try {
             // Read plugins metadata
-            Map<String, DataClasses.Plugin> plugin_metadata = FileIO.fileRead(DataClasses.Plugins.class).plugins;
+            DataClasses.Plugins plugins = FileIO.fileRead(DataClasses.Plugins.class);
+            Map<String, DataClasses.Plugin> plugin_metadata = plugins.plugins;
+
+            if (plugin_metadata == null) plugin_metadata = new HashMap<>();
 
             // Final object to send to server
             Map<String, Map<String, String>> body = new HashMap<>();
@@ -100,7 +103,7 @@ public class VersionCheck {
             String[] avail_update = res.app.available_version.split("\\.");
             String[] curr_update = res.app.current_version.split("\\.");
 
-            if (Integer.parseInt(avail_update[0] > Integer.parseInt(curr_update[0]))){ // Major
+            if (Integer.parseInt(avail_update[0]) > Integer.parseInt(curr_update[0])){ // Major
                 bsres.update_info.app_update_avail = true;
                 bsres.update_info.update_type = BootstrapResponse.UpdateType.OPTIONAL;
                 bsres.update_info.app_avail_ver = res.app.available_version;
@@ -129,6 +132,9 @@ public class VersionCheck {
             for (String plugin_name : res.plugins.keySet()){
                 ServerResponseClasses.Plugin plugin = res.plugins.get(plugin_name);
 
+                // Mark incompatibility
+                plugin_metadata.get(plugin_name).is_compatible = res.plugins.get(plugin_name).is_compatible;
+
                 if (res.plugins.get(plugin_name).update_required){
                     BootstrapResponse.PluginInfo info = new BootstrapResponse.PluginInfo();
                     info.available_ver = plugin.available_version;
@@ -144,6 +150,9 @@ public class VersionCheck {
                 }
             }
 
+            plugins.plugins = plugin_metadata;
+            FileIO.fileWrite(plugins);
+
             if (update_found){
                 bsres.update_info.changes = res.changes;
                 logger.info("bootstrap", "Update is available to download");
@@ -152,10 +161,10 @@ public class VersionCheck {
             }
 
         } catch (JsonProcessingException e) {
-            bsres.app_state = BootstrapResponse.AppState.TERMINATE;
-            bsres.status = BootstrapResponse.Status.INVALID_FILE_FORMAT;
+            bsres.app_state = BootstrapResponse.AppState.CONTINUE;
+            bsres.status = BootstrapResponse.Status.INVALID_UPDATE_RESPONSE;
             bsres.body = null;
-            bsres.message = "Application startup aborted";
+            bsres.message = "Update check failed: Parsing issue";
 
             return false;
         } catch (IOException e) {

@@ -1,5 +1,6 @@
-package cli.cli_utils;
+package cli.utils.command_util;
 
+import cli.utils.tools.ConsoleIO;
 import user_auth.UserAuth;
 
 public class AuthPipe {
@@ -63,13 +64,13 @@ public class AuthPipe {
                 else if (choice == 3) System.exit(0);
 
                 else{
-                    this.io.info("Invalid choice. Select 1 or 2\n");
+                    this.io.info("Invalid choice. Select 1, 2 or 3\n");
                     continue;
                 }
 
                 break;
             }
-            catch (NumberFormatException e){ io.info("Invalid choice. Select 1 or 2\n"); }
+            catch (NumberFormatException e){ io.info("Invalid choice. Select 1, 2 or 3\n"); }
         }
     }
     
