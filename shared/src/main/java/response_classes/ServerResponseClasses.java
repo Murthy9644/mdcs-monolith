@@ -1,9 +1,9 @@
-package network;
+package response_classes;
 
 import java.util.List;
 import java.util.Map;
 
-public class ResponseClasses {
+public class ServerResponseClasses {
 
     // Helper for update-check response class
     public static class App{

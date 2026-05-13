@@ -5,6 +5,7 @@ import java.io.IOException;
 import file_io.DataClasses;
 import file_io.FileIO;
 import logger.Log;
+import response_classes.BootstrapResponse;
 
 public class UserStateResolution {
 
@@ -23,28 +24,28 @@ public class UserStateResolution {
         }
     }
 
-    private static String userState(DataClasses.Accounts accounts, Log logger){
-        String state;
+    private static BootstrapResponse.UserState userState(DataClasses.Accounts accounts, Log logger){
+        BootstrapResponse.UserState state;
 
-        if (accounts == null) state = "USER_AUTH_REQUIRED";
+        if (accounts == null) state = BootstrapResponse.UserState.USER_AUTH_REQUIRED;
         
-        else if (!accounts.login_status) state = "USER_AUTH_REQUIRED";
+        else if (!accounts.login_status) state = BootstrapResponse.UserState.USER_AUTH_REQUIRED;
 
         else if (
             accounts.user_id == 0
             || (accounts.user_name == null || accounts.user_name.isEmpty())
             || (accounts.email == null || accounts.email.isEmpty())
             || (accounts.auth_token == null || accounts.auth_token.isEmpty())
-        ) state = "USER_AUTH_REQUIRED";
+        ) state = BootstrapResponse.UserState.USER_AUTH_REQUIRED;
 
-        else state = "USER_LOGGED_IN";
+        else state = BootstrapResponse.UserState.USER_LOGGED_IN;
 
         logger.info("bootstrap", "User state resolved to: " + state);
 
         return state;
     }
 
-    public static String resolve(Log logger)
+    public static BootstrapResponse.UserState resolve(Log logger)
     throws IllegalAccessException, NoSuchFieldException{
         logger.info("bootstrap", "User state resolution started");
 
@@ -52,7 +53,7 @@ public class UserStateResolution {
             // File deleted or couldn't write file uring initial bootstrap phases
             logger.info("bootstrap", "Failed to find Accounts.json file");
 
-            return "USER_AUTH_REQUIRED";
+            return BootstrapResponse.UserState.USER_AUTH_REQUIRED;
         }
 
         return userState(valid(logger), logger);
