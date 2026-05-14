@@ -4,6 +4,8 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import utils.SystemUtils;
 
 // Maintains blue print of file structures mapped to java classes
@@ -43,6 +45,7 @@ public class DataClasses{
 
         public boolean login_status;
 
+        @JsonIgnore
         public String getPath(){ return path; }
 
         // When data is sent
@@ -80,6 +83,7 @@ public class DataClasses{
             workspace_name,
             device_status;
 
+        @JsonIgnore
         public String getPath(){ return path; }
 
         // When data is sent
@@ -110,7 +114,10 @@ public class DataClasses{
             "application", "Configs.json"
         ).toString();
 
+        @JsonIgnore
         public String getPath(){ return path; }
+
+        public String temp_field;
     }
 
     // Template for ModulePaths.json
@@ -133,6 +140,7 @@ public class DataClasses{
             client,
             mesh;
 
+        @JsonIgnore
         public String getPath(){ return path; }
 
         // When data is sent
@@ -171,7 +179,10 @@ public class DataClasses{
             "application", "Data.json"
         ).toString();
 
+        @JsonIgnore
         public String getPath(){ return path; }
+
+        public String temp_field;
     }
 
     // Template for plugin internal strucutre
@@ -190,6 +201,7 @@ public class DataClasses{
             "plugins", "Plugin.json"
         ).toString();
 
+        @JsonIgnore
         public String getPath(){ return path; }
 
         public Map<String, Plugin> plugins = new HashMap<>(); // plugin name -> Plugin

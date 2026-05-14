@@ -9,20 +9,6 @@ import (
 	"time"
 )
 
-type AppMetadata struct {
-	LatestVersion           string `json:"latest_version"`
-	MinimumSupportedVersion string `json:"minimum_supported_version"`
-	ReleaseDate             string `json:"release_date"`
-	CriticalUpdate          bool   `json:"critical_update"`
-}
-
-type VersionMetadata struct {
-	App       AppMetadata       `json:"app"`
-	Modules   map[string]string `json:"modules"`
-	Changes   []string          `json:"changes"`
-	FetchedAt time.Time
-}
-
 func FetchMetadata() (*VersionMetadata, error) {
 	url := os.Getenv("VERSION_DATA_URL")
 

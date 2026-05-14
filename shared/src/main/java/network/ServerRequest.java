@@ -23,7 +23,7 @@ public class ServerRequest {
 
         HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
         
-        return res.toString();
+        return res.body().toString();
     }
 
     public static String get(String api, String headers[])

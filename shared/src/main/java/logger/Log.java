@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -12,6 +13,13 @@ import utils.SystemUtils;
 
 public class Log{
     public HashMap<String, ArrayList<String>> logs;
+
+    public static String formatTimestamp() {
+        LocalDateTime time = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+
+        return time.format(formatter) + "." + String.format("%09d", time.getNano());
+    }
 
     private static String levelToFile(String level){
         switch (level.toLowerCase()) {
@@ -33,44 +41,44 @@ public class Log{
     }
 
     public void error(String module, String message){
-        LocalDateTime time = LocalDateTime.now();
+        String time = formatTimestamp();
 
         String line = String.format(
             "[ %s ] [ ERROR ] [ %s ] %s", 
-            time.toString(), module, message
+            time, module, message
         );
 
         this.logs.get(levelToFile("error")).add(line);
     }
 
     public void info(String module, String message){
-        LocalDateTime time = LocalDateTime.now();
+        String time = formatTimestamp();
 
         String line = String.format(
             "[ %s ] [ INFO ] [ %s ] %s", 
-            time.toString(), module, message
+            time, module, message
         );
 
         this.logs.get(levelToFile("info")).add(line);
     }
 
     public void warn(String module, String message){
-        LocalDateTime time = LocalDateTime.now();
+        String time = formatTimestamp();
 
         String line = String.format(
             "[ %s ] [ WARN ] [ %s ] %s", 
-            time.toString(), module, message
+            time, module, message
         );
 
         this.logs.get(levelToFile("warn")).add(line);
     }
 
     public void network(String module, String message){
-        LocalDateTime time = LocalDateTime.now();
+        String time = formatTimestamp();
 
         String line = String.format(
             "[ %s ] [ NETWORK ] [ %s ] %s", 
-            time.toString(), module, message
+            time, module, message
         );
 
         this.logs.get(levelToFile("network")).add(line);

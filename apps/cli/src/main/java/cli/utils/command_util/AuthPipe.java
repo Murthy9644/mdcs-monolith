@@ -46,11 +46,11 @@ public class AuthPipe {
     }
 
     public void start(){
-        this.io.info("Authentication required to continue.\n");
+        this.io.info("Authentication required to continue\n");
         this.io.print("\nSelect:\n");
         this.io.print("1. Signup (If new to MDCS)\n");
         this.io.print("2. Signin (If already have an account)\n");
-        this.io.print("3. exit\n");
+        this.io.print("3. Exit\n");
         
         while (true){
             try{

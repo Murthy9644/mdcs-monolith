@@ -15,7 +15,9 @@ public class BootstrapTerminal {
     private boolean updateHandler() {
 
         // Critical update
-        if (res.status == Status.CRITICAL_UPDATE) {
+        if (res.update_info != null
+                &&
+                res.update_info.status == Status.CRITICAL_UPDATE) {
             io.critical("Update required to continue to the application\n");
 
             io.muted("Current version: ");
@@ -26,9 +28,10 @@ public class BootstrapTerminal {
             io.print("\nChanges:\n");
 
             for (String s : res.update_info.changes)
-                io.print("\t- " + s + "\n");
+                io.print("- " + s + "\n");
 
-            io.info(res.message);
+            io.print("\n");
+            io.info(res.update_info.message + "\n");
 
             io.print("Do you want to continue downloading the updates? (y/n) ");
             String choice = io.ask();
@@ -37,14 +40,14 @@ public class BootstrapTerminal {
             if (choice.equalsIgnoreCase("y")) {
                 this.io.info("Updated successfully. Re-launching the application.");
                 System.exit(0);
-            } 
-            
-            else 
+            }
+
+            else
                 return false;
         }
 
         // Normal updates
-        if (res.update_info != null) {
+        if (res.update_info.status != null) {
 
             if (res.update_info.app_update_avail) {
 
@@ -58,12 +61,11 @@ public class BootstrapTerminal {
                 io.muted("Available version: ");
                 io.print(res.update_info.app_avail_ver + "\n");
 
-            } 
-            
-            boolean plugin_updates_exist = 
-                res.update_info.plugin_ver != null 
-                && !res.update_info.plugin_ver.isEmpty();
-            
+            }
+
+            boolean plugin_updates_exist = res.update_info.plugin_ver != null
+                    && !res.update_info.plugin_ver.isEmpty();
+
             if (plugin_updates_exist) {
                 io.info("These plugin(s) can be updated:\n");
 
@@ -96,74 +98,79 @@ public class BootstrapTerminal {
         return true;
     }
 
-    public boolean appStatusCheck() {
+    private boolean appStatusCheck() {
 
-        switch (res.status) {
-            case Status.CHECK:
-                break;
+        for (BootstrapIssue issue : res.reports) {
+            io.info("Report: " + issue.phase + "\n");
 
-            case Status.CRITICAL_UPDATE:
-                break;
+            switch (issue.status) {
+                case Status.CHECK:
+                    break;
 
-            case Status.INVALID_UPDATE_RESPONSE:
-                this.io.warn("Failed to validate update response\n");
+                case Status.CRITICAL_UPDATE:
+                    break;
 
-            case Status.INVALID_VERSION_FORMAT:
-                this.io.critical("Invalid version format: " + res.body.get(0) + "\n");
-                this.io.print("Expected format: MAJOR.MINOR.PATCH (eg., 1.2.3)\n");
+                case Status.INVALID_UPDATE_RESPONSE:
+                    this.io.warn("Update check failed: Parsing issue\n");
+                    
+                    break;
 
-                break;
+                case Status.INVALID_VERSION_FORMAT:
+                    this.io.critical("Invalid version format: " + issue.issues.get(0) + "\n");
+                    this.io.info("Expected format: MAJOR.MINOR.PATCH (eg., 1.2.3)\n");
 
-            case Status.UPDATE_CHECK_FAILED:
-                this.io.error("Failed to check for updates\n");
+                    break;
 
-                break;
+                case Status.UPDATE_CHECK_FAILED:
+                    this.io.error("Update check failed: Network issue\n");
 
-            case Status.INVALID_FILE_SCHEMA:
-                this.io.error("Invalid data values for:\n\n");
+                    break;
 
-                for (String s : res.body)
-                    this.io.print(s + "\n");
+                case Status.INVALID_FILE_SCHEMA:
+                    this.io.error("Invalid data values for:\n");
 
-                this.io.print("\n");
+                    for (String s : issue.issues)
+                        this.io.print(s + "\n");
 
-                break;
+                    this.io.print("\n");
 
-            case Status.FILE_WRITE_FAILURE:
-                this.io.critical("Failed to write to the file: ");
-                this.io.print(res.body.get(0) + "\n");
+                    break;
 
-                break;
+                case Status.FILE_WRITE_FAILURE:
+                    this.io.critical("Failed to write to the file: ");
+                    this.io.print(issue.issues.get(0) + "\n");
 
-            case Status.INVALID_FILE_FORMAT:
-                String ack = "Failed to parse file: " + res.body.get(0) + "\n";
+                    break;
 
-                if (res.app_state == AppState.TERMINATE)
-                    this.io.critical(ack);
-                else
-                    this.io.error(ack);
+                case Status.INVALID_FILE_FORMAT:
 
-                break;
+                    for (String s : issue.issues){
+                        String ack = "Failed to parse file: " + s + "\n";
+
+                        if (res.app_state == AppState.TERMINATE)
+                            this.io.critical(ack);
+                        else
+                            this.io.error(ack);
+                    }
+
+                    break;
+            }
+
+            if (res.app_state == AppState.TERMINATE) {
+                this.io.critical(issue.message + "\n");
+                return false;
+            }
+
+            this.io.info(issue.message + "\n");
         }
-
-        if (res.app_state == AppState.TERMINATE){
-            this.io.critical(res.message + "\n");
-            return false;
-        }
-
-        this.io.info(res.message + "\n");
 
         return true;
     }
 
-    public void userState(){
-        if (
-            res.user_state == UserState.USER_AUTH_REQUIRED
-            || (
-                res.user_state == UserState.USER_LOGGED_IN
-                && !AuthPipe.verifyAuthToken()
-            )
-        ){
+    private void userState() {
+        if (res.user_state == UserState.USER_AUTH_REQUIRED
+                || (res.user_state == UserState.USER_LOGGED_IN
+                        && !AuthPipe.verifyAuthToken())) {
             AuthPipe pipe = new AuthPipe(io);
             pipe.start();
         }
@@ -182,10 +189,10 @@ public class BootstrapTerminal {
             return false;
         }
 
-        if (this.updateHandler() && this.appStatusCheck()){
+        if (this.updateHandler() && this.appStatusCheck())
             this.userState();
-            return true;
-        }
+
+        this.io.info(res.summary);
 
         return false;
     }

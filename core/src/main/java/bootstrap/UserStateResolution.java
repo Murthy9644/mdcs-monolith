@@ -52,6 +52,7 @@ public class UserStateResolution {
         if (!FileIO.exists(DataClasses.Accounts.class)){
             // File deleted or couldn't write file uring initial bootstrap phases
             logger.info("bootstrap", "Failed to find Accounts.json file");
+            logger.info("bootstrap", "User state resolved to: USER_AUTH_REQUIRED");
 
             return BootstrapResponse.UserState.USER_AUTH_REQUIRED;
         }

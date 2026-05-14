@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import file_io.DataClasses;
 import file_io.FileIO;
 import logger.Log;
-import response_classes.BootstrapResponse;
+import response_classes.BootstrapResponse.*;
 
 public class SchemaValidation {
     private static Log logger;
@@ -24,13 +24,16 @@ public class SchemaValidation {
     }
 
     public static boolean checkSchema(
-        HashMap<Class<? extends DataClasses.HasPath>,
-        List<DataClasses.FieldRules>> schema_design,
-        BootstrapResponse.GeneralResponse bsres
+        HashMap<Class<? extends DataClasses.HasPath>, List<DataClasses.FieldRules>> schema_design,
+        GeneralResponse bsres
     )
     throws Exception{
         boolean schema_validity = true;
         logger.info("bootstrap", "Checking file schemas and format");
+        
+        BootstrapIssue issue = new BootstrapIssue();
+        issue.phase = "Schema Validation";
+        issue.status = null;
 
         for (Class<? extends DataClasses.HasPath> data_class : schema_design.keySet()){
             boolean invalid_schema = false;
@@ -71,7 +74,7 @@ public class SchemaValidation {
                 }
             } catch (IOException e){ // Format is invalid (couldn't load file)
                 logger.error("bootstrap", "Invalid file format: " + data_class.getSimpleName());
-                bsres.body.add(data_class.getSimpleName());
+                issue.issues.add("Invalid file format: " + data_class.getSimpleName());
 
                 // Attempt backup (will be added later)
 
@@ -82,15 +85,15 @@ public class SchemaValidation {
                     try{
                         FileIO.createAndWrite(data_class);
 
-                        bsres.app_state = BootstrapResponse.AppState.CONTINUE;
-                        bsres.status = BootstrapResponse.Status.INVALID_FILE_FORMAT;
-                        bsres.message = "Default file created";
+                        bsres.setAppState(AppState.CONTINUE);
+                        issue.status = Status.INVALID_FILE_FORMAT;
+                        issue.message = "Default file created";
 
                         logger.info("bootstrap", "Created default file: " + data_class.getSimpleName());
                     } catch (Exception e1){
-                        bsres.app_state = BootstrapResponse.AppState.TERMINATE;
-                        bsres.status = BootstrapResponse.Status.INVALID_FILE_FORMAT;
-                        bsres.message = "Application startup aborted after recovery attempt failed";
+                        bsres.setAppState(AppState.TERMINATE);
+                        issue.status = Status.INVALID_FILE_FORMAT;
+                        issue.message = "Application startup aborted after recovery attempt failed";
 
                         logger.error("bootstrap", "Failed to create file: " + data_class.getSimpleName());
 
@@ -99,9 +102,9 @@ public class SchemaValidation {
                 } else{
                     logger.info("bootstrap", "Backup file restored: " + data_class.getSimpleName());
 
-                    bsres.app_state = BootstrapResponse.AppState.CONTINUE;
-                    bsres.status = BootstrapResponse.Status.INVALID_FILE_FORMAT;
-                    bsres.message = "Backup file restored";
+                    bsres.setAppState(AppState.CONTINUE);
+                    issue.status = Status.INVALID_FILE_FORMAT;
+                    issue.message = "Backup file restored";
                 }
 
                 schema_validity = false; // Acknowledge failure
@@ -111,20 +114,20 @@ public class SchemaValidation {
             if (invalid_schema){
                 logger.error("bootstrap", "Invalid file schema: " + data_class.getSimpleName());
 
-                bsres.app_state = BootstrapResponse.AppState.CONTINUE;
-                bsres.status = BootstrapResponse.Status.INVALID_FILE_SCHEMA;
-                bsres.body.add(data_class.getSimpleName());
-                bsres.message = "Defaulting invalid data";
+                bsres.setAppState(AppState.CONTINUE);
+                issue.status = Status.INVALID_FILE_SCHEMA;
+                issue.issues.add("Invalid file schema: " + data_class.getSimpleName());
 
                 try{
                     FileIO.writeJsonNode(data_class, node);
+                    issue.message = "Defaulted invalid data";
 
                     logger.info("bootstrap", "Defaulted invalid data: " + data_class.getSimpleName());
                 } catch (Exception e) {
-                    bsres.app_state = BootstrapResponse.AppState.TERMINATE;
-                    bsres.status = BootstrapResponse.Status.FILE_WRITE_FAILURE;
-                    bsres.body.add(data_class.getSimpleName());
-                    bsres.message = "Application startup aborted";
+                    bsres.setAppState(AppState.TERMINATE);
+                    issue.status = Status.FILE_WRITE_FAILURE;
+                    issue.issues.add(data_class.getSimpleName());
+                    issue.message = "Application startup aborted";
 
                     logger.error("bootstrap", "Failed to write file: " + data_class.getSimpleName());
                 }
@@ -133,12 +136,13 @@ public class SchemaValidation {
             }
         }
 
+        if (issue.status != null) bsres.reports.add(issue);
         logger.info("bootstrap", "Schemas and format validation passed");
 
         return schema_validity;
     }
     
-    public static boolean validate(BootstrapResponse.GeneralResponse bsres, Log logger_inc)
+    public static boolean validate(GeneralResponse bsres, Log logger_inc)
     throws Exception{
         logger = logger_inc;
         HashMap<Class<? extends DataClasses.HasPath>, List<DataClasses.FieldRules>> schema_design = new HashMap<>();

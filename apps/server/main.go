@@ -19,6 +19,6 @@ func main() {
 
 	// Stripping /mdcs (base of url)
 	mux_final := http.StripPrefix("/mdcs", mux)
-	fmt.Print("Server listening at :1097")
+	fmt.Println("Server listening at :1097")
 	http.ListenAndServe("0.0.0.0:1097", mux_final)
 }

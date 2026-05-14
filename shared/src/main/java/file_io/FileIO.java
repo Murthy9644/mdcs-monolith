@@ -113,5 +113,6 @@ public class FileIO{
         new File(app_dir, "entities").mkdirs();
         new File(app_dir, "application").mkdirs();
         new File(app_dir, "logs").mkdirs();
+        new File(app_dir, "plugins").mkdir();
     }
 }

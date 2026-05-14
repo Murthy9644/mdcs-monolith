@@ -3,32 +3,37 @@ package bootstrap;
 import java.util.Properties;
 
 import logger.Log;
-import response_classes.BootstrapResponse;
+import response_classes.BootstrapResponse.*;
 
 public class BootstrapHandler{
-    private static Properties VERSIONS;
+    private static Properties APP, VERSIONS;
     
-    public static BootstrapResponse.GeneralResponse run(Properties APP_inc, Properties VERSIONS_inc)
+    public static GeneralResponse run(Properties APP_inc, Properties VERSIONS_inc)
     throws Exception{
         VERSIONS = VERSIONS_inc;
-        BootstrapResponse.GeneralResponse bsres = new BootstrapResponse.GeneralResponse();
+        APP = APP_inc;
+        GeneralResponse bsres = new GeneralResponse();
 
         Log logger = new Log();
         logger.info("bootstrap", "Starting application bootstrap");
-        
-        if (
-            SchemaValidation.validate(bsres, logger)
-            && VersionCheck.validate(VERSIONS, bsres, logger)
-        ){
-            bsres.app_state = BootstrapResponse.AppState.CONTINUE;
-            bsres.status = BootstrapResponse.Status.CHECK;
-            bsres.body = null;
-            bsres.message = "Application bootstrap completed";
-        }
-        
-        bsres.user_state = UserStateResolution.resolve(logger);
 
-        logger.info("bootstrap", "Bootstrap completed successfully");
+        boolean test = SchemaValidation.validate(bsres, logger);
+
+        if (bsres.app_state != AppState.TERMINATE)
+            test = VersionCheck.validate(APP, VERSIONS, bsres, logger) && test;
+        
+        if (bsres.app_state != AppState.TERMINATE)
+            bsres.user_state = UserStateResolution.resolve(logger);
+        
+        if (test){
+            bsres.setAppState(AppState.CONTINUE);
+            bsres.summary = "Application bootstrap completed";
+            logger.info("bootstrap", "Bootstrap completed successfully");
+        } else{
+            bsres.summary = "Bootstrap reported with anomalies";
+            logger.info("bootstrap", "Bootstrap completed with anomalies");
+        }
+
         logger.flush();
 
         return bsres;
