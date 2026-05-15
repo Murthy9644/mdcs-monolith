@@ -36,7 +36,8 @@ public class BootstrapResponse {
     public static enum UpdateType {
         CRITICAL,
         OPTIONAL,
-        PATCH
+        PATCH,
+        PLUGIN
     }
 
     // Generic bootstrap issue/report
@@ -75,7 +76,6 @@ public class BootstrapResponse {
 
     // Helper class - To hold update related info
     public static class UpdateInfo {
-        public Status status;
         public String message;
 
         // App updates
@@ -92,7 +92,6 @@ public class BootstrapResponse {
         @Override
         public String toString() {
             return "UpdateInfo{" +
-                    "\n    status=" + status +
                     ",\n    message='" + message + '\'' +
                     ",\n    app_update_avail=" + app_update_avail +
                     ",\n    update_type=" + update_type +

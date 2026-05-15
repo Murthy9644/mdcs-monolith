@@ -17,7 +17,7 @@ public class BootstrapTerminal {
         // Critical update
         if (res.update_info != null
                 &&
-                res.update_info.status == Status.CRITICAL_UPDATE) {
+                res.update_info.update_type == UpdateType.CRITICAL) {
             io.critical("Update required to continue to the application\n");
 
             io.muted("Current version: ");
@@ -47,7 +47,7 @@ public class BootstrapTerminal {
         }
 
         // Normal updates
-        if (res.update_info.status != null) {
+        if (res.update_info.update_type != null) {
 
             if (res.update_info.app_update_avail) {
 

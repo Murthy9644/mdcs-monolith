@@ -13,7 +13,7 @@ public class ServerResponseClasses {
     }
 
     // Helper for update-check response class
-    public class Plugin {
+    public static class Plugin {
         public String installed_version;
         public String available_version;
         public boolean is_compatible;

@@ -122,7 +122,7 @@ Stores the available plugins and their path, version
 ```json
 {
     "plugins": {
-            "plugin-name": {
+        "plugin-name": {
             "path": "...",
             "installed_version": "..."
         }

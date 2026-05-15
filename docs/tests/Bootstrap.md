@@ -166,10 +166,10 @@ Expected:
 
 Test:
 ```
-Current	Compare	Expected
-2.0.0	1.9.9	NOT lower
-1.10.0	1.2.0	NOT lower
-1.0.9	1.0.10	lower
+Current Compare	  Expected
+2.0.0   1.9.9	    NOT lower
+1.10.0	1.2.0	    NOT lower
+1.0.9	  1.0.10	  lower
 ```
 
 ---

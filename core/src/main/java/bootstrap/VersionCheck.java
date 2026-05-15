@@ -49,7 +49,7 @@ public class VersionCheck {
         logger.network("bootstrap", "Checking for updates");
         BootstrapIssue issue = new BootstrapIssue();
         issue.phase = "Version Validation";
-        bsres.update_info.status = null;
+        bsres.update_info.update_type = null;
 
         try {
             // Read plugins metadata
@@ -92,9 +92,7 @@ public class VersionCheck {
             if (res.app.critical_update){
                 bsres.setAppState(AppState.BLOCK);
 
-                bsres.update_info.status = Status.CRITICAL_UPDATE;
                 bsres.update_info.message = "Application startup blocked";
-
                 bsres.update_info.app_update_avail = true;
                 bsres.update_info.update_type = UpdateType.CRITICAL;
                 bsres.update_info.app_avail_ver = res.app.available_version;
@@ -160,6 +158,7 @@ public class VersionCheck {
                         bsres.update_info.plugin_ver = new HashMap<>();
 
                     bsres.update_info.plugin_ver.put(plugin_name, info);
+                    bsres.update_info.update_type = UpdateType.PLUGIN;
 
                     logger.network("bootstrap", "New update found: " + plugin_name + " (" + plugin.available_version + ")");
 
@@ -181,6 +180,7 @@ public class VersionCheck {
             issue.message = "Version validated successfully";
 
         } catch (JsonProcessingException e) {
+            e.printStackTrace();
             bsres.setAppState(AppState.CONTINUE);
             issue.status = Status.INVALID_UPDATE_RESPONSE;
             issue.issues = null;
