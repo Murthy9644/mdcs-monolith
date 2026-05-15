@@ -25,14 +25,13 @@ Keeps selected folders synchronized across multiple devices with automatic updat
 
 ## Functional Decomposition
 ### Internal Modules (Dependencies):
-- bootstrap &rarr; Manage app launch protocols (file system check, update check, version check etc)
 - user_auth &rarr; Control user sign(in/up)
 - device_auth &rarr; Control device registration/login
 - device_mesh &rarr; Find/ping devices over the network
-- command_router &rarr; Sanitize commands & map to respective services within the device
-- logger &rarr; Generate logs
-- host &rarr; User level local server that constantly listens for commands from other devices
-- client &rarr; To send commands to other devices
+- command_exec &rarr; Execute user commands & map to respective services
+- logging &rarr; Generate logs
+- local_server &rarr; User level local server to communicate with other devices
+- client &rarr; Separate command listener that constantly listens for commands from other servers
 
 ### Feature Modules (Micro-services):
 - clipboard &rarr; Maintain common clipboard across devices
@@ -41,6 +40,36 @@ Keeps selected folders synchronized across multiple devices with automatic updat
 - protocols &rarr; Turn on/off the protocols across devices
 - application_access &rarr; Access the applications on device(s) from other device(s)
 - scheduler &rarr; Schedule or sequentialize applications over devices
+
+## Folder Structure
+`Changes are possible as the project evolves`
+```
+mdcs-monolith/
+    apps/
+        cli/
+        server/
+        gui/
+    core/
+        user_auth/
+        device_auth/
+        device_mesh/
+        command_exec/
+        local_server/
+        client/
+    assets/
+    services/
+        clipboard/
+        file_share/
+        folder_sync/
+        protocols/
+        application_access/
+        scheduler/
+    shared/
+        logger/
+        utils/
+        configs/
+        network/
+```
 
 ## Architecture Overview
 Follows Two-Layered architecture
@@ -65,7 +94,7 @@ Target Device
 ```
 
 ### Communication Model
-- Core → Services  
+- CLI → Services  
   - Process execution / IPC (initially)
 
 - Service ↔ Service (same device)  
@@ -130,9 +159,6 @@ Will be updated as needed as project evolves
 - Other micro-services
 
 ## Documentation
-- [Folder Strucutre](/docs/architecture/folder-structure.md)
-- [Application Data Store](/docs/architecture/state-store_files.md)
-- [Auth System Design](/docs/system_design/auth-system.md)
-- [Build Commands](/docs/build-commands.md)
+- [Auth System Design](/docs/auth-system.md)
 
 ---
