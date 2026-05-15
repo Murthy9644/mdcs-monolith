@@ -1,0 +1,24 @@
+{
+    "app": {
+        "latest_version": "1.0.0",
+        "minimum_supported_version": "1.0.0",
+        "release_date": "..."
+    },
+
+    "plugins": {
+        "clipboard": {
+            "available_version": "1.0.0",
+            "minimum_supported_version": "1.0.0",
+            "release_date": "...",
+
+            "compatible_app_versions": {
+                "min": "1.0.0",
+                "max": "1.0.0"
+            }
+        }
+    },
+
+    "changes": [
+        "Initial release"
+    ]
+}

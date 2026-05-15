@@ -1,1 +1,5 @@
 secrets.json
+.vscode/
+target/
+.env
+bin/

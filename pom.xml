@@ -1,0 +1,32 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.mdcs</groupId>
+    <artifactId>mdcs-monolith</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>shared</module>
+        <module>core</module>
+        <module>apps/cli</module>
+        <module>apps/gui</module>
+    </modules>
+
+    <properties>
+        <maven.compiler.release>24</maven.compiler.release>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <release>24</release>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
