@@ -5,17 +5,25 @@ mdcs-monolith/
     apps/
         cli/
             pom.xml
-            src/main/java/cli/
-                cli_utils/
-                    CLIHandler.java
-                    Colors.java
-                    IO.java
-                Main.java # (Console app entry point)
-                App.java
-        gui/
-            pom.xml
-            src/main/java/gui/
-                Main.java # (GUI app entry point)
+            src/main/
+                java/cli/
+                    helpers/
+                        BootstrapTerminal.java
+                    utils/
+                        command_utils/
+                            AuthPipe.java
+                            Interface.java
+                        tools/
+                            Colors.java
+                            ConfigLoader.java
+                            ConsoleIO.java
+                        CLIHandler.java
+                    Main.java # (Console app entry point)
+                    App.java
+                resources/
+                    application.properties
+                    versions.properties
+                    
         server/
             api/
                 auth/
@@ -26,46 +34,71 @@ mdcs-monolith/
                     error.go
                     request.go
                     response.go
-                router.go
-            configs/
-                configs.go
-            core/
-                auth/
+                    tools.go
+                version/
+                    controller.go
+                    models.go
+                    routes.go
                     services.go
-                    validation.go
-            storage/
-                db.go
+                router.go
+            core/
+                bootstrap/
+                    BootstrapHandler.go
+                    LoadEnv.go
+                    Models.go
+                    VersionMetadata.go
+            # .env
             go.mod
+            go.sum
             main.go
 
     core/
         src/main/java/
+            bootstrap/
+                BootstrapHandler.java
+                SchemaValidation.java
+                UserStateResolution.java
+                VersionCheck.java
             user_auth/
                 UserAuth.java
             device_auth/
                 DeviceAuth.java
         pom.xml
-
-    services/
-        clipboard/
-        file_share/
-        folder_sync/
-        protocols/
-        application_access/
-        scheduler/
-        host/
-        client/
-        mesh/
         
     shared/
         src/main/java/
-            logger/
             file_io/
+                DataClasses.java
+                FileIO.java
+            logger/
+                Log.java
             utils/
-            configs/
+                SystemUtils.java
+            response_classes/
+                BootstrapResponse.java
+                ServerResponseClasses.java
             network/
+                ServerRequest.java
         pom.xml
+        
+    docs/
+        architecture/
+            folder-structure.md
+            state-store_files.md
+        system_design/
+            app-bootstrap.md
+            auth-system.md
+        tests/
+            Bootstrap.md
+        build-commands.md
 
     assets/
+        images/
+            user_level_viz.png
+
+    .gitignore
+    build.py
+    pom.xml
+    README.md
 ```
 ---

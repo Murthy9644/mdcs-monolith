@@ -31,10 +31,11 @@ Based on Accounts.json:
 - Invalid/corrupted &rarr; Logged out
 
 Also:
-- Validate `auth_token` (expiry / server check)
+- Validate `auth_token`
     - Else mark as corrupted
 
 ### Phase 5: Configuration Initialization
+> Will b done added for `GUI`
 - If Configs.json missing:
     - Create with defaults
 - If present:
@@ -42,6 +43,7 @@ Also:
     - Apply defaults for missing fields
 
 ### Phase 6: Device Context Setup
+> Will be added after User & Device auth
 - Load device.json
 - Validate workspace/device binding
 - If mismatch:

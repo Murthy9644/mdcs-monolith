@@ -27,8 +27,12 @@ public class SystemUtils {
                 break;
 
             case "LINUX":
-                if ((appdata_path = Paths.get(System.getenv("XDG_CONFIG_HOME")).toString()) == null)
-                    appdata_path = Paths.get(System.getProperty("user.home"), ".config").toString();
+                String home_path = System.getenv("XDG_CONFIG_HOME");
+                String base = (home_path != null && !home_path.isEmpty)
+                    ? home_path
+                    : System.getProperty("user.home") + "./config";
+
+                appdata_path = Paths.get(base).toString();
 
                 break;
 
