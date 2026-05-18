@@ -5,7 +5,7 @@ import java.io.IOException;
 import file_io.DataClasses;
 import file_io.FileIO;
 import logger.Log;
-import response_classes.BootstrapResponse;
+import models.bootstrap.BootstrapResponse;
 
 public class UserStateResolution {
 

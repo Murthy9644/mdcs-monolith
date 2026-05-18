@@ -3,15 +3,13 @@ package bootstrap;
 import java.util.Properties;
 
 import logger.Log;
-import response_classes.BootstrapResponse.*;
+import models.bootstrap.BootstrapResponse.*;
+import network.ServerRequest;
 
 public class BootstrapHandler{
-    private static Properties APP, VERSIONS;
     
-    public static GeneralResponse run(Properties APP_inc, Properties VERSIONS_inc)
+    public static GeneralResponse run(ServerRequest server, Properties VERSIONS)
     throws Exception{
-        VERSIONS = VERSIONS_inc;
-        APP = APP_inc;
         GeneralResponse bsres = new GeneralResponse();
 
         Log logger = new Log();
@@ -20,7 +18,7 @@ public class BootstrapHandler{
         boolean test = SchemaValidation.validate(bsres, logger);
 
         if (bsres.app_state != AppState.TERMINATE)
-            test = VersionCheck.validate(APP, VERSIONS, bsres, logger) && test;
+            test = VersionCheck.validate(server, VERSIONS, bsres, logger) && test;
         
         if (bsres.app_state != AppState.TERMINATE)
             bsres.user_state = UserStateResolution.resolve(logger);

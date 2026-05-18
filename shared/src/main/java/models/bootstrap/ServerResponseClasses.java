@@ -1,4 +1,4 @@
-package response_classes;
+package models.bootstrap;
 
 import java.util.List;
 import java.util.Map;

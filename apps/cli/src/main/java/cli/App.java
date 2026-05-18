@@ -7,9 +7,11 @@ import cli.helpers.BootstrapTerminal;
 import cli.utils.command_util.Interface;
 import cli.utils.tools.ConfigLoader;
 import cli.utils.tools.ConsoleIO;
+import network.ServerRequest;
 
 public class App {
     private ConsoleIO io;
+    private ServerRequest server;
     private Properties APP, VERSIONS;
 
     public void start() {
@@ -17,7 +19,7 @@ public class App {
         header_string += " V" + this.VERSIONS.getProperty("app.version") + "\n";
         this.io.heading(header_string);
         
-        if (!(new BootstrapTerminal(this.APP, this.VERSIONS).initiate()))
+        if (!(new BootstrapTerminal(this.server, this.VERSIONS).initiate()))
             return;
         
         new Interface(this.io, this.APP, this.VERSIONS).begin();
@@ -25,6 +27,7 @@ public class App {
 
     public App(){
         this.io = new ConsoleIO();
+        this.server = new ServerRequest(APP);
 
         try{
             this.APP = new ConfigLoader("application.properties").property;

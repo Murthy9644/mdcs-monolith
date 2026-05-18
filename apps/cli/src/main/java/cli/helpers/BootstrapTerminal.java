@@ -5,10 +5,12 @@ import java.util.Properties;
 import bootstrap.BootstrapHandler;
 import cli.utils.command_util.AuthPipe;
 import cli.utils.tools.ConsoleIO;
-import response_classes.BootstrapResponse.*;
+import models.bootstrap.BootstrapResponse.*;
+import network.ServerRequest;
 
 public class BootstrapTerminal {
-    private Properties APP, VERSIONS;
+    private Properties VERSIONS;
+    private ServerRequest server;
     private GeneralResponse res;
     private ConsoleIO io;
 
@@ -171,7 +173,7 @@ public class BootstrapTerminal {
         if (res.user_state == UserState.USER_AUTH_REQUIRED
                 || (res.user_state == UserState.USER_LOGGED_IN
                         && !AuthPipe.verifyAuthToken())) {
-            AuthPipe pipe = new AuthPipe(io);
+            AuthPipe pipe = new AuthPipe(io, server);
             pipe.start();
         }
     }
@@ -181,7 +183,7 @@ public class BootstrapTerminal {
 
         // Initialize bootstrap
         try {
-            this.res = BootstrapHandler.run(APP, VERSIONS);
+            this.res = BootstrapHandler.run(this.server, VERSIONS);
         }
 
         catch (Exception e) {
@@ -197,8 +199,8 @@ public class BootstrapTerminal {
         return false;
     }
 
-    public BootstrapTerminal(Properties APP, Properties VERSIONS) {
-        this.APP = APP;
+    public BootstrapTerminal(ServerRequest server, Properties VERSIONS) {
+        this.server = server;
         this.VERSIONS = VERSIONS;
         this.io = new ConsoleIO();
     }

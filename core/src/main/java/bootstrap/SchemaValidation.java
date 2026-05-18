@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import file_io.DataClasses;
 import file_io.FileIO;
 import logger.Log;
-import response_classes.BootstrapResponse.*;
+import models.bootstrap.BootstrapResponse.*;
 
 public class SchemaValidation {
     private static Log logger;

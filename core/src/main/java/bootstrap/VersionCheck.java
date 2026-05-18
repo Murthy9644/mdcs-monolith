@@ -10,12 +10,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import file_io.DataClasses;
 import file_io.FileIO;
 import logger.Log;
-import response_classes.BootstrapResponse.*;
-import response_classes.ServerResponseClasses;
+import models.bootstrap.ServerResponseClasses;
+import models.bootstrap.BootstrapResponse.*;
 import network.ServerRequest;
 
 public class VersionCheck {
-    private static Properties APP, VERSIONS;
+    private static ServerRequest server;
+    private static Properties VERSIONS;
     private static Log logger;
 
     private static boolean versionFormat(GeneralResponse bsres) {
@@ -80,8 +81,8 @@ public class VersionCheck {
             String json_body = FileIO.toJson(body);
 
             // Sending request to server
-            String response = ServerRequest.post(
-                "http://" + APP.getProperty("server.host") + ":" + APP.getProperty("server.port") + "/mdcs/version/check",
+            String response = server.post(
+                "/version/check",
                 new String[] { "Content-Type", "application/json" },
                 json_body
             );
@@ -219,11 +220,11 @@ public class VersionCheck {
     }
 
     public static boolean validate(
-            Properties a_inc,
+            ServerRequest server_inc,
             Properties v_inc,
             GeneralResponse bsres,
             Log logger_inc) throws Exception {
-        APP = a_inc;
+        server = server_inc;
         VERSIONS = v_inc;
         logger = logger_inc;
 
