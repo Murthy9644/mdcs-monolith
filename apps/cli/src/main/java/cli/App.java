@@ -3,8 +3,8 @@ package cli;
 import java.io.IOException;
 import java.util.Properties;
 
-import cli.helpers.BootstrapTerminal;
-import cli.utils.command_util.Interface;
+import cli.interaction.base.Interface;
+import cli.interaction.bootstrap.BootstrapTerminal;
 import cli.utils.tools.ConfigLoader;
 import cli.utils.tools.ConsoleIO;
 import network.ServerRequest;

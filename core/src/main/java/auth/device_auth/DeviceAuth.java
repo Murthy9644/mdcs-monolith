@@ -1,6 +1,5 @@
-package device_auth;
+package auth.device_auth;
 
 public class DeviceAuth {
-    
     //
 }

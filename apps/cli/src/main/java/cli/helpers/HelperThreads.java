@@ -48,8 +48,8 @@ public class HelperThreads {
 
                     this.mapLevel(args[0], args[1]);
                 } catch (InterruptedException e) {
-                    // Exit thread
-                    return;
+                    // Eat 6-star, exit the loop!
+                    break;
                 }
             }
         }

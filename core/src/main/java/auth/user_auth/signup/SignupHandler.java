@@ -1,25 +1,28 @@
-package user_auth.signup;
+package auth.user_auth.signup;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 
 import file_io.FileIO;
-import models.user_auth.ServerResponseClasses.*;
+import models.auth.AuthInteractor;
 import network.ServerRequest;
 
 public class SignupHandler {
     private ServerRequest server;
     private BlockingQueue<String> queue;
     private String username, email;
+    private AuthInteractor interactor;
 
-    public boolean validateAccount(String otp)
+    public void validateAccount()
     throws IOException, InterruptedException{
+        String otp = this.interactor.getOTP();
+
         HashMap<String, String> validation_data = new HashMap<>();
         validation_data.put("email", this.email);
         validation_data.put("otp", otp);
         
-        this.queue.offer("info<>Starting OTP verification");
+        this.queue.offer("info<>Starting OTP verification\n");
 
         String res = this.server.post(
             "/auth/verify-otp", 
@@ -38,21 +41,29 @@ public class SignupHandler {
             "message": "..."
         }
         */
-        
-        return true;
     }
 
-    public CreateAccResponse createAccount(String username, String email, String password)
+    public void createAccount()
     throws IOException, InterruptedException{
-        this.username = username;
-        this.email = email;
+        this.username = this.interactor.getUsername();
+        this.email = this.interactor.getEmail();
+
+        String password = this.interactor.getPassword();
+
+        while (!password.equals(this.interactor.confirmPassword())){
+            this.queue.offer("error<>Passwords DO NOT match\n");
+            password = this.interactor.getPassword();
+        }
+
+        // (Optional) Regex test for password strength
+        // Implement regex test at backend also.
 
         HashMap<String, String> signup_data = new HashMap<>();
         signup_data.put("username", username);
         signup_data.put("email", email);
         signup_data.put("password", password);
 
-        this.queue.offer("info<>Registration request has been submitted to the server");
+        this.queue.offer("info<>Registration request has been submitted to the server\n");
         
         String res = this.server.post(
             "/auth/signup", 
@@ -72,12 +83,11 @@ public class SignupHandler {
             "message": "..."
         }
         */
-
-        return FileIO.toObject(res, CreateAccResponse.class);
     }
     
-    public SignupHandler(ServerRequest server, BlockingQueue<String> queue){
+    public SignupHandler(ServerRequest server, BlockingQueue<String> queue, AuthInteractor interactor){
         this.server = server;
         this.queue = queue;
+        this.interactor = interactor;
     }
 }

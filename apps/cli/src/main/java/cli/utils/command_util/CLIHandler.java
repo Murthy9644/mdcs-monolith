@@ -1,4 +1,4 @@
-package cli.utils;
+package cli.utils.command_util;
 
 import java.util.Properties;
 

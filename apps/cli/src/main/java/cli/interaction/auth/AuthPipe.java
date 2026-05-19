@@ -1,45 +1,19 @@
-package cli.utils.command_util;
+package cli.interaction.auth;
 
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import auth.AuthHandler;
 import cli.helpers.HelperThreads;
 import cli.utils.tools.ConsoleIO;
 import network.ServerRequest;
-import models.user_auth.ServerResponseClasses.*;
-import user_auth.signup.SignupHandler;
 
 public class AuthPipe {
     private ConsoleIO io;
     private ServerRequest server;
-    private SignupHandler signup;
+    private AuthHandler auth;
     private BlockingQueue<String> queue;
-
-    private String[] getSignupData(){
-        io.muted("Username: "); String username = io.ask();
-        io.muted("Email: "); String email = io.ask();
-
-        String password;
-        String conf_password;
-
-        while (true){
-            io.muted("Create password: "); password = io.ask();
-            io.muted("Confirm password: "); conf_password = io.ask();
-
-            if (password.equals(conf_password)) break;
-            else
-                io.error("Passwords do not match\n");
-        }
-
-        return new String[]{username, email, password};
-    }
-
-    private String getOtp(){
-        this.io.print("OTP has been sent to your email.\nPlease enter it here: ");
-        
-        return this.io.ask();
-    }
 
     public static boolean verifyAuthToken(){
 
@@ -49,24 +23,22 @@ public class AuthPipe {
     }
     
     public void handleSignup(){
-        String data[] = this.getSignupData();
-
         try{
             HelperThreads.PrintToConsole print_helper = new HelperThreads.PrintToConsole(queue, io);
             Thread printer = new Thread(print_helper);
 
             printer.setDaemon(true);
             printer.start();
-
-            // Create account request
-            CreateAccResponse res = this.signup.createAccount(data[0], data[1], data[2]);
+            
+            // Start registration
+            this.auth.registration();
             printer.interrupt();
 
-            if (!res.status){
-                this.io.critical("Signup attempt failed\n");
-                this.io.critical(res.message);
-                return;
-            }
+            // if (!res.status){
+            //     this.io.critical("Signup attempt failed\n");
+            //     this.io.critical(res.message);
+            //     return;
+            // }
 
             // status = this.signup.validateAccount(getOtp());
         } catch (IOException e){
@@ -122,6 +94,9 @@ public class AuthPipe {
         this.io = inou;
         this.server = server;
         this.queue = new LinkedBlockingQueue<>();
-        this.signup = new SignupHandler(server, queue);
+
+        CLIAuthInteractor interactor = new CLIAuthInteractor(this.io);
+
+        this.auth = new AuthHandler(this.server, this.queue, interactor);
     }
 }

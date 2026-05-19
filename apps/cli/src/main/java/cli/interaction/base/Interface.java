@@ -1,8 +1,8 @@
-package cli.utils.command_util;
+package cli.interaction.base;
 
 import java.util.Properties;
 
-import cli.utils.CLIHandler;
+import cli.utils.command_util.CLIHandler;
 import cli.utils.tools.ConsoleIO;
 
 public class Interface {

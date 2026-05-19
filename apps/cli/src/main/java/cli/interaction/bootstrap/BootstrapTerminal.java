@@ -1,9 +1,9 @@
-package cli.helpers;
+package cli.interaction.bootstrap;
 
 import java.util.Properties;
 
 import bootstrap.BootstrapHandler;
-import cli.utils.command_util.AuthPipe;
+import cli.interaction.auth.AuthPipe;
 import cli.utils.tools.ConsoleIO;
 import models.bootstrap.BootstrapResponse.*;
 import network.ServerRequest;

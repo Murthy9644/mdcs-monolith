@@ -1,4 +1,4 @@
-package models.user_auth;
+package models.auth.user_auth;
 
 public class ServerResponseClasses {
 
