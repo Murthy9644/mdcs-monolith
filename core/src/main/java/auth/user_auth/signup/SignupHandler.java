@@ -6,6 +6,8 @@ import java.util.concurrent.BlockingQueue;
 
 import file_io.FileIO;
 import models.auth.AuthInteractor;
+import models.auth.ServerResponseClasses.CreateAccRequest;
+import models.auth.ServerResponseClasses.CreateAccResponse;
 import network.ServerRequest;
 
 public class SignupHandler {
@@ -57,17 +59,18 @@ public class SignupHandler {
 
         // (Optional) Regex test for password strength
         // Implement regex test at backend also.
-
-        HashMap<String, String> signup_data = new HashMap<>();
-        signup_data.put("username", username);
-        signup_data.put("email", email);
-        signup_data.put("password", password);
+        
+        CreateAccRequest signup_data = new CreateAccRequest(
+            this.username, 
+            this.email, 
+            password
+        );
 
         this.queue.offer("info<>Registration request has been submitted to the server\n");
         
         String res = this.server.post(
             "/auth/signup", 
-            new String[]{"Content-type", "application/json"}, 
+            new String[] {"Content-type", "application/json"}, 
             FileIO.toJson(signup_data)
         );
 
@@ -80,9 +83,16 @@ public class SignupHandler {
                 "username": "...",
                 "email": "..."
             },
+            "error": "...",
             "message": "..."
         }
         */
+
+        CreateAccResponse response = FileIO.toObject(res, CreateAccResponse.class);
+
+        // Need to add functionality to handle account creation errors
+
+        //
     }
     
     public SignupHandler(ServerRequest server, BlockingQueue<String> queue, AuthInteractor interactor){
