@@ -39,9 +39,10 @@ public class DataClasses{
         public int user_id;
 
         public String
-            user_name,
+            username,
             email,
-            auth_token;
+            auth_token,
+            refresh_token;
 
         public boolean login_status;
 
@@ -51,20 +52,15 @@ public class DataClasses{
         // When data is sent
         public Accounts(String details[]){
             this.user_id        = Integer.parseInt(details[0]);
-            this.user_name      = details[1];
+            this.username      = details[1];
             this.email          = details[2];
             this.auth_token     = details[3];
-            this.login_status   = details[4] == "true";
+            this.refresh_token  = details[4];
+            this.login_status   = details[5] == "true";
         }
 
         // When data is null
-        public Accounts(){
-            this.user_id        = 0;
-            this.user_name      = "";
-            this.email          = "";
-            this.auth_token     = "";
-            this.login_status   = false;
-        }
+        public Accounts(){ }
     }
 
     // Template for Device.json
@@ -76,33 +72,27 @@ public class DataClasses{
             "entities", "Device.json"
         ).toString();
 
-        public String
+        public int
             device_id,
+            workspace_id;
+
+        public String
             device_name,
-            workspace_id,
-            workspace_name,
-            device_status;
+            workspace_name;
 
         @JsonIgnore
         public String getPath(){ return path; }
 
         // When data is sent
         public Device(String details[]){
-            this.device_id      = details[0];
+            this.device_id      = Integer.parseInt(details[0]);
             this.device_name    = details[1];
-            this.workspace_id   = details[2];
+            this.workspace_id   = Integer.parseInt(details[2]);
             this.workspace_name = details[3];
-            this.device_status  = details[4];
         }
 
         // When data is null
-        public Device(){
-            this.device_id      = "";
-            this.device_name    = "";
-            this.workspace_id   = "";
-            this.workspace_name = "";
-            this.device_status  = "";
-        }
+        public Device(){ }
     }
 
     // Template for Configs.json
@@ -157,17 +147,7 @@ public class DataClasses{
         }
 
         // When data is null
-        public ModulePaths(){
-            this.clipboard          = "";
-            this.file_share         = "";
-            this.folder_sync        = "";
-            this.protocols          = "";
-            this.application_acess  = "";
-            this.scheduler          = "";
-            this.host               = "";
-            this.client             = "";
-            this.mesh               = "";
-        }
+        public ModulePaths(){ }
     }
 
     // Template for Data.json

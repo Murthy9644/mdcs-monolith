@@ -1,14 +1,15 @@
 package auth.user_auth.signup;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 
+import file_io.DataClasses;
 import file_io.FileIO;
 import models.auth.AuthInteractor;
-import models.auth.ServerResponseClasses.CreateAccRequest;
-import models.auth.ServerResponseClasses.CreateAccResponse;
+import models.auth.ServerResponseClasses.*;
+import models.auth.SignupResponse.AuthState;
 import network.ServerRequest;
+import security.TokenCipher;
 
 public class SignupHandler {
     private ServerRequest server;
@@ -16,36 +17,33 @@ public class SignupHandler {
     private String username, email;
     private AuthInteractor interactor;
 
-    public void validateAccount()
+    public AuthState validateAccount(DataClasses.Accounts body)
     throws IOException, InterruptedException{
-        String otp = this.interactor.getOTP();
+        int otp = Integer.parseInt(this.interactor.getOTP());
+        ValidateAccRequest validation_data = new ValidateAccRequest(this.email, otp);        
 
-        HashMap<String, String> validation_data = new HashMap<>();
-        validation_data.put("email", this.email);
-        validation_data.put("otp", otp);
-        
         this.queue.offer("info<>Starting OTP verification\n");
 
         String res = this.server.post(
-            "/auth/verify-otp", 
+            "/auth/user/verify-otp", 
             new String[] {"Content-type", "application/json"}, 
             FileIO.toJson(validation_data)
         );
+        
+        ValidateAccResponse response = FileIO.toObject(res, ValidateAccResponse.class);
 
-        /*
-        Expected server output:
-        {
-            "status": true/false,
-            "body": {
-                "user_id": int(...),
-                "auth_token": "..."
-            }
-            "message": "..."
-        }
-        */
+        // Need to add functionality to handle, account creation / OTP errors
+
+        this.queue.offer("success<>Account validated successfully");
+
+        // Encrypt tokens
+        body.auth_token = TokenCipher.encrypt(response.body.auth_token);
+        body.refresh_token = TokenCipher.encrypt(response.body.refresh_token);
+
+        return AuthState.SUCCESS;
     }
 
-    public void createAccount()
+    public AuthState createAccount(DataClasses.Accounts body)
     throws IOException, InterruptedException{
         this.username = this.interactor.getUsername();
         this.email = this.interactor.getEmail();
@@ -69,30 +67,22 @@ public class SignupHandler {
         this.queue.offer("info<>Registration request has been submitted to the server\n");
         
         String res = this.server.post(
-            "/auth/signup", 
+            "/auth/user/signup", 
             new String[] {"Content-type", "application/json"}, 
             FileIO.toJson(signup_data)
         );
-
-        /*
-        Expected output from server:
-        {
-            "status": true/false,
-            "body": {
-                "user_id": int(...),
-                "username": "...",
-                "email": "..."
-            },
-            "error": "...",
-            "message": "..."
-        }
-        */
 
         CreateAccResponse response = FileIO.toObject(res, CreateAccResponse.class);
 
         // Need to add functionality to handle account creation errors
 
-        //
+        this.queue.offer("success<>Account created successfully\n");
+
+        body.user_id = response.body.user_id;
+        body.username = response.body.username;
+        body.email = response.body.email;
+
+        return AuthState.SUCCESS;
     }
     
     public SignupHandler(ServerRequest server, BlockingQueue<String> queue, AuthInteractor interactor){

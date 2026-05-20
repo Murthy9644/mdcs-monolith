@@ -169,13 +169,20 @@ public class BootstrapTerminal {
         return true;
     }
 
-    private void userState() {
-        if (res.user_state == UserState.USER_AUTH_REQUIRED
-                || (res.user_state == UserState.USER_LOGGED_IN
-                        && !AuthPipe.verifyAuthToken())) {
+    private boolean userState() {
+        if (
+            res.user_state == UserState.USER_AUTH_REQUIRED
+            || (
+                res.user_state == UserState.USER_LOGGED_IN
+                &&
+                !AuthPipe.verifyAuthToken()
+            )
+        ) {
             AuthPipe pipe = new AuthPipe(io, server);
-            pipe.start();
+            return pipe.start();
         }
+
+        return true;
     }
 
     public boolean initiate() {
@@ -191,8 +198,10 @@ public class BootstrapTerminal {
             return false;
         }
 
-        if (this.updateHandler() && this.appStatusCheck())
-            this.userState();
+        if (!this.updateHandler() || !this.appStatusCheck() || !this.userState()){
+            this.io.info(res.summary);
+            return true;
+        }
 
         this.io.info(res.summary);
 

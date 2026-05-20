@@ -1,12 +1,12 @@
 package cli.interaction.auth;
 
-import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import auth.AuthHandler;
 import cli.helpers.HelperThreads;
 import cli.utils.tools.ConsoleIO;
+import models.auth.SignupResponse.AuthState;
 import network.ServerRequest;
 
 public class AuthPipe {
@@ -22,7 +22,7 @@ public class AuthPipe {
         return true;
     }
     
-    public void handleSignup(){
+    public boolean handleSignup(){
         try{
             HelperThreads.PrintToConsole print_helper = new HelperThreads.PrintToConsole(queue, io);
             Thread printer = new Thread(print_helper);
@@ -31,24 +31,20 @@ public class AuthPipe {
             printer.start();
             
             // Start registration
-            this.auth.registration();
+            AuthState state = this.auth.registration();
             printer.interrupt();
 
-            // if (!res.status){
-            //     this.io.critical("Signup attempt failed\n");
-            //     this.io.critical(res.message);
-            //     return;
-            // }
+            if (state == AuthState.FAIL){
+                this.io.critical("Signup attempt failed\n");
+                return false;
+            }
 
             // status = this.signup.validateAccount(getOtp());
-        } catch (IOException e){
-            //
-        } catch (InterruptedException e){
-            //
+        } catch (Exception e){
+            return false;
         }
 
-        // if (success) io.success("Registered successfully\n");
-        // else io.error("Registration failed\n");
+        return true;
     }
 
     public void handleSignin(){
@@ -61,7 +57,7 @@ public class AuthPipe {
         // else io.error("Authentication failed\n");
     }
 
-    public void start(){
+    public boolean start(){
         this.io.info("Authentication required to continue\n");
         this.io.print("\nSelect:\n");
         this.io.print("1. Signup (If new to MDCS)\n");
@@ -73,7 +69,7 @@ public class AuthPipe {
                 this.io.specifier("\n> ");
                 int choice = Integer.parseInt(this.io.ask());
 
-                if (choice == 1) handleSignup();
+                if (choice == 1) return handleSignup();
 
                 else if (choice == 2) handleSignin();
 
@@ -88,6 +84,8 @@ public class AuthPipe {
             }
             catch (NumberFormatException e){ io.info("Invalid choice. Select 1, 2 or 3\n"); }
         }
+
+        return true; // Temporarily
     }
     
     public AuthPipe(ConsoleIO inou, ServerRequest server){
