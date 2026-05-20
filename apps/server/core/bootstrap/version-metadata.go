@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mdcs-server/core/models"
 	"net/http"
 	"os"
 	"time"
 )
 
-func FetchMetadata() (*VersionMetadata, error) {
+func FetchMetadata() (*models.VersionMetadata, error) {
 	url := os.Getenv("VERSION_DATA_URL")
 
 	if url == "" {
@@ -38,7 +39,7 @@ func FetchMetadata() (*VersionMetadata, error) {
 		return nil, err
 	}
 
-	var metadata VersionMetadata
+	var metadata models.VersionMetadata
 	err = json.Unmarshal(data, &metadata)
 
 	if err != nil {

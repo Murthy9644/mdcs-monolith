@@ -1,6 +1,8 @@
 package bootstrap
 
-var Metadata *VersionMetadata
+import "mdcs-server/core/models"
+
+var Metadata *models.VersionMetadata
 
 func BootstrapHandler() bool {
 

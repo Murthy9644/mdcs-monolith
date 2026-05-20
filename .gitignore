@@ -3,3 +3,4 @@ secrets.json
 target/
 .env
 bin/
+disk/
