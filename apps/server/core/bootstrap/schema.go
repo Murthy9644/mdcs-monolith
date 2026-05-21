@@ -1,9 +1,10 @@
 package bootstrap
 
-import {
+import (
     "os"
     "models" // need to be resolved
-}
+    "encoding/json"
+)
 
 // Generate and maintain the files in database.
 // Used for v1 where data is stored locally on the server
@@ -22,29 +23,50 @@ phase 3: schema and format validation
 file
 */
 
-func schemaCheck() bool{
-    var files map[string]string = {
-        "users": "disk/users.json",
-        "workspaces": "disk/workspaces.json",
-        "devices": "disk/devices.json"
-    }
+var files = map[string]string{
+    "users": "disk/users.json",
+    "workspaces": "disk/workspaces.json",
+    "devices": "disk/devices.json"
+}
+
+var defvals = map[string]any{
+    "users": models.Users{},
+    "workspaces": models.Workspaces{},
+    "devices": models.Devices{}
+}
+
+func ensureSchemaFiles() bool{
 
     for file, path := range files{
         _, err := os.Stat(path)
 
-        if os.IsNotExist(err){
-            switch key{
-                case "users":
-                    //
+        if err != nil{
+            
+            if os.IsNotExist(err){
+                data, err := json.Marshal(defvals[file])
 
-                case "workspaces":
-                    //
+                if err != nil{
+                    return false
+                }
 
-                case "devices":
-                    //
+                err = os.WriteFile(path, data, 0644)
+
+                if err != nil{
+                    return false
+                }
+            } else {
+                return false
             }
         }
     }
 
     return true
+}
+
+func ensureSchema() bool{
+    //
+}
+
+func SchForValidation() bool{
+    //
 }
