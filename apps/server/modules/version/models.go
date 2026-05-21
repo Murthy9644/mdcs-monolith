@@ -7,15 +7,12 @@ type UpdateCheckRequest struct {
 }
 
 // Response DTO
-
-// Helper
 type AppData struct {
 	CurrentVersion   string `json:"current_version"`
 	AvailableVersion string `json:"available_version"`
 	CriticalUpdate   bool   `json:"critical_update"`
 }
 
-// Helper
 type PluginData struct {
 	InstalledVersion string `json:"installed_version"`
 	AvailableVersion string `json:"available_version"`
@@ -23,7 +20,6 @@ type PluginData struct {
 	UpdateRequired   bool   `json:"update_required"`
 }
 
-// Main
 type UpdateCheckResponse struct {
 	App     AppData               `json:"app"`
 	Plugins map[string]PluginData `json:"plugins"`

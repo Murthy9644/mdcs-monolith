@@ -34,7 +34,7 @@ type UserAttrs struct {
 // string(user_id) -> user attributes
 type Users map[string]UserAttrs
 
-type WorkspaceAttrs struct {`
+type WorkspaceAttrs struct {
 	WorkspaceId   int    `json:"workspace_id"`
 	WorkspaceName string `json:"workspace_name"`
 	MainDevice    int    `json:"main_device"`
@@ -44,8 +44,8 @@ type WorkspaceAttrs struct {`
 type Workspaces map[string][]WorkspaceAttrs
 
 type DeviceAttrs struct {
-	DeviceId    int    `json:"device_id"`
-	DeviceName  string `json:"device_name"`
+	DeviceId   int    `json:"device_id"`
+	DeviceName string `json:"device_name"`
 }
 
 // string(workspace_id) -> array of devices

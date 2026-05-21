@@ -6,6 +6,12 @@ import (
 	"net/http"
 )
 
+// Still need to improve the error handling and write responses accordingly
+
+/*
+Version check is intentionally kept without authentication so that users can check for
+updates or compatibilities
+*/
 func versionCheck(res http.ResponseWriter, req *http.Request) {
 	data, err := io.ReadAll(req.Body)
 
