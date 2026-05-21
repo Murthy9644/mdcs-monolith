@@ -1,6 +1,5 @@
 package models
 
-// Models for the schema
 // Have entities: user, workspace, devices
 
 /*
@@ -36,16 +35,18 @@ type UserAttrs struct {
 	Verified bool   `json:"verified"`
 }
 
-type User struct {
-	UserId int `json:"user_id"`
-}
+// string(user_id) -> user attributes
+type User map[string]UserAttrs
 
-type Workspace struct {
+type WorkspaceAttrs struct {
 	UserId        int    `json:"user_id"`
 	WorkspaceId   int    `json:"workspace_id"`
 	WorkspaceName string `json:"workspace_name"`
 	MainDevice    int    `json:"main_device"`
 }
+
+// string(user_id) -> array of workspace attrs
+type Workspace map[string]WorkspaceAttrs
 
 type Devices struct {
 	WorkspaceId int    `json:"workspace_id"`
