@@ -5,6 +5,7 @@ package bootstrap
 import (
 	"fmt"
 	"mdcs-server/core/models"
+	"mdcs-server/data"
 )
 
 /*
@@ -41,6 +42,7 @@ func BootstrapHandler() bool {
 
 	if val_stat {
 		fmt.Println("Schema validated successfully")
+		data.LoadFiles()
 	}
 
 	return val_stat

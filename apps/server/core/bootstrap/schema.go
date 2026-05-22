@@ -25,9 +25,9 @@ file
 */
 
 var files = map[string]string{
-	"users":      "disk/users.json",
-	"workspaces": "disk/workspaces.json",
-	"devices":    "disk/devices.json",
+	"users":      "data/disk/users.json",
+	"workspaces": "data/disk/workspaces.json",
+	"devices":    "data/disk/devices.json",
 }
 
 var defvals = map[string]any{
@@ -37,7 +37,7 @@ var defvals = map[string]any{
 }
 
 func ensureSchemaFiles() (bool, error) {
-	err := os.MkdirAll("./disk", 0755)
+	err := os.MkdirAll("./data/disk", 0755)
 
 	if err != nil {
 		return false, err
@@ -49,7 +49,7 @@ func ensureSchemaFiles() (bool, error) {
 		if err != nil {
 
 			if os.IsNotExist(err) {
-				data, err := json.Marshal(defvals[file])
+				data, err := json.MarshalIndent(defvals[file], "", "    ")
 
 				if err != nil {
 					return false, err
