@@ -1,8 +1,8 @@
 package version
 
 import (
-	"mdcs-server/api/shared"
 	"mdcs-server/core/bootstrap"
+	"mdcs-server/modules/shared"
 )
 
 func responseBuilder(update_check_data UpdateCheckRequest) (UpdateCheckResponse, error) {
@@ -25,6 +25,11 @@ func responseBuilder(update_check_data UpdateCheckRequest) (UpdateCheckResponse,
 	return response, nil
 }
 
+/*
+If client has lower app version then suggested, server APIs may be broken or may
+lead to other bugs.
+Application will be blocked (handled by frontend) in such case
+*/
 func criticalUpdateCheck(update_check_data UpdateCheckRequest) (AppData, error) {
 	curr_app_ver, err := shared.ParseSemVer(update_check_data.App["current_version"])
 	if err != nil {
@@ -44,6 +49,11 @@ func criticalUpdateCheck(update_check_data UpdateCheckRequest) (AppData, error) 
 	return app_data, nil
 }
 
+/*
+Incompatible plugin is when current version of a plugin is not supported by the
+application.
+If so, that plugin may not work as expected
+*/
 func pluginCompatAndUpCheck(update_check_data UpdateCheckRequest) (map[string]PluginData, error) {
 	plugins := make(map[string]PluginData)
 

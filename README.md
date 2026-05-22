@@ -49,7 +49,7 @@ Every instance of application (A particular device running this application) wil
 
 ### User Level:
 This level is for commuication among devices that user have opted in for access. The network of devices formed will communicate with each other through their own light-weight server and client modules, after all the required setup has been done.
-![UserLevelViz](assets/images/user_level_viz.png)
+![UserLevelViz](docs/assets/images/user_level_viz.png)
 
 ### Workflow
 ```

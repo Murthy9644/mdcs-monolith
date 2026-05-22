@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+// The metadata this function returns is necessary.
+// Server startup must fail if metadata server is unreachable
 func FetchMetadata() (*models.VersionMetadata, error) {
 	url := os.Getenv("VERSION_DATA_URL")
 
@@ -46,6 +48,8 @@ func FetchMetadata() (*models.VersionMetadata, error) {
 		return nil, err
 	}
 
+	// This is used for later cases when may want to load metadata at regular
+	// intervals
 	metadata.FetchedAt = time.Now()
 
 	return &metadata, nil
