@@ -28,6 +28,16 @@ public class CLIAuthInteractor implements AuthInteractor {
 
         return email;
     }
+
+    public void pswdRules(){
+        this.io.highlight("Password rules:");
+        this.io.print("Password must contain atleast one\n");
+        this.io.print("\t- Uppercase alphabet\t(A-Z)\n");
+        this.io.print("\t- Lowercase alphabet\t(a-z)\n");
+        this.io.print("\t- Special character\t(!@#$%^&*_)\n");
+        this.io.print("\t- Digit\t(0-9)\n");
+        this.io.print("Password must be atleast 6 digits long\n");
+    }
     
     public String getPassword(){
         this.io.muted("Create password: ");
@@ -47,6 +57,10 @@ public class CLIAuthInteractor implements AuthInteractor {
             conf = this.io.ask();
         
         return conf;
+    }
+
+    public void pswdsMismatch(){
+        this.io.error("Passwords DO NOT match\n");
     }
     
     public String getOTP(){

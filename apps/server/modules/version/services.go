@@ -2,7 +2,7 @@ package version
 
 import (
 	"mdcs-server/core/bootstrap"
-	"mdcs-server/modules/shared"
+	"mdcs-server/tools/version"
 )
 
 func responseBuilder(update_check_data UpdateCheckRequest) (UpdateCheckResponse, error) {
@@ -31,12 +31,12 @@ lead to other bugs.
 Application will be blocked (handled by frontend) in such case
 */
 func criticalUpdateCheck(update_check_data UpdateCheckRequest) (AppData, error) {
-	curr_app_ver, err := shared.ParseSemVer(update_check_data.App["current_version"])
+	curr_app_ver, err := version.Parse(update_check_data.App["current_version"])
 	if err != nil {
 		return AppData{}, err
 	}
 
-	min_sup_ver, err := shared.ParseSemVer(bootstrap.Metadata.App.MinimumSupportedVersion)
+	min_sup_ver, err := version.Parse(bootstrap.Metadata.App.MinimumSupportedVersion)
 	if err != nil {
 		return AppData{}, err
 	}
@@ -44,7 +44,7 @@ func criticalUpdateCheck(update_check_data UpdateCheckRequest) (AppData, error) 
 	var app_data AppData
 	app_data.CurrentVersion = update_check_data.App["current_version"]
 	app_data.AvailableVersion = bootstrap.Metadata.App.LatestVersion
-	app_data.CriticalUpdate = shared.IsLowerVersion(curr_app_ver, min_sup_ver)
+	app_data.CriticalUpdate = version.Lower(curr_app_ver, min_sup_ver)
 
 	return app_data, nil
 }
@@ -57,7 +57,7 @@ If so, that plugin may not work as expected
 func pluginCompatAndUpCheck(update_check_data UpdateCheckRequest) (map[string]PluginData, error) {
 	plugins := make(map[string]PluginData)
 
-	curr_app_semver, err := shared.ParseSemVer(update_check_data.App["current_version"])
+	curr_app_semver, err := version.Parse(update_check_data.App["current_version"])
 	if err != nil {
 		return nil, err
 	}
@@ -71,30 +71,30 @@ func pluginCompatAndUpCheck(update_check_data UpdateCheckRequest) (map[string]Pl
 			continue
 		}
 
-		installed_semver, err := shared.ParseSemVer(installed_ver)
+		installed_semver, err := version.Parse(installed_ver)
 		if err != nil {
 			return nil, err
 		}
 
-		available_semver, err := shared.ParseSemVer(plugin_meta.AvailableVersion)
+		available_semver, err := version.Parse(plugin_meta.AvailableVersion)
 		if err != nil {
 			return nil, err
 		}
 
-		min_compat_semver, err := shared.ParseSemVer(plugin_meta.CompatibleAppVersions.Min)
+		min_compat_semver, err := version.Parse(plugin_meta.CompatibleAppVersions.Min)
 		if err != nil {
 			return nil, err
 		}
 
-		max_compat_semver, err := shared.ParseSemVer(plugin_meta.CompatibleAppVersions.Max)
+		max_compat_semver, err := version.Parse(plugin_meta.CompatibleAppVersions.Max)
 		if err != nil {
 			return nil, err
 		}
 
 		plugin_res.InstalledVersion = installed_ver
 		plugin_res.AvailableVersion = plugin_meta.AvailableVersion
-		plugin_res.UpdateRequired = shared.IsLowerVersion(installed_semver, available_semver)
-		plugin_res.IsCompatible = shared.IsVerInRange(curr_app_semver, min_compat_semver, max_compat_semver)
+		plugin_res.UpdateRequired = version.Lower(installed_semver, available_semver)
+		plugin_res.IsCompatible = version.Inrange(curr_app_semver, min_compat_semver, max_compat_semver)
 
 		plugins[plugin_name] = plugin_res
 	}

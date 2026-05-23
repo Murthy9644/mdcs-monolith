@@ -32,7 +32,7 @@ public class UserStateResolution {
         else if (!accounts.login_status) state = BootstrapResponse.UserState.USER_AUTH_REQUIRED;
 
         else if (
-            accounts.user_id == 0
+            accounts.user_id == ""
             || (accounts.username == null || accounts.username.isEmpty())
             || (accounts.email == null || accounts.email.isEmpty())
             || (accounts.auth_token == null || accounts.auth_token.isEmpty())

@@ -19,16 +19,16 @@ public class App {
         header_string += " V" + this.VERSIONS.getProperty("app.version") + "\n";
         this.io.heading(header_string);
         
-        if (!(new BootstrapTerminal(this.server, this.VERSIONS).initiate()))
+        if (!(new BootstrapTerminal(this.server, this.VERSIONS).initiate())){
             return;
+        }
         
         new Interface(this.io, this.APP, this.VERSIONS).begin();
     }
 
     public App(){
         this.io = new ConsoleIO();
-        this.server = new ServerRequest(APP);
-
+        
         try{
             this.APP = new ConfigLoader("application.properties").property;
             this.VERSIONS = new ConfigLoader("versions.properties").property;
@@ -36,5 +36,7 @@ public class App {
             this.io.error("File not found: couldn't find or load config files\n");
             System.exit(0);
         }
+
+        this.server = new ServerRequest(APP);
     }
 }

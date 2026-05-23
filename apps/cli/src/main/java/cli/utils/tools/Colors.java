@@ -56,12 +56,12 @@ public class Colors {
     public static final String BG_BRIGHT_CYAN = "\u001B[106m";
     public static final String BG_BRIGHT_WHITE = "\u001B[107m";
 
-    // Styles (THIS is what makes it feel professional)
+    // Styles
     public static final String BOLD = "\u001B[1m";
     public static final String DIM = "\u001B[2m";
-    public static final String ITALIC = "\u001B[3m";      // Not supported everywhere
+    public static final String ITALIC = "\u001B[3m";
     public static final String UNDERLINE = "\u001B[4m";
-    public static final String BLINK = "\u001B[5m";       // Rarely used
+    public static final String BLINK = "\u001B[5m";
     public static final String REVERSE = "\u001B[7m";
     public static final String HIDDEN = "\u001B[8m";
 }

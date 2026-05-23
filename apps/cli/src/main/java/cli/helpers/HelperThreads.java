@@ -11,6 +11,7 @@ public class HelperThreads {
         private ConsoleIO io;
 
         private void mapLevel(String level, String line){
+            line += "\n";
 
             switch (level) {
                 case "info":
@@ -34,7 +35,7 @@ public class HelperThreads {
                     break;
             
                 default:
-                    this.io.info(line);
+                    this.io.print(line);
                     break;
             }
         }
@@ -48,7 +49,13 @@ public class HelperThreads {
 
                     this.mapLevel(args[0], args[1]);
                 } catch (InterruptedException e) {
-                    // Eat 6-star, exit the loop!
+                    String line;
+                    
+                    while ((line = queue.poll()) != null){
+                        String args[] = line.split("<>");
+                        this.mapLevel(args[0], args[1]);
+                    }
+
                     break;
                 }
             }

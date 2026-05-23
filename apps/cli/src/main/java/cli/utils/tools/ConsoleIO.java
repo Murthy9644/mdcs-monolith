@@ -35,7 +35,7 @@ public class ConsoleIO{
     public void print(String text){ System.out.print(text); }
 
     public void highlight(String text){
-        System.out.print(Colors.BG_BRIGHT_WHITE + Colors.BLACK + text);
+        System.out.print("\n" + Colors.BG_WHITE + Colors.BOLD + Colors.BLACK + text + Colors.RESET + "\n");
     }
 
     public void heading(String text){

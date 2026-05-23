@@ -36,9 +36,8 @@ public class DataClasses{
             "entities", "Accounts.json"
         ).toString();
 
-        public int user_id;
-
         public String
+            user_id,
             username,
             email,
             auth_token,
@@ -51,8 +50,8 @@ public class DataClasses{
 
         // When data is sent
         public Accounts(String details[]){
-            this.user_id        = Integer.parseInt(details[0]);
-            this.username      = details[1];
+            this.user_id        = details[0];
+            this.username       = details[1];
             this.email          = details[2];
             this.auth_token     = details[3];
             this.refresh_token  = details[4];
@@ -72,12 +71,10 @@ public class DataClasses{
             "entities", "Device.json"
         ).toString();
 
-        public int
-            device_id,
-            workspace_id;
-
         public String
+            device_id,
             device_name,
+            workspace_id,
             workspace_name;
 
         @JsonIgnore
@@ -85,9 +82,9 @@ public class DataClasses{
 
         // When data is sent
         public Device(String details[]){
-            this.device_id      = Integer.parseInt(details[0]);
+            this.device_id      = details[0];
             this.device_name    = details[1];
-            this.workspace_id   = Integer.parseInt(details[2]);
+            this.workspace_id   = details[2];
             this.workspace_name = details[3];
         }
 

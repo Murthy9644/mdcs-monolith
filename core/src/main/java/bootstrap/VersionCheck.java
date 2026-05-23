@@ -1,6 +1,7 @@
 package bootstrap;
 
 import java.io.IOException;
+import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -81,13 +82,15 @@ public class VersionCheck {
             String json_body = FileIO.toJson(body);
 
             // Sending request to server
-            String response = server.post(
+            HttpResponse<String> response = server.post(
                 "/version/check",
                 new String[] { "Content-Type", "application/json" },
                 json_body
             );
 
-            ServerResponseClasses.UpdateResponse res = FileIO.toObject(response, ServerResponseClasses.UpdateResponse.class);
+            String res_body = response.body().toString();
+
+            ServerResponseClasses.UpdateResponse res = FileIO.toObject(res_body, ServerResponseClasses.UpdateResponse.class);
             
             // Check for critical app update
             if (res.app.critical_update){

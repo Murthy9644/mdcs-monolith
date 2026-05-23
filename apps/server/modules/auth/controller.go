@@ -2,23 +2,49 @@ package auth
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
-type SignupRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
+// Write user entry and return user id
+func signup(res http.ResponseWriter, req *http.Request) {
+	data := req.Context().Value(SUpDataKey).(SignupRequest)
+	var respld SignupResponse
 
-func SignupHandler(res http.ResponseWriter, req *http.Request) {
-	var new_req SignupRequest
+	user_id, err := registerUser(data)
 
-	err := json.NewDecoder(req.Body).Decode(&new_req)
 	if err != nil {
-		http.Error(res, "Invalid body", http.StatusBadRequest)
+		respld.Status = false
+		respld.Body = nil
+		respld.Error = err.Error()
+		respld.Message = "User registration failed"
+
+		payload, err := json.Marshal(respld)
+
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		res.Write(payload)
+		return
 	}
 
-	fmt.Fprintf(res, "signup req received\n")
+	respld.Status = true
+
+	respld.Body = map[string]string{}
+	respld.Body["user_id"] = user_id
+	respld.Body["username"] = data.Username
+	respld.Body["email"] = data.Email
+
+	respld.Error = ""
+	respld.Message = "User registered successfully"
+
+	payload, err := json.Marshal(respld)
+
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res.Write(payload)
 }

@@ -6,9 +6,13 @@ public interface AuthInteractor {
 
     String getEmail();
 
+    void pswdRules();
+
     String getPassword();
 
     String confirmPassword();
+
+    void pswdsMismatch();
 
     String getOTP();
 

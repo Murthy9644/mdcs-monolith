@@ -1,6 +1,7 @@
 package auth.device_auth;
 
 import java.io.IOException;
+import java.net.http.HttpResponse;
 import java.util.concurrent.BlockingQueue;
 
 import file_io.DataClasses;
@@ -25,14 +26,16 @@ public class DeviceAuthHandler {
 
         this.queue.offer("info<>Register device request has been submitted\n");
 
-        String res = this.server.post(
+        HttpResponse<String> res = this.server.post(
             "/auth/device/register",
             new String[] {"Content-type", "application/json"},
             FileIO.toJson(req)
         );
 
+        String res_body = res.body().toString();
+
         this.queue.offer("success<>Device registered as MAIN successfully\n");
-        FDRResponse response = FileIO.toObject(res, FDRResponse.class);
+        FDRResponse response = FileIO.toObject(res_body, FDRResponse.class);
 
         body.device_id = response.body.device_id;
         body.device_name = response.body.device_name;

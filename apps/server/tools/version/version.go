@@ -1,4 +1,4 @@
-package shared
+package version
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ type SemVer struct {
 	Patch int
 }
 
-func ParseSemVer(version string) (SemVer, error) {
+func Parse(version string) (SemVer, error) {
 	parts := strings.Split(version, ".")
 
 	if len(parts) < 3 {
@@ -38,7 +38,7 @@ func ParseSemVer(version string) (SemVer, error) {
 	return SemVer{Major: major, Minor: minor, Patch: patch}, nil
 }
 
-func IsLowerVersion(curr, min SemVer) bool {
+func Lower(curr, min SemVer) bool {
 
 	if curr.Major != min.Major {
 		return curr.Major < min.Major
@@ -51,9 +51,9 @@ func IsLowerVersion(curr, min SemVer) bool {
 	return curr.Patch < min.Patch
 }
 
-func IsVerInRange(curr, min, max SemVer) bool {
-	isAboveMin := !IsLowerVersion(curr, min)
-	isBelowMax := !IsLowerVersion(max, curr)
+func Inrange(curr, min, max SemVer) bool {
+	isAboveMin := !Lower(curr, min)
+	isBelowMax := !Lower(max, curr)
 
 	return isAboveMin && isBelowMax
 }

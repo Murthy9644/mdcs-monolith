@@ -11,7 +11,7 @@ public class ServerRequest {
     private HttpClient client;
     private String url_base;
     
-    public String post(String api, String headers[], String body)
+    public HttpResponse<String> post(String api, String headers[], String body)
     throws IOException, InterruptedException{
         HttpRequest req = HttpRequest.newBuilder()
             .uri(URI.create(this.url_base + api))
@@ -21,7 +21,7 @@ public class ServerRequest {
 
         HttpResponse<String> res = this.client.send(req, HttpResponse.BodyHandlers.ofString());
         
-        return res.body().toString();
+        return res;
     }
 
     public String get(String api, String headers[])

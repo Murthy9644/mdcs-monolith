@@ -179,7 +179,14 @@ public class BootstrapTerminal {
             )
         ) {
             AuthPipe pipe = new AuthPipe(io, server);
-            return pipe.start();
+            
+            while (true){
+                Boolean success = pipe.start();
+
+                if (success == null) continue;
+                
+                return success;
+            }
         }
 
         return true;
@@ -199,13 +206,13 @@ public class BootstrapTerminal {
         }
 
         if (!this.updateHandler() || !this.appStatusCheck() || !this.userState()){
-            this.io.info(res.summary);
-            return true;
+            this.io.info(res.summary + "\n");
+            return false;
         }
 
-        this.io.info(res.summary);
+        this.io.info(res.summary + "\n");
 
-        return false;
+        return true;
     }
 
     public BootstrapTerminal(ServerRequest server, Properties VERSIONS) {

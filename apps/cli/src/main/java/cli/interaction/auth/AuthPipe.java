@@ -22,8 +22,9 @@ public class AuthPipe {
         return true;
     }
     
-    public boolean handleSignup(){
+    public Boolean handleSignup(){
         try{
+            this.queue.clear();
             HelperThreads.PrintToConsole print_helper = new HelperThreads.PrintToConsole(queue, io);
             Thread printer = new Thread(print_helper);
 
@@ -33,11 +34,13 @@ public class AuthPipe {
             // Start registration
             AuthState state = this.auth.registration();
             printer.interrupt();
+            printer.join();
 
-            if (state == AuthState.FAIL){
-                this.io.critical("Signup attempt failed\n");
+            if (state == AuthState.FAIL)
+                return null;
+
+            if (state == AuthState.TERMINATE)
                 return false;
-            }
 
             // status = this.signup.validateAccount(getOtp());
         } catch (Exception e){
@@ -57,7 +60,7 @@ public class AuthPipe {
         // else io.error("Authentication failed\n");
     }
 
-    public boolean start(){
+    public Boolean start(){
         this.io.info("Authentication required to continue\n");
         this.io.print("\nSelect:\n");
         this.io.print("1. Signup (If new to MDCS)\n");

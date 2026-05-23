@@ -6,7 +6,7 @@ public class ServerResponseClasses {
 
     // Body for CreateAccResponse
     public static class CreateAccResBody{
-        public int user_id;
+        public String user_id;
         public String username;
         public String email;
     }
@@ -27,9 +27,9 @@ public class ServerResponseClasses {
 
     // Body for First Device Reg Response
     public static class FDRBody{
-        public int device_id;
+        public String device_id;
         public String device_name;
-        public int workspace_id;
+        public String workspace_id;
         public String workspace_name;
     }
 
