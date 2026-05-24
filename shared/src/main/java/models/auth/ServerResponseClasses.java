@@ -52,10 +52,12 @@ public class ServerResponseClasses {
 
     // DTO for validate request
     public static class ValidateAccRequest{
+        public String user_id;
         public String email;
-        public int otp;
+        public String otp;
 
-        public ValidateAccRequest(String email, int otp){
+        public ValidateAccRequest(String user_id, String email, String otp){
+            this.user_id = user_id;
             this.email = email;
             this.otp = otp;
         }

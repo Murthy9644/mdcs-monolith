@@ -1,12 +1,18 @@
 package auth
 
-type SignupRequest struct {
+type SignupReq struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-type SignupResponse struct {
+type VerifyAccReq struct {
+	UserId string `json:"user_id"`
+	Email  string `json:"email"`
+	OTP    string `json:"otp"`
+}
+
+type Response struct {
 	Status  bool              `json:"status"`
 	Body    map[string]string `json:"body"`
 	Error   string            `json:"error"`
@@ -14,5 +20,6 @@ type SignupResponse struct {
 }
 
 const (
-	SUpDataKey string = "signup_req_data"
+	SUpDataKey    string = "signup_req_data"
+	VerAccDataKey string = "verifyacc_req_data"
 )

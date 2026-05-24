@@ -29,7 +29,7 @@ public class AuthHandler {
         this.sres = SignupResponse.setAuthState(this.sres, signup.createAccount(user_data));
 
         // Step 2 -> Validate email (with OTP)
-        // this.sres = SignupResponse.setAuthState(this.sres, signup.validateAccount(user_data));
+        this.sres = SignupResponse.setAuthState(this.sres, signup.validateAccount(user_data));
 
         // Step 3 -> First device registration
         // this.sres = SignupResponse.setAuthState(this.sres, device.firstDeviceRegistration(device_data));

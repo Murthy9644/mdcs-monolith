@@ -183,4 +183,16 @@ public class DataClasses{
 
         public Map<String, Plugin> plugins = new HashMap<>(); // plugin name -> Plugin
     }
+
+    // Template for Secrets.key
+    public class Secrets{
+
+        // File location
+        private static final String ci_path = Paths.get(
+            SystemUtils.getAppDataDirectory(), 
+            "secrets", "Cikey.key"
+        ).toString();
+
+        public static String getCiPath(){ return ci_path; }
+    }
 }

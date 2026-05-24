@@ -15,13 +15,13 @@ import security.TokenCipher;
 public class SignupHandler {
     private ServerRequest server;
     private BlockingQueue<String> queue;
-    private String username, email;
+    private String user_id, username, email;
     private AuthInteractor interactor;
 
     public AuthState validateAccount(DataClasses.Accounts body)
     throws IOException, InterruptedException{
-        int otp = Integer.parseInt(this.interactor.getOTP());
-        ValidateAccRequest validation_data = new ValidateAccRequest(this.email, otp);        
+        String otp = this.interactor.getOTP();
+        ValidateAccRequest validation_data = new ValidateAccRequest(this.user_id, this.email, otp);        
 
         this.queue.offer("info<>Starting OTP verification");
 
@@ -31,13 +31,21 @@ public class SignupHandler {
             FileIO.toJson(validation_data)
         );
 
+        if (res.statusCode() >= 500){
+            this.queue.offer("critical<>Internal server error");
+            return AuthState.TERMINATE;
+        }
+
         String res_body = res.body().toString();
         
         ValidateAccResponse response = FileIO.toObject(res_body, ValidateAccResponse.class);
 
-        // Need to add functionality to handle, account creation / OTP errors
-
-        this.queue.offer("success<>Account validated successfully");
+        if (!response.status){
+            this.queue.offer("error<>" + Utils.err.get(response.error));
+            this.queue.offer("error<>" + response.message);
+            
+            return AuthState.FAIL;
+        }
 
         // Encrypt tokens
         body.auth_token = TokenCipher.encrypt(response.body.auth_token);
@@ -95,6 +103,8 @@ public class SignupHandler {
         body.user_id = response.body.user_id;
         body.username = response.body.username;
         body.email = response.body.email;
+
+        this.user_id = response.body.user_id;
 
         return AuthState.SUCCESS;
     }

@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 // Have entities: user, workspace, device
 
 /*
@@ -24,11 +26,23 @@ device have properties:
 		device_name
 */
 
+type OTP struct {
+	OTP    string    `json:"otp"`
+	SentAt time.Time `json:"sent_at"`
+}
+
+type AccessToken struct {
+	RefreshToken string    `json:"refresh_token"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
 type UserAttrs struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Verified bool   `json:"verified"`
+	Username    string      `json:"username"`
+	Email       string      `json:"email"`
+	Password    string      `json:"password"`
+	Otp         OTP         `json:"verification"`
+	AccessToken AccessToken `json:"token"`
+	Verified    bool        `json:"verified"`
 }
 
 // string(user_id) -> user attributes

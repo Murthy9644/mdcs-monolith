@@ -1,27 +1,14 @@
 package security;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.Base64;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import file_io.DataClasses;
 import file_io.FileIO;
-import utils.SystemUtils;
-
-// Template for Secrets.key
-class Secrets{
-
-    // File location
-    private static final String ci_path = Paths.get(
-        SystemUtils.getAppDataDirectory(), 
-        "secrets", "Cikey.key"
-    ).toString();
-
-    public static String getCiPath(){ return ci_path; }
-}
 
 public class KeyManager {
     
@@ -38,7 +25,7 @@ public class KeyManager {
 
     public static SecretKey getKey()
     throws IOException{
-        String cikey = FileIO.fileRead(Secrets.getCiPath());
+        String cikey = FileIO.fileRead(DataClasses.Secrets.getCiPath());
 
         if (cikey != null && !cikey.isEmpty()){
             byte[] decoded_key = Base64.getDecoder().decode(cikey);
@@ -50,7 +37,7 @@ public class KeyManager {
         byte[] key_bytes = secret_key.getEncoded();
         String encoded_key = Base64.getEncoder().encodeToString(key_bytes);
 
-        FileIO.fileWrite(Secrets.getCiPath(), encoded_key, "_");
+        FileIO.fileWrite(DataClasses.Secrets.getCiPath(), encoded_key, "_");
 
         return secret_key;
     }

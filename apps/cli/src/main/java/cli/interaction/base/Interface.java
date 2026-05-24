@@ -11,6 +11,7 @@ public class Interface {
 
     public void begin(){
         String command;
+        this.io.highlight("Command Interface");
 
         while (true) {
             this.io.specifier("> ");

@@ -29,13 +29,13 @@ func pswdCheck(next http.HandlerFunc) http.HandlerFunc {
 	emailtest := regexp.MustCompile(`^[a-zA-Z\d._%+-]+@(([a-z]+\.)[a-z]+)$`)
 
 	return func(res http.ResponseWriter, req *http.Request) {
-		var data SignupRequest
+		var data SignupReq
 		err := json.NewDecoder(req.Body).Decode(&data)
 		defer req.Body.Close()
 
 		if err != nil {
 			payload, err := json.Marshal(
-				SignupResponse{
+				Response{
 					Status:  false,
 					Body:    nil,
 					Error:   "INVALID_DATA",
@@ -52,7 +52,7 @@ func pswdCheck(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		if len(data.Password) < 6 {
-			respld := SignupResponse{
+			respld := Response{
 				Status:  false,
 				Body:    nil,
 				Error:   "SHORT_PASSWORD",
@@ -71,7 +71,7 @@ func pswdCheck(next http.HandlerFunc) http.HandlerFunc {
 
 		for test, err := range tests {
 			if !test.MatchString(data.Password) {
-				respld := SignupResponse{
+				respld := Response{
 					Status:  false,
 					Body:    nil,
 					Error:   err,
@@ -90,7 +90,7 @@ func pswdCheck(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		if !emailtest.MatchString(data.Email) {
-			respld := SignupResponse{
+			respld := Response{
 				Status:  false,
 				Body:    nil,
 				Error:   "INVALID_EMAIL",
@@ -110,6 +110,40 @@ func pswdCheck(next http.HandlerFunc) http.HandlerFunc {
 		con := context.WithValue(
 			req.Context(),
 			SUpDataKey, data,
+		)
+
+		next(res, req.WithContext(con))
+	}
+}
+
+func requireOtp(next http.HandlerFunc) http.HandlerFunc {
+
+	return func(res http.ResponseWriter, req *http.Request) {
+		var data VerifyAccReq
+		err := json.NewDecoder(req.Body).Decode(&data)
+		defer req.Body.Close()
+
+		if err != nil || data.UserId == "" || data.Email == "" || data.OTP == "" {
+			payload, err := json.Marshal(
+				Response{
+					Status:  false,
+					Body:    nil,
+					Error:   "INVALID_DATA",
+					Message: "Failed to parse data",
+				})
+
+			if err != nil {
+				http.Error(res, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			res.Write(payload)
+			return
+		}
+
+		con := context.WithValue(
+			req.Context(),
+			VerAccDataKey, data,
 		)
 
 		next(res, req.WithContext(con))

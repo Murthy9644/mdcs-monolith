@@ -3,6 +3,8 @@ package bootstrap;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -178,6 +180,10 @@ public class SchemaValidation {
 
         boolean status = checkSchema(schema_design, bsres);
         schema_design.clear();
+
+        // Check file existence for non-JSON files
+        if (!Files.exists(Path.of(DataClasses.Secrets.getCiPath())))
+            FileIO.fileWrite(DataClasses.Secrets.getCiPath(), "", "_");
 
         return status;
     }
