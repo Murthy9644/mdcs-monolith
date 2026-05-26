@@ -6,6 +6,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import auth.AuthHandler;
 import cli.helpers.HelperThreads;
 import cli.utils.tools.ConsoleIO;
+import models.PrintTask;
 import models.auth.SignupResponse.AuthState;
 import network.ServerRequest;
 
@@ -13,7 +14,7 @@ public class AuthPipe {
     private ConsoleIO io;
     private ServerRequest server;
     private AuthHandler auth;
-    private BlockingQueue<String> queue;
+    private BlockingQueue<PrintTask> queue;
 
     public static boolean verifyAuthToken(){
 

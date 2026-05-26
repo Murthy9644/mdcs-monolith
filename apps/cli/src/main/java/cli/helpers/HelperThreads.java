@@ -3,11 +3,12 @@ package cli.helpers;
 import java.util.concurrent.BlockingQueue;
 
 import cli.utils.tools.ConsoleIO;
+import models.PrintTask;
 
 public class HelperThreads {
     
     public static class PrintToConsole implements Runnable{
-        private BlockingQueue<String> queue;
+        private BlockingQueue<PrintTask> queue;
         private ConsoleIO io;
 
         private void mapLevel(String level, String line){
@@ -44,16 +45,18 @@ public class HelperThreads {
             
             while (true){
                 try {
-                    String line = queue.take();
-                    String args[] = line.split("<>");
+                    PrintTask task = queue.take();
+                    String args[] = task.message.split("<>");
 
                     this.mapLevel(args[0], args[1]);
+                    task.latch.countDown();
                 } catch (InterruptedException e) {
-                    String line;
+                    PrintTask task;
                     
-                    while ((line = queue.poll()) != null){
-                        String args[] = line.split("<>");
+                    while ((task = queue.poll()) != null){
+                        String args[] = task.message.split("<>");
                         this.mapLevel(args[0], args[1]);
+                        task.latch.countDown();
                     }
 
                     break;
@@ -61,7 +64,7 @@ public class HelperThreads {
             }
         }
 
-        public PrintToConsole(BlockingQueue<String> queue, ConsoleIO io){
+        public PrintToConsole(BlockingQueue<PrintTask> queue, ConsoleIO io){
             this.queue = queue;
             this.io = io;
         }

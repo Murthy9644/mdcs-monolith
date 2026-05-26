@@ -3,9 +3,11 @@ package auth.user_auth.signup;
 import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 
 import file_io.DataClasses;
 import file_io.FileIO;
+import models.PrintTask;
 import models.auth.AuthInteractor;
 import models.auth.ServerResponseClasses.*;
 import models.auth.SignupResponse.AuthState;
@@ -14,16 +16,27 @@ import security.TokenCipher;
 
 public class SignupHandler {
     private ServerRequest server;
-    private BlockingQueue<String> queue;
+    private BlockingQueue<PrintTask> queue;
     private String user_id, username, email;
     private AuthInteractor interactor;
 
     public AuthState validateAccount(DataClasses.Accounts body)
     throws IOException, InterruptedException{
+        CountDownLatch latch = new CountDownLatch(1);
+        PrintTask task = new PrintTask("<>", latch);
+        this.queue.offer(task);
+
+        // latch.await();
+
         String otp = this.interactor.getOTP();
         ValidateAccRequest validation_data = new ValidateAccRequest(this.user_id, this.email, otp);        
 
-        this.queue.offer("info<>Starting OTP verification");
+        this.queue.offer(
+            new PrintTask(
+                "info<>Starting OTP verification",
+                new CountDownLatch(1)
+            )
+        );
 
         HttpResponse<String> res = this.server.post(
             "/auth/user/verify-otp", 
@@ -32,7 +45,12 @@ public class SignupHandler {
         );
 
         if (res.statusCode() >= 500){
-            this.queue.offer("critical<>Internal server error");
+            this.queue.offer(
+                new PrintTask(
+                    "critical<>Internal Server Error",
+                    new CountDownLatch(1)
+                )
+            );
             return AuthState.TERMINATE;
         }
 
@@ -41,8 +59,18 @@ public class SignupHandler {
         ValidateAccResponse response = FileIO.toObject(res_body, ValidateAccResponse.class);
 
         if (!response.status){
-            this.queue.offer("error<>" + Utils.err.get(response.error));
-            this.queue.offer("error<>" + response.message);
+            this.queue.offer(
+                new PrintTask(
+                    "error<>" + Utils.err.get(response.error),
+                    new CountDownLatch(1)
+                )
+            );
+            this.queue.offer(
+                new PrintTask(
+                    "error<>" + response.message,
+                    new CountDownLatch(1)
+                )
+            );
             
             return AuthState.FAIL;
         }
@@ -56,6 +84,11 @@ public class SignupHandler {
 
     public AuthState createAccount(DataClasses.Accounts body)
     throws IOException, InterruptedException{
+        CountDownLatch latch = new CountDownLatch(1);
+        PrintTask task = new PrintTask("info<>Enter your details", latch);
+        this.queue.offer(task);
+
+        latch.await();
 
         this.username = this.interactor.getUsername();
         this.email = this.interactor.getEmail();
@@ -74,7 +107,11 @@ public class SignupHandler {
             password
         );
 
-        this.queue.offer("info<>Registration request has been submitted to the server");
+        task = new PrintTask(
+            "info<>Registration request has been submitted to the server",
+            new CountDownLatch(1)
+        );
+        this.queue.offer(task);
         
         HttpResponse<String> res = this.server.post(
             "/auth/user/signup", 
@@ -83,7 +120,11 @@ public class SignupHandler {
         );
 
         if (res.statusCode() >= 500){
-            this.queue.offer("critical<>Internal server error");
+            task = new PrintTask(
+                "critical<>Internal server error",
+                new CountDownLatch(1)
+            );
+            this.queue.offer(task);
             return AuthState.TERMINATE;
         }
 
@@ -92,13 +133,28 @@ public class SignupHandler {
         CreateAccResponse response = FileIO.toObject(res_body, CreateAccResponse.class);
 
         if (!response.status){
-            this.queue.offer("error<>" + Utils.err.get(response.error));
-            this.queue.offer("error<>" + response.message);
+            this.queue.offer(
+                new PrintTask(
+                    "error<>" + Utils.err.get(response.error),
+                    new CountDownLatch(1)
+                )
+            );
+            this.queue.offer(
+                new PrintTask(
+                    "error<>" + response.message,
+                    new CountDownLatch(1)
+                )
+            );
             
             return AuthState.FAIL;
         }
 
-        this.queue.offer("success<>Account created successfully");
+        this.queue.offer(
+            new PrintTask(
+                "success<>Account created successfully",
+                new CountDownLatch(1)
+            )
+        );
 
         body.user_id = response.body.user_id;
         body.username = response.body.username;
@@ -109,7 +165,7 @@ public class SignupHandler {
         return AuthState.SUCCESS;
     }
     
-    public SignupHandler(ServerRequest server, BlockingQueue<String> queue, AuthInteractor interactor){
+    public SignupHandler(ServerRequest server, BlockingQueue<PrintTask> queue, AuthInteractor interactor){
         this.server = server;
         this.queue = queue;
         this.interactor = interactor;

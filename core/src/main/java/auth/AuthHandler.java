@@ -6,6 +6,7 @@ import java.util.concurrent.BlockingQueue;
 import auth.user_auth.signup.SignupHandler;
 import file_io.DataClasses;
 import file_io.FileIO;
+import models.PrintTask;
 import models.auth.AuthInteractor;
 import models.auth.SignupResponse;
 import models.auth.SignupResponse.*;
@@ -13,7 +14,7 @@ import network.ServerRequest;
 
 public class AuthHandler {
     private ServerRequest server;
-    private BlockingQueue<String> queue;
+    private BlockingQueue<PrintTask> queue;
     private AuthInteractor interactor;
     private AuthState sres = AuthState.SUCCESS;
 
@@ -28,8 +29,12 @@ public class AuthHandler {
         // Step 1 -> Create account
         this.sres = SignupResponse.setAuthState(this.sres, signup.createAccount(user_data));
 
+        if (this.sres == AuthState.FAIL || this.sres == AuthState.TERMINATE) return sres;
+
         // Step 2 -> Validate email (with OTP)
         this.sres = SignupResponse.setAuthState(this.sres, signup.validateAccount(user_data));
+
+        if (sres == AuthState.FAIL || sres == AuthState.TERMINATE) return sres;
 
         // Step 3 -> First device registration
         // this.sres = SignupResponse.setAuthState(this.sres, device.firstDeviceRegistration(device_data));
@@ -52,7 +57,7 @@ public class AuthHandler {
         //
     }
     
-    public AuthHandler(ServerRequest server, BlockingQueue<String> queue, AuthInteractor interactor){
+    public AuthHandler(ServerRequest server, BlockingQueue<PrintTask> queue, AuthInteractor interactor){
         this.server = server;
         this.queue = queue;
         this.interactor = interactor;
