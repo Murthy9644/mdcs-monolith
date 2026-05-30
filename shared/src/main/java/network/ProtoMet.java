@@ -7,7 +7,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Properties;
 
-public class ServerRequest {
+public class ProtoMet {
     private HttpClient client;
     private String url_base;
     
@@ -37,7 +37,7 @@ public class ServerRequest {
         return res.toString();
     }
 
-    public ServerRequest(Properties APP){
+    public ProtoMet(Properties APP){
         String host = APP.getProperty("server.host");
         String port = APP.getProperty("server.port");
 

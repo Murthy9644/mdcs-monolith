@@ -5,17 +5,17 @@ import java.net.http.HttpResponse;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 
-import file_io.DataClasses;
-import file_io.FileIO;
+import fileio.DataClasses;
+import fileio.FileIO;
 import models.PrintTask;
 import models.auth.AuthInteractor;
 import models.auth.ServerResponseClasses.*;
 import models.auth.SignupResponse.AuthState;
-import network.ServerRequest;
+import network.ProtoMet;
 import security.TokenCipher;
 
 public class SignupHandler {
-    private ServerRequest server;
+    private ProtoMet server;
     private BlockingQueue<PrintTask> queue;
     private String user_id, username, email;
     private AuthInteractor interactor;
@@ -165,7 +165,7 @@ public class SignupHandler {
         return AuthState.SUCCESS;
     }
     
-    public SignupHandler(ServerRequest server, BlockingQueue<PrintTask> queue, AuthInteractor interactor){
+    public SignupHandler(ProtoMet server, BlockingQueue<PrintTask> queue, AuthInteractor interactor){
         this.server = server;
         this.queue = queue;
         this.interactor = interactor;

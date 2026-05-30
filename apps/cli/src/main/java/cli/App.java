@@ -7,16 +7,16 @@ import cli.interaction.base.Interface;
 import cli.interaction.bootstrap.BootstrapTerminal;
 import cli.utils.tools.ConfigLoader;
 import cli.utils.tools.ConsoleIO;
-import network.ServerRequest;
+import network.ProtoMet;
 
 public class App {
     private ConsoleIO io;
-    private ServerRequest server;
+    private ProtoMet server;
     private Properties APP, VERSIONS;
 
     public void start() {
         String header_string = this.APP.getProperty("app.name");
-        header_string += " V" + this.VERSIONS.getProperty("app.version") + "\n";
+        header_string += " v" + this.VERSIONS.getProperty("app.version") + "\n";
         this.io.heading(header_string);
         
         if (!(new BootstrapTerminal(this.server, this.VERSIONS).initiate())){
@@ -37,6 +37,6 @@ public class App {
             System.exit(0);
         }
 
-        this.server = new ServerRequest(APP);
+        this.server = new ProtoMet(APP);
     }
 }

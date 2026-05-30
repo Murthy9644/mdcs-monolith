@@ -1,6 +1,6 @@
 package models.auth;
 
-import models.ServerResponse;
+import models.network.Http;
 
 public class ServerResponseClasses {
 
@@ -11,7 +11,7 @@ public class ServerResponseClasses {
         public String email;
     }
 
-    public static class CreateAccResponse extends ServerResponse{
+    public static class CreateAccResponse extends Http{
         public CreateAccResBody body;
     }
 
@@ -21,7 +21,7 @@ public class ServerResponseClasses {
         public String refresh_token;
     }
 
-    public static class ValidateAccResponse extends ServerResponse{
+    public static class ValidateAccResponse extends Http{
         public ValidateAccResBody body;
     }
 
@@ -33,7 +33,7 @@ public class ServerResponseClasses {
         public String workspace_name;
     }
 
-    public static class FDRResponse extends ServerResponse{
+    public static class FDRResponse extends Http{
         public FDRBody body;
     }
 

@@ -2,12 +2,12 @@ package bootstrap;
 
 import java.io.IOException;
 
-import file_io.DataClasses;
-import file_io.FileIO;
+import fileio.DataClasses;
+import fileio.FileIO;
 import logger.Log;
 import models.bootstrap.BootstrapResponse;
 
-public class UserStateResolution {
+public class UserState {
 
     private static DataClasses.Accounts valid(Log logger)
     throws IllegalAccessException, NoSuchFieldException{

@@ -1,7 +1,5 @@
 import os, sys, colorama
 
-colorama.init(autoreset= True)
-
 acknowledge = '''
     python "build.py" <command> <module>
 
@@ -70,5 +68,6 @@ class Build:
 
         self.run()
 
+colorama.init(autoreset= True)
 Build()
 print(colorama.Fore.RESET, end = '')

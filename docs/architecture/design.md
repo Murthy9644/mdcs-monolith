@@ -1,5 +1,6 @@
 # Master - Workers Models
-Main thread assigns jobs to different worker threads and manages the following step from resultant states from workers
+Main thread assigns jobs to different worker threads and manages the following step from resultant 
+states from workers
 
 ## Expected Workers for v1.0.0
 - Bootstrap
@@ -12,12 +13,13 @@ Main thread assigns jobs to different worker threads and manages the following s
 - job
 - job status
 - app state
-- summary
+- report
 
-### Workers &rarr; Master Request
+### Workers &harr; Master Envelope
+> May change later as required
 - requested thread id
 - mode (request / serve)
-- event (print / scan / instance)
+- event (print / scan / instance ...)
 - latch
 
 ---

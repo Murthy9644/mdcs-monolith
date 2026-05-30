@@ -1,4 +1,4 @@
-package file_io;
+package fileio;
 
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -184,15 +184,17 @@ public class DataClasses{
         public Map<String, Plugin> plugins = new HashMap<>(); // plugin name -> Plugin
     }
 
-    // Template for Secrets.key
-    public class Secrets{
+    // Template for Cikey.key
+    public class Cikey implements HasPath{
 
         // File location
-        private static final String ci_path = Paths.get(
+        private static final String path = Paths.get(
             SystemUtils.getAppDataDirectory(), 
             "secrets", "Cikey.key"
         ).toString();
+        
+        public String getPath(){ return path; }
 
-        public static String getCiPath(){ return ci_path; }
+        public static String getCiPath(){ return path; }
     }
 }

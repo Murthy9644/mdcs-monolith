@@ -8,11 +8,11 @@ import cli.helpers.HelperThreads;
 import cli.utils.tools.ConsoleIO;
 import models.PrintTask;
 import models.auth.SignupResponse.AuthState;
-import network.ServerRequest;
+import network.ProtoMet;
 
 public class AuthPipe {
     private ConsoleIO io;
-    private ServerRequest server;
+    private ProtoMet server;
     private AuthHandler auth;
     private BlockingQueue<PrintTask> queue;
 
@@ -92,7 +92,7 @@ public class AuthPipe {
         return true; // Temporarily
     }
     
-    public AuthPipe(ConsoleIO inou, ServerRequest server){
+    public AuthPipe(ConsoleIO inou, ProtoMet server){
         this.io = inou;
         this.server = server;
         this.queue = new LinkedBlockingQueue<>();

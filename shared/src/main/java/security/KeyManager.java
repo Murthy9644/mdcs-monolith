@@ -7,8 +7,8 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import file_io.DataClasses;
-import file_io.FileIO;
+import fileio.DataClasses;
+import fileio.FileIO;
 
 public class KeyManager {
     

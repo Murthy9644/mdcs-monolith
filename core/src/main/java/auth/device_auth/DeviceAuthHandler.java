@@ -4,16 +4,16 @@ import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.util.concurrent.BlockingQueue;
 
-import file_io.DataClasses;
-import file_io.FileIO;
+import fileio.DataClasses;
+import fileio.FileIO;
 import models.auth.AuthInteractor;
 import models.auth.ServerResponseClasses.FDRRequest;
 import models.auth.ServerResponseClasses.FDRResponse;
 import models.auth.SignupResponse.AuthState;
-import network.ServerRequest;
+import network.ProtoMet;
 
 public class DeviceAuthHandler {
-    private ServerRequest server;
+    private ProtoMet server;
     private BlockingQueue<String> queue;
     private AuthInteractor interactor;
 
@@ -45,7 +45,7 @@ public class DeviceAuthHandler {
         return AuthState.SUCCESS;
     }
     
-    public DeviceAuthHandler(ServerRequest server, BlockingQueue<String> queue, AuthInteractor interactor){
+    public DeviceAuthHandler(ProtoMet server, BlockingQueue<String> queue, AuthInteractor interactor){
         this.server = server;
         this.queue = queue;
         this.interactor = interactor;

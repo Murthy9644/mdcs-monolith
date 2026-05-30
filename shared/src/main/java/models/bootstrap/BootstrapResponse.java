@@ -8,11 +8,6 @@ import java.util.Map;
 public class BootstrapResponse {
 
     // Enums for app state
-    public static enum AppState {
-        TERMINATE,
-        BLOCK,
-        CONTINUE
-    }
 
     // Enums for status
     public static enum Status {

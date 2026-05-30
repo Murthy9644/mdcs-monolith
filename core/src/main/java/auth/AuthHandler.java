@@ -4,16 +4,16 @@ import java.util.concurrent.BlockingQueue;
 
 // import auth.device_auth.DeviceAuthHandler;
 import auth.user_auth.signup.SignupHandler;
-import file_io.DataClasses;
-import file_io.FileIO;
+import fileio.DataClasses;
+import fileio.FileIO;
 import models.PrintTask;
 import models.auth.AuthInteractor;
 import models.auth.SignupResponse;
 import models.auth.SignupResponse.*;
-import network.ServerRequest;
+import network.ProtoMet;
 
 public class AuthHandler {
-    private ServerRequest server;
+    private ProtoMet server;
     private BlockingQueue<PrintTask> queue;
     private AuthInteractor interactor;
     private AuthState sres = AuthState.SUCCESS;
@@ -57,7 +57,7 @@ public class AuthHandler {
         //
     }
     
-    public AuthHandler(ServerRequest server, BlockingQueue<PrintTask> queue, AuthInteractor interactor){
+    public AuthHandler(ProtoMet server, BlockingQueue<PrintTask> queue, AuthInteractor interactor){
         this.server = server;
         this.queue = queue;
         this.interactor = interactor;

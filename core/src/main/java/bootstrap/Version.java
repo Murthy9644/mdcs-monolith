@@ -8,19 +8,20 @@ import java.util.Properties;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import file_io.DataClasses;
-import file_io.FileIO;
+import fileio.DataClasses;
+import fileio.FileIO;
 import logger.Log;
 import models.bootstrap.ServerResponseClasses;
 import models.bootstrap.BootstrapResponse.*;
-import network.ServerRequest;
+import models.jobs.Report;
+import network.ProtoMet;
 
-public class VersionCheck {
-    private static ServerRequest server;
+public class Version {
+    private static ProtoMet server;
     private static Properties VERSIONS;
     private static Log logger;
 
-    private static boolean versionFormat(GeneralResponse bsres) {
+    private static boolean versionFormat(GeneralResponse report) {
         logger.info("bootstrap", "Checking version format");
         BootstrapIssue issue = new BootstrapIssue();
         issue.phase = "Version Validation";
@@ -29,13 +30,13 @@ public class VersionCheck {
             String version = VERSIONS.getProperty(key);
 
             if (!version.matches("^[0-9]+\\.[0-9]+\\.[0-9]$")) {
-                bsres.setAppState(AppState.TERMINATE);
+                report.setAppState(AppState.TERMINATE);
                 issue.status = Status.INVALID_VERSION_FORMAT;
                 issue.issues.add(version);
                 issue.message = "Application startup aborted";
 
                 logger.error("bootstrap", "Invalid version format: " + key);
-                bsres.reports.add(issue);
+                report.reports.add(issue);
 
                 return false;
             }
@@ -46,12 +47,12 @@ public class VersionCheck {
         return true;
     }
 
-    private static boolean updateCheck(GeneralResponse bsres)
+    private static boolean updateCheck(GeneralResponse report)
             throws Exception {
         logger.network("bootstrap", "Checking for updates");
         BootstrapIssue issue = new BootstrapIssue();
         issue.phase = "Version Validation";
-        bsres.update_info.update_type = null;
+        report.update_info.update_type = null;
 
         try {
             // Read plugins metadata
@@ -94,14 +95,14 @@ public class VersionCheck {
             
             // Check for critical app update
             if (res.app.critical_update){
-                bsres.setAppState(AppState.BLOCK);
+                report.setAppState(AppState.BLOCK);
 
-                bsres.update_info.message = "Application startup blocked";
-                bsres.update_info.app_update_avail = true;
-                bsres.update_info.update_type = UpdateType.CRITICAL;
-                bsres.update_info.app_avail_ver = res.app.available_version;
-                bsres.update_info.app_curr_ver = res.app.current_version;
-                bsres.update_info.changes = res.changes;
+                report.update_info.message = "Application startup blocked";
+                report.update_info.app_update_avail = true;
+                report.update_info.update_type = UpdateType.CRITICAL;
+                report.update_info.app_avail_ver = res.app.available_version;
+                report.update_info.app_curr_ver = res.app.current_version;
+                report.update_info.changes = res.changes;
 
                 logger.network("bootstrap", "Critical update detected");
 
@@ -115,36 +116,36 @@ public class VersionCheck {
             String[] curr_update = res.app.current_version.split("\\.");
 
             if (Integer.parseInt(avail_update[0]) > Integer.parseInt(curr_update[0])){ // Major
-                bsres.update_info.app_update_avail = true;
-                bsres.update_info.update_type = UpdateType.OPTIONAL;
-                bsres.update_info.app_avail_ver = res.app.available_version;
-                bsres.update_info.app_curr_ver = res.app.current_version;
+                report.update_info.app_update_avail = true;
+                report.update_info.update_type = UpdateType.OPTIONAL;
+                report.update_info.app_avail_ver = res.app.available_version;
+                report.update_info.app_curr_ver = res.app.current_version;
 
                 logger.network("bootstrap", "New application update found");
 
                 update_found = true;
 
             } else if (Integer.parseInt(avail_update[1]) > Integer.parseInt(curr_update[1])){ // Minor
-                bsres.update_info.app_update_avail = true;
-                bsres.update_info.update_type = UpdateType.OPTIONAL;
-                bsres.update_info.app_avail_ver = res.app.available_version;
-                bsres.update_info.app_curr_ver = res.app.current_version;
+                report.update_info.app_update_avail = true;
+                report.update_info.update_type = UpdateType.OPTIONAL;
+                report.update_info.app_avail_ver = res.app.available_version;
+                report.update_info.app_curr_ver = res.app.current_version;
 
                 logger.network("bootstrap", "New application update found");
 
                 update_found = true;
 
             } else if (Integer.parseInt(avail_update[2]) > Integer.parseInt(curr_update[2])){ // Patch
-                bsres.update_info.app_update_avail = true;
-                bsres.update_info.update_type = UpdateType.PATCH;
-                bsres.update_info.app_avail_ver = res.app.available_version;
-                bsres.update_info.app_curr_ver = res.app.current_version;
+                report.update_info.app_update_avail = true;
+                report.update_info.update_type = UpdateType.PATCH;
+                report.update_info.app_avail_ver = res.app.available_version;
+                report.update_info.app_curr_ver = res.app.current_version;
 
                 logger.network("bootstrap", "New application update found");
 
                 update_found = true;
 
-            } else bsres.update_info.app_update_avail = false;
+            } else report.update_info.app_update_avail = false;
 
             for (String plugin_name : res.plugins.keySet()){
                 ServerResponseClasses.Plugin plugin = res.plugins.get(plugin_name);
@@ -158,11 +159,11 @@ public class VersionCheck {
                     info.installed_ver = plugin.installed_version;
                     info.is_compatible = plugin.is_compatible;
 
-                    if (bsres.update_info.plugin_ver == null)
-                        bsres.update_info.plugin_ver = new HashMap<>();
+                    if (report.update_info.plugin_ver == null)
+                        report.update_info.plugin_ver = new HashMap<>();
 
-                    bsres.update_info.plugin_ver.put(plugin_name, info);
-                    bsres.update_info.update_type = UpdateType.PLUGIN;
+                    report.update_info.plugin_ver.put(plugin_name, info);
+                    report.update_info.update_type = UpdateType.PLUGIN;
 
                     logger.network("bootstrap", "New update found: " + plugin_name + " (" + plugin.available_version + ")");
 
@@ -174,7 +175,7 @@ public class VersionCheck {
             FileIO.fileWrite(plugins);
 
             if (update_found){
-                bsres.update_info.changes = res.changes;
+                report.update_info.changes = res.changes;
             } else {
                 logger.network("bootstrap", "Current version is up-to-date");
             }
@@ -185,7 +186,7 @@ public class VersionCheck {
 
         } catch (JsonProcessingException e) {
             e.printStackTrace();
-            bsres.setAppState(AppState.CONTINUE);
+            report.setAppState(AppState.CONTINUE);
             issue.status = Status.INVALID_UPDATE_RESPONSE;
             issue.issues = null;
             issue.message = "Proceeding without update check";
@@ -194,7 +195,7 @@ public class VersionCheck {
 
             return false;
         } catch (IOException e) {
-            bsres.setAppState(AppState.CONTINUE);
+            report.setAppState(AppState.CONTINUE);
             issue.status = Status.UPDATE_CHECK_FAILED;
             issue.issues = null;
             issue.message = "Proceeding without update check";
@@ -203,7 +204,7 @@ public class VersionCheck {
 
             return false;
         } catch (InterruptedException e) {
-            bsres.setAppState(AppState.CONTINUE);
+            report.setAppState(AppState.CONTINUE);
             issue.status = Status.UPDATE_CHECK_FAILED;
             issue.issues = null;
             issue.message = "Proceeding without update check";
@@ -216,22 +217,22 @@ public class VersionCheck {
         } catch (Exception e){
             logger.error("bootstrap", "Failed to validate version: " + e.getMessage());
         } finally{
-            if (issue.status != null) bsres.reports.add(issue);
+            if (issue.status != null) report.reports.add(issue);
         }
 
         return true;
     }
 
     public static boolean validate(
-            ServerRequest server_inc,
+            ProtoMet server_inc,
             Properties v_inc,
-            GeneralResponse bsres,
+            Report report,
             Log logger_inc) throws Exception {
         server = server_inc;
         VERSIONS = v_inc;
         logger = logger_inc;
 
-        if (versionFormat(bsres) && updateCheck(bsres))
+        if (versionFormat(report) && updateCheck(report))
             return true;
 
         return false;

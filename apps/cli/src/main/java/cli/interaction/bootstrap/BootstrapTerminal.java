@@ -2,15 +2,15 @@ package cli.interaction.bootstrap;
 
 import java.util.Properties;
 
-import bootstrap.BootstrapHandler;
+import bootstrap.Bootstrap;
 import cli.interaction.auth.AuthPipe;
 import cli.utils.tools.ConsoleIO;
 import models.bootstrap.BootstrapResponse.*;
-import network.ServerRequest;
+import network.ProtoMet;
 
 public class BootstrapTerminal {
     private Properties VERSIONS;
-    private ServerRequest server;
+    private ProtoMet server;
     private GeneralResponse res;
     private ConsoleIO io;
 
@@ -197,7 +197,7 @@ public class BootstrapTerminal {
 
         // Initialize bootstrap
         try {
-            this.res = BootstrapHandler.run(this.server, VERSIONS);
+            this.res = Bootstrap.run(this.server, VERSIONS);
         }
 
         catch (Exception e) {
@@ -215,7 +215,7 @@ public class BootstrapTerminal {
         return true;
     }
 
-    public BootstrapTerminal(ServerRequest server, Properties VERSIONS) {
+    public BootstrapTerminal(ProtoMet server, Properties VERSIONS) {
         this.server = server;
         this.VERSIONS = VERSIONS;
         this.io = new ConsoleIO();
