@@ -100,12 +100,19 @@ public class Schema implements Runnable{
 
                         FileIO.writeJsonNode(template, node);
                         
-                        this.logger.info("bootstrap", "Defaulted invalid data: " + tem_name);
+                        this.logger.info(
+                            "bootstrap", 
+                            "Defaulted invalid data: " + tem_name
+                        );
+
                         this.job.logs.add("info<>Defaulted invalid data: " + tem_name);
                     } catch (Exception e){
                         // Failed to write file. Stop application startup
 
-                        this.logger.error("bootstrap", "Failed to write file: " + tem_name);
+                        this.logger.error(
+                            "bootstrap", 
+                            "Failed to write file: " + tem_name
+                        );
 
                         this.report.setAppState(AppState.TERMINATE);
                         this.job.logs.add("error<>Failed to write file: " + tem_name);
@@ -139,7 +146,10 @@ public class Schema implements Runnable{
                     } catch (Exception f){
                         // Failed to write defaults. Stop application startup
 
-                        this.logger.error("bootstrap", "Failed to create file: " + tem_name);
+                        this.logger.error(
+                            "bootstrap", 
+                            "Failed to create file: " + tem_name
+                        );
 
                         this.report.setAppState(AppState.TERMINATE);
                         this.job.logs.add(
@@ -228,7 +238,7 @@ public class Schema implements Runnable{
         this.rules.clear();
     }
 
-    private Schema(Report report, Log logger){
+    protected Schema(Report report, Log logger){
         this.report = report;
         this.logger = logger;
 

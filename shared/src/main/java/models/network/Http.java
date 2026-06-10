@@ -1,31 +1,31 @@
 package models.network;
 
-import java.util.HashMap;
-import java.util.Map;
-
 // Contains DTOs for HTTP requests and responses
 
+/**
+ * These DTOs are meant to be extended. These provide basic members that are common in any
+ * transaction, and remaining members/methods are to be included in the child.
+ * 
+ * Suggestion is, create a class for a particular api which extends these abstract classes and 
+ * 'Body' DTO in the respective package in shared/models.
+ */
+
 public class Http {
-
-    public enum Method{
-        GET,
-        POST
-    }
-    
-    /*
-    These DTOs are meant to be extended. These provide basic members that are common in any
-    transaction, and remaining members/methods are to be included in the child.
-    */
-
-    /*
-    Suggestion is, create a class for a particular api which extends these abstract classes and 
-    'Body' DTO in the respective package in `shared/models`.
-    */
    
-    public static abstract class Request{
-        public Method method;
+    public static abstract class Request<T>{
         public String endpoint;
-        public Map<String, String> headers = new HashMap<>();
+        public String headers[] = new String[0];
+        public T body;
+
+        public void addHeader(String key, String value){
+            String headers[] = new String[this.headers.length + 2];
+            System.arraycopy(this.headers, 0, headers, 0, this.headers.length);
+
+            headers[this.headers.length] = key;
+            headers[this.headers.length + 1] = value;
+
+            this.headers = headers;
+        }
     }
 
     public static abstract class Response{

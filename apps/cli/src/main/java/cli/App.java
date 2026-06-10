@@ -4,10 +4,15 @@ import java.io.IOException;
 import java.util.Properties;
 
 import cli.interaction.base.Interface;
-import cli.interaction.bootstrap.BootstrapTerminal;
 import cli.utils.tools.ConfigLoader;
 import cli.utils.tools.ConsoleIO;
 import network.ProtoMet;
+
+/**
+ * Manager to control entire application flow, from the moment it is launched until it is closed.
+ * It is responsible for initializing the application, loading configuration files, and managing
+ * the user interface.
+ */
 
 public class App {
     private ConsoleIO io;
@@ -19,13 +24,12 @@ public class App {
         header_string += " v" + this.VERSIONS.getProperty("app.version") + "\n";
         this.io.heading(header_string);
         
-        if (!(new BootstrapTerminal(this.server, this.VERSIONS).initiate())){
-            return;
-        }
-        
         new Interface(this.io, this.APP, this.VERSIONS).begin();
     }
 
+    /**
+     * Runs when the application is launched without command line arguments.
+     */
     public App(){
         this.io = new ConsoleIO();
         

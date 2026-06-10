@@ -7,16 +7,28 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Properties;
 
+import fileio.FileIO;
+import models.network.Http.Request;
+
+/**
+ * Protocol methods to send requests to the server. Provides different methods like, POST, GET,...
+ */
+
 public class ProtoMet {
     private HttpClient client;
     private String url_base;
     
-    public HttpResponse<String> post(String api, String headers[], String body)
+    /**
+     * Expects payload along with the headers and metadata. Returns complete server response :
+     * HttpResponse<String>
+     */
+    public <T> HttpResponse<String> post(Request<T> message)
     throws IOException, InterruptedException{
+        
         HttpRequest req = HttpRequest.newBuilder()
-            .uri(URI.create(this.url_base + api))
-            .headers(headers)
-            .POST(HttpRequest.BodyPublishers.ofString(body))
+            .uri(URI.create(this.url_base + message.endpoint))
+            .headers(message.headers)
+            .POST(HttpRequest.BodyPublishers.ofString(FileIO.toJson(message.body)))
             .build();
 
         HttpResponse<String> res = this.client.send(req, HttpResponse.BodyHandlers.ofString());

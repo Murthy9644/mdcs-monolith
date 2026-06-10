@@ -8,6 +8,7 @@ import java.util.Properties;
 
 import logger.Log;
 import models.bootstrap.Network;
+import models.bootstrap.Network.UpdReq;
 import models.bootstrap.Network.UpdRes;
 import models.jobs.Report;
 import models.jobs.Report.AppState;
@@ -63,7 +64,7 @@ public class Version implements Runnable{
             // Set compatibility
             this.plugins.plugins.get(name).compatible = plugin.compatible;
 
-            if (plugin.upd_req){
+            if (plugin.update_req){
                 // Pass plugin name, currnt version, available version and continue to application
 
                 this.logger.info(
@@ -175,28 +176,20 @@ public class Version implements Runnable{
                 plg_data = new HashMap<>();
 
             // Final object to send to server
-            Map<String, Map<String, String>> body = new HashMap<>();
+            UpdReq message = new UpdReq();
 
-            Map<String, String> appver = new HashMap<>();
-            appver.put("current_version", ver.getProperty("app.version"));
-
-            body.put("app", appver);
-
-            body.put("plugins", new HashMap<>());
+            message.endpoint = "/version/check";
+            message.addHeader("Content-type", "application/json");
+            
+            message.body.app.current_version = this.ver.getProperty("app.version");
 
             for (String name : plg_data.keySet())
-                body.get("plugins").put(
+                message.body.plugins.put(
                     name,
                     plg_data.get(name).avai_ver
                 );
 
-            String json = FileIO.toJson(body);
-
-            HttpResponse<String> res = server.post(
-                "/version/check",
-                new String[] { "Content-Type", "application/json" },
-                json
-            );
+            HttpResponse<String> res = server.post(message);
             
             this.logger.network("bootstrap", "Version metadata received");
 
@@ -304,7 +297,7 @@ public class Version implements Runnable{
         this.report.jobs.add(this.job);
     }
     
-    private Version(Report report, Log logger, ProtoMet server, Properties ver){
+    protected Version(Report report, Log logger, ProtoMet server, Properties ver){
         this.report = report;
         this.logger = logger;
         this.server = server;

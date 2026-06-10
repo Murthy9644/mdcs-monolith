@@ -1,8 +1,10 @@
 package models.bootstrap;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import models.network.Http.Request;
 import models.network.Http.Response;
 
 public class Network {
@@ -11,6 +13,18 @@ public class Network {
     'Response' class includes common fields for any response from server. We include 'Body' which
     changes per API.
     */
+
+    public static class UpdReq extends Request<UpdReq.Body>{
+
+        public static class App{
+            public String current_version;
+        }
+        
+        public static class Body{
+            public App app;
+            public Map<String, String> plugins = new HashMap<>();
+        }
+    }
 
     public static class UpdRes extends Response{
 
@@ -24,7 +38,7 @@ public class Network {
             public String curr_ver;
             public String avail_ver;
             public boolean compatible;
-            public boolean upd_req;
+            public boolean update_req;
         }
 
         public static class Body{

@@ -48,6 +48,36 @@ public class ConsoleIO{
 
     public String ask(){ return input.nextLine(); }
 
+    public void map(String level, String line){
+        line += "\n";
+
+        switch (level) {
+            case "info":
+                this.info(line);
+                break;
+
+            case "error":
+                this.error(line);
+                break;
+
+            case "warn":
+                this.warn(line);
+                break;
+
+            case "success":
+                this.success(line);
+                break;
+
+            case "critical":
+                this.critical(line);
+                break;
+            
+            default:
+                this.print(line);
+                break;
+        }
+    }
+
     public ConsoleIO(){
         input = new Scanner(System.in);
     }

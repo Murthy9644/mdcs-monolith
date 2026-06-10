@@ -1,5 +1,6 @@
 package bootstrap;
 
+import java.io.IOException;
 import java.util.Properties;
 
 import logger.Log;
@@ -46,8 +47,11 @@ public class Bootstrap {
         ver_worker.start();
         sch_worker.start();
 
-        sch_worker.join();
-        ver_worker.join();
+        try { sch_worker.join(); } 
+        catch (InterruptedException e) { sch_worker.interrupt(); }
+        
+        try { ver_worker.join(); } 
+        catch (InterruptedException e) { ver_worker.interrupt(); }
 
         if (report.app_state == AppState.CONTINUE){
             logger.info(
@@ -77,8 +81,10 @@ public class Bootstrap {
         }
 
         logger.info("bootstrap", "Application bootstrap completed");
-        logger.flush();
 
-        return Report;
+        try { logger.flush(); } 
+        catch (IOException e) { }
+
+        return report;
     }
 }
