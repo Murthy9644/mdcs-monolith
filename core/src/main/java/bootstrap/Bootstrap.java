@@ -11,19 +11,18 @@ import network.ProtoMet;
 /*
 Phases in bootstrap:
         - Schema validation
-        - Version validation
-        - Update check
+        - Version validation / Update check
         - User state resolution
 */
 
 public class Bootstrap{
 
     /*
-    Processes like schema validation, update check, version validation are independent of each other
-    and thus can be executed in parallel.
+    Processes like schema validation, version validation are independent of each other and thus 
+    can be executed in parallel.
 
-    Since, they are CPU bound, I/O bound and Network bound processes, they won't cause much context
-    switching for CPU.
+    Since, they are mix of CPU bound, I/O bound and Network bound processes, they won't cause much
+    context switching for CPU.
     */
     
     public static Report run(ProtoMet server, Properties VERSIONS)

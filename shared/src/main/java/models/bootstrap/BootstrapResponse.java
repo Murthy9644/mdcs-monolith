@@ -23,8 +23,8 @@ public class BootstrapResponse {
 
     // Enums for user state
     public static enum UserState {
-        USER_AUTH_REQUIRED,
-        USER_LOGGED_IN
+        OUT,
+        IN
     }
 
     // Enums for update type

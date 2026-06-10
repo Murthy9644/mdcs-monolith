@@ -19,6 +19,7 @@ public class Report {
     public enum JobType{
         SCHEMA,
         VERSION,
+        USERSTATE,
         AUTH
     }
 

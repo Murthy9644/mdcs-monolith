@@ -2,61 +2,81 @@ package bootstrap;
 
 import java.io.IOException;
 
-import fileio.DataClasses;
 import fileio.FileIO;
+import fileio.DataClasses.Accounts;
 import logger.Log;
-import models.bootstrap.BootstrapResponse;
+
+/*
+Determines the user state: 
+        - logged in
+        - logged out & auth required
+        - logged out & auth not required
+
+This is done based on status of Accounts.json file and the auth, refresh tokens availability or
+correctness.
+        - File exists & auth / refresh tokens are valid => logged in
+        - File exists & auth & refresh tokens not valid => logged out
+        - File doesn't exist => logged out
+        - Manually logged out => logged out (implemented in future versions)
+*/
 
 public class UserState {
+    // This phase of bootstrap is executed independent of other phases, not in parallel with them.
 
-    private static DataClasses.Accounts valid(Log logger)
-    throws IllegalAccessException, NoSuchFieldException{
-        
+    private Log logger;
+
+    private Accounts read(){
+        /*
+        If came to this phase, format of Accounts.json would have already validated before. So,
+        assuming it is correct and neglecting exceptions here.
+        */
+
         try{
-            DataClasses.Accounts acc = FileIO.fileRead(DataClasses.Accounts.class);
-            logger.info("bootstrap", "File validation successful: Accounts.json");
-            
+            Accounts acc = FileIO.fileRead(Accounts.class);
+
             return acc;
         } catch (IOException e){
-            logger.error("bootstrap", "Failed to load file: Accounts.json");
+            /*
+            Failed to read from the file. Then assume user is logged out. Because, this can due to
+            user / environment issues like, file not found or corrupted.
+            */
+
+            return null;
+        } catch (Exception e){
+            // Eat 5-star, do nothing
 
             return null;
         }
     }
 
-    private static BootstrapResponse.UserState userState(DataClasses.Accounts accounts, Log logger){
-        BootstrapResponse.UserState state;
-
-        if (accounts == null) state = BootstrapResponse.UserState.USER_AUTH_REQUIRED;
+    private String state(){
+        Accounts acc;
         
-        else if (!accounts.login_status) state = BootstrapResponse.UserState.USER_AUTH_REQUIRED;
+        if ((acc = this.read()) == null) return "LOGGED_OUT";
 
-        else if (
-            accounts.user_id == ""
-            || (accounts.username == null || accounts.username.isEmpty())
-            || (accounts.email == null || accounts.email.isEmpty())
-            || (accounts.auth_token == null || accounts.auth_token.isEmpty())
-        ) state = BootstrapResponse.UserState.USER_AUTH_REQUIRED;
+        if (!acc.logged_in) return "LOGGED_OUT";
+        
+        // If any of the below important fields are empty, that means, this is the first run of
+        // the application on current device.
+        if (
+            acc.user_id == ""
+            || (acc.username == null || acc.username.isEmpty())
+            || (acc.email == null || acc.email.isEmpty())
+            || (acc.auth_token == null || acc.auth_token.isEmpty())
+        ) return "LOGGED_OUT";
 
-        else state = BootstrapResponse.UserState.USER_LOGGED_IN;
-
-        logger.info("bootstrap", "User state resolved to: " + state);
-
-        return state;
+        return "LOGGED_IN";
     }
 
-    public static BootstrapResponse.UserState resolve(Log logger)
-    throws IllegalAccessException, NoSuchFieldException{
-        logger.info("bootstrap", "User state resolution started");
+    public String resolve(){
+        String usr_state = this.state();
 
-        if (!FileIO.exists(DataClasses.Accounts.class)){
-            // File deleted or couldn't write file uring initial bootstrap phases
-            logger.info("bootstrap", "Failed to find Accounts.json file");
-            logger.info("bootstrap", "User state resolved to: USER_AUTH_REQUIRED");
-
-            return BootstrapResponse.UserState.USER_AUTH_REQUIRED;
-        }
-
-        return userState(valid(logger), logger);
+        this.logger.info("bootstrap", "User state resolved to " + usr_state);
+        
+        return usr_state;
+    }
+    
+    public UserState(Log logger){
+        this.logger = logger;
     }
 }

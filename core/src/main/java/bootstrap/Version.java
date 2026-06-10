@@ -104,8 +104,8 @@ public class Version implements Runnable{
                 - Minor update
                 - Patch update
     
-        In case of critical update, will block the main app execution (May include modular
-        blocking in future updates).
+        In case of critical update, will block the main app execution (May include modular block
+        in future updates).
         In any other cases, will continue to app after noticing the user about the update.
         */
        

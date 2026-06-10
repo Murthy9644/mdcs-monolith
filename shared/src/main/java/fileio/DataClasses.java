@@ -43,7 +43,7 @@ public class DataClasses{
             auth_token,
             refresh_token;
 
-        public boolean login_status;
+        public boolean logged_in;
 
         @JsonIgnore
         public String getPath(){ return path; }
@@ -55,7 +55,7 @@ public class DataClasses{
             this.email          = details[2];
             this.auth_token     = details[3];
             this.refresh_token  = details[4];
-            this.login_status   = details[5] == "true";
+            this.logged_in   = details[5] == "true";
         }
 
         // When data is null
