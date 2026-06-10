@@ -164,7 +164,7 @@ public class Version implements Runnable{
         this out of this class.
         */
 
-        this.logger.info("bootstrap", "Getting version metadata");
+        this.logger.network("bootstrap", "Getting version metadata");
         
         try{
             // Data as written by local plugins available on user device
@@ -198,7 +198,7 @@ public class Version implements Runnable{
                 json
             );
             
-            this.logger.info("bootstrap", "Version metadata received");
+            this.logger.network("bootstrap", "Version metadata received");
 
             // Handle internal errors
             
@@ -225,7 +225,7 @@ public class Version implements Runnable{
             to application without update check
             */
 
-            this.logger.error(
+            this.logger.network(
                 "bootstrap", 
                 "Server request for version meta was interrupted"
             );
