@@ -165,8 +165,8 @@ public class DataClasses{
     // Template for plugin internal strucutre
     public static class Plugin{
         public String path;
-        public String installed_version;
-        public boolean is_compatible;
+        public String avai_ver;
+        public boolean compatible;
     }
 
     // Template for Plugins.json

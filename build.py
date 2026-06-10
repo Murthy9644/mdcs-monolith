@@ -6,9 +6,11 @@ acknowledge = '''
     # works only for this project structure & when run from root
 
     commands:
-        compile = clean compile files (including dependencies) from specified module
+        compile = clean compile files (including dependencies) from specified
+                  module
         exec    = run Main class from specified module
-        build   = clean build .jar modules (of dependencies also) from specified module
+        build   = clean build .jar modules (of dependencies also) from specified
+                  module
 
     module flags:
         module={module path}
@@ -19,7 +21,7 @@ acknowledge = '''
 
 def codeStrings(command, module):
     string = ''
-    classpath = f'apps/{module}/target/classes:core/target/classes:shared/target/classes '
+    classpath = f'apps/{module}/target/classes:core/target/classes:shared/target/classes'
 
     match command:
         case "compile":

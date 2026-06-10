@@ -6,27 +6,27 @@ public class ConsoleIO{
     private Scanner input;
 
     public void error(String text){
-        String log_level = "[ " + Colors.RED + "ERROR " + Colors.RESET + "]    ";
+        String log_level = "[ " + Colors.RED + "ERROR " + Colors.RESET + "]   ";
         System.out.print(log_level + text);
     }
 
     public void success(String text){
-        String log_level = "[ " + Colors.GREEN + "SUCCESS " + Colors.RESET + "]  ";
+        String log_level = "[ " + Colors.GREEN + "SUCCESS " + Colors.RESET + "] ";
         System.out.print(log_level + text);
     }
 
     public void warn(String text){
-        String log_level = "[ " + Colors.YELLOW + "WARN " + Colors.RESET + "]     ";
+        String log_level = "[ " + Colors.YELLOW + "WARN " + Colors.RESET + "]    ";
         System.out.print(log_level + text);
     }
 
     public void info(String text){
-        String log_level = "[ " + Colors.CYAN + "INFO " + Colors.RESET + "]     ";
+        String log_level = "[ " + Colors.CYAN + "INFO " + Colors.RESET + "]    ";
         System.out.print(log_level + text);
     }
 
     public void critical(String text){
-        String log_level = "[ " + Colors.BOLD + Colors.RED + "CRITICAL " + Colors.RESET + "] ";
+        String log_level = "[ " + Colors.BOLD + Colors.RED + "FATAL " + Colors.RESET + "] ";
         System.out.print(log_level + text);
     }
 

@@ -6,235 +6,311 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
+import logger.Log;
+import models.bootstrap.Network;
+import models.bootstrap.Network.UpdRes;
+import models.jobs.Report;
+import models.jobs.Report.AppState;
+import models.jobs.Report.Job;
+import models.jobs.Report.JobType;
+import network.ProtoMet;
 import fileio.DataClasses;
 import fileio.FileIO;
-import logger.Log;
-import models.bootstrap.ServerResponseClasses;
-import models.bootstrap.BootstrapResponse.*;
-import models.jobs.Report;
-import network.ProtoMet;
 
-public class Version {
-    private static ProtoMet server;
-    private static Properties VERSIONS;
-    private static Log logger;
+/*
+Validates version format, checks for update and plugin compatibilty between plugins and
+application version.
+*/
 
-    private static boolean versionFormat(GeneralResponse report) {
-        logger.info("bootstrap", "Checking version format");
-        BootstrapIssue issue = new BootstrapIssue();
-        issue.phase = "Version Validation";
+/*
+For now only plugin to application compatibility is checked. Assuming if a plugin is compatible
+with the application, they are compatible with another plugin which is compatible with the 
+application aswell.
+*/
 
-        for (String key : VERSIONS.stringPropertyNames()) {
-            String version = VERSIONS.getProperty(key);
+public class Version implements Runnable{
+    private Report report;
+    private Job job;
+    private Log logger;
+    private ProtoMet server;
+    private Properties ver;
+    private Network.UpdRes ver_meta;
+    private DataClasses.Plugins plugins;
+    
+    private void pluginUpate(){
+        /*
+        Plugin update availabiity can be of 2 types.
+        One is when new version is available but the current version is still supported by the
+        application.
+        Another is when current version has become incompatible with the application. In such
+        cases, respective plugin is marked incompatible and its existence is neglected.
+        */
 
-            if (!version.matches("^[0-9]+\\.[0-9]+\\.[0-9]$")) {
-                report.setAppState(AppState.TERMINATE);
-                issue.status = Status.INVALID_VERSION_FORMAT;
-                issue.issues.add(version);
-                issue.message = "Application startup aborted";
+        this.logger.info(
+            "bootstrap", 
+            "Checking for plugins updates and compatibility"
+        );
 
-                logger.error("bootstrap", "Invalid version format: " + key);
-                report.reports.add(issue);
+        this.job.logs.add("info<>Checking for plugins updates and compatibility");
 
-                return false;
+        Map<String, UpdRes.Plugin> plugins = this.ver_meta.body.plugins;
+
+        for (String name : plugins.keySet()){
+            UpdRes.Plugin plugin = plugins.get(name);
+            String curr_ver = plugin.curr_ver;
+            String avail_ver = plugin.avail_ver;
+
+            // Set compatibility
+            this.plugins.plugins.get(name).compatible = plugin.compatible;
+
+            if (plugin.upd_req){
+                // Pass plugin name, currnt version, available version and continue to application
+
+                this.logger.info(
+                    "bootstrap", 
+                    "Plugin update available [" + name + "|" + curr_ver + "|" + avail_ver + "]"
+                );
+
+                this.job.logs.add("_<>- " + name);
+                this.job.logs.add("_<>Current version: " + curr_ver);
+                this.job.logs.add("_<>Available version: " + avail_ver);
             }
         }
+        
+        try{
+            FileIO.fileWrite(this.plugins);
+        } catch (Exception e){
+            /*
+            When can't write the plugin compatibility back to file, can't say if that plugin is
+            valid or not further in application. So, treating all the plugins incompatible. But
+            wait, what is even the purpose of the application alone when don't have any plugins
+            => Terminate application startup.
+            */
 
-        logger.info("bootstrap", "Version format check passed");
+            this.logger.error(
+                "bootstrap", 
+                "Failed to persist plugin compatibility"
+            );
 
-        return true;
+            this.job.logs.add("critical<>Failed to persist plugin compatibiliy");
+        }
+    }
+    
+    private void appUpdate(){
+        /*
+        From the metadata we get from the server, will decide if app update is available or not.
+        An app update is classified into:
+                - Critical update
+                - Minor update
+                - Patch update
+    
+        In case of critical update, will block the main app execution (May include modular
+        blocking in future updates).
+        In any other cases, will continue to app after noticing the user about the update.
+        */
+       
+        this.logger.info("bootstrap", "Checking for app updates");
+        this.job.logs.add("info<>Checking for app updates");
+
+        String curr_ver = this.ver_meta.body.app.cur_ver;
+        String avail_ver = this.ver_meta.body.app.avail_ver;
+    
+        // Checking for critical update
+        if (this.ver_meta.body.app.critical_update){
+            // Block the app startup and inform user
+
+            this.logger.info(
+                "bootstrap", 
+                "New (critical) update available for installation"
+            );
+
+            this.job.logs.add("info<>New (critical) update available for installation");
+            this.job.logs.add("_<>Current version: " + curr_ver);
+            this.job.logs.add("_<>Available version: " + avail_ver);
+
+            this.report.setAppState(AppState.BLOCK);
+
+            return;
+        }
+    
+        // Checking for other available updates
+        String avail[] = avail_ver.split("//.");
+        String curr[] = curr_ver.split("//.");
+    
+        if (
+            Integer.parseInt(avail[0]) > Integer.parseInt(curr[0])
+            || Integer.parseInt(avail[1]) > Integer.parseInt(curr[1])
+            || Integer.parseInt(avail[2]) > Integer.parseInt(curr[2])
+        ){
+            // New update available => Notify user and continue app execution
+
+            this.logger.info(
+                "bootstrap", 
+                "New update available for installation"
+            );
+
+            this.job.logs.add("info<>New update available for installation");
+            this.job.logs.add("_<>Current version: " + curr_ver);
+            this.job.logs.add("_<>Available version: " + avail_ver);
+        }
     }
 
-    private static boolean updateCheck(GeneralResponse report)
-            throws Exception {
-        logger.network("bootstrap", "Checking for updates");
-        BootstrapIssue issue = new BootstrapIssue();
-        issue.phase = "Version Validation";
-        report.update_info.update_type = null;
+    private void metadata()
+    throws RuntimeException{
+        /*
+        It may be noted that this metadata is only for version validation and update check during
+        bootstrap. Later when user wants to update the applcation or plugins, they will use update
+        manager which will require another kind of metadata. Thus, there is no need to persist
+        this out of this class.
+        */
 
-        try {
-            // Read plugins metadata
-            DataClasses.Plugins plugins = FileIO.fileRead(DataClasses.Plugins.class);
-            Map<String, DataClasses.Plugin> plugin_metadata = plugins.plugins;
+        this.logger.info("bootstrap", "Getting version metadata");
+        
+        try{
+            // Data as written by local plugins available on user device
+            this.plugins = FileIO.fileRead(DataClasses.Plugins.class);
+            Map<String, DataClasses.Plugin> plg_data;
 
-            if (plugin_metadata == null) plugin_metadata = new HashMap<>();
+            if ((plg_data = this.plugins.plugins) == null)
+                plg_data = new HashMap<>();
 
             // Final object to send to server
             Map<String, Map<String, String>> body = new HashMap<>();
 
-            // Put app version
-            Map<String, String> app_version = new HashMap<>();
-            app_version.put("current_version", VERSIONS.getProperty("app.version"));
+            Map<String, String> appver = new HashMap<>();
+            appver.put("current_version", ver.getProperty("app.version"));
 
-            body.put("app", app_version);
+            body.put("app", appver);
 
-            // Put plugins version
             body.put("plugins", new HashMap<>());
 
-            for (String plugin_name : plugin_metadata.keySet())
+            for (String name : plg_data.keySet())
                 body.get("plugins").put(
-                        plugin_name,
-                        plugin_metadata.get(plugin_name).installed_version
+                    name,
+                    plg_data.get(name).avai_ver
                 );
 
-            // Convert to json format string
-            String json_body = FileIO.toJson(body);
+            String json = FileIO.toJson(body);
 
-            // Sending request to server
-            HttpResponse<String> response = server.post(
+            HttpResponse<String> res = server.post(
                 "/version/check",
                 new String[] { "Content-Type", "application/json" },
-                json_body
+                json
+            );
+            
+            this.logger.info("bootstrap", "Version metadata received");
+
+            // Handle internal errors
+            
+            this.ver_meta = FileIO.toObject(res.body(), Network.UpdRes.class);
+        } catch (IOException e){
+            /*
+            Means, failed to write/read from a file (user/environment related issue). In this case
+            can't reliably move forward with plugins update checks, but can check for application
+            updates.
+            */
+           
+            this.logger.error(
+                "bootstrap", 
+                "Failed to persist plugin compatibility"
             );
 
-            String res_body = response.body().toString();
+            this.job.logs.add("error<>Failed to persist plugin compatibility");
 
-            ServerResponseClasses.UpdateResponse res = FileIO.toObject(res_body, ServerResponseClasses.UpdateResponse.class);
-            
-            // Check for critical app update
-            if (res.app.critical_update){
-                report.setAppState(AppState.BLOCK);
+            throw new RuntimeException();
 
-                report.update_info.message = "Application startup blocked";
-                report.update_info.app_update_avail = true;
-                report.update_info.update_type = UpdateType.CRITICAL;
-                report.update_info.app_avail_ver = res.app.available_version;
-                report.update_info.app_curr_ver = res.app.current_version;
-                report.update_info.changes = res.changes;
+        } catch (InterruptedException e){
+            /*
+            This implies that server request was interrupted while in process. So, will continue
+            to application without update check
+            */
 
-                logger.network("bootstrap", "Critical update detected");
+            this.logger.error(
+                "bootstrap", 
+                "Server request for version meta was interrupted"
+            );
 
-                return false;
-            }
-
-            boolean update_found = false;
-
-            // Check for minor or patch updates
-            String[] avail_update = res.app.available_version.split("\\.");
-            String[] curr_update = res.app.current_version.split("\\.");
-
-            if (Integer.parseInt(avail_update[0]) > Integer.parseInt(curr_update[0])){ // Major
-                report.update_info.app_update_avail = true;
-                report.update_info.update_type = UpdateType.OPTIONAL;
-                report.update_info.app_avail_ver = res.app.available_version;
-                report.update_info.app_curr_ver = res.app.current_version;
-
-                logger.network("bootstrap", "New application update found");
-
-                update_found = true;
-
-            } else if (Integer.parseInt(avail_update[1]) > Integer.parseInt(curr_update[1])){ // Minor
-                report.update_info.app_update_avail = true;
-                report.update_info.update_type = UpdateType.OPTIONAL;
-                report.update_info.app_avail_ver = res.app.available_version;
-                report.update_info.app_curr_ver = res.app.current_version;
-
-                logger.network("bootstrap", "New application update found");
-
-                update_found = true;
-
-            } else if (Integer.parseInt(avail_update[2]) > Integer.parseInt(curr_update[2])){ // Patch
-                report.update_info.app_update_avail = true;
-                report.update_info.update_type = UpdateType.PATCH;
-                report.update_info.app_avail_ver = res.app.available_version;
-                report.update_info.app_curr_ver = res.app.current_version;
-
-                logger.network("bootstrap", "New application update found");
-
-                update_found = true;
-
-            } else report.update_info.app_update_avail = false;
-
-            for (String plugin_name : res.plugins.keySet()){
-                ServerResponseClasses.Plugin plugin = res.plugins.get(plugin_name);
-
-                // Mark incompatibility
-                plugin_metadata.get(plugin_name).is_compatible = res.plugins.get(plugin_name).is_compatible;
-
-                if (res.plugins.get(plugin_name).update_required){
-                    PluginInfo info = new PluginInfo();
-                    info.available_ver = plugin.available_version;
-                    info.installed_ver = plugin.installed_version;
-                    info.is_compatible = plugin.is_compatible;
-
-                    if (report.update_info.plugin_ver == null)
-                        report.update_info.plugin_ver = new HashMap<>();
-
-                    report.update_info.plugin_ver.put(plugin_name, info);
-                    report.update_info.update_type = UpdateType.PLUGIN;
-
-                    logger.network("bootstrap", "New update found: " + plugin_name + " (" + plugin.available_version + ")");
-
-                    update_found = true;
-                }
-            }
-
-            plugins.plugins = plugin_metadata;
-            FileIO.fileWrite(plugins);
-
-            if (update_found){
-                report.update_info.changes = res.changes;
-            } else {
-                logger.network("bootstrap", "Current version is up-to-date");
-            }
-
-            issue.issues = null;
-            issue.status = null;
-            issue.message = "Version validated successfully";
-
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            report.setAppState(AppState.CONTINUE);
-            issue.status = Status.INVALID_UPDATE_RESPONSE;
-            issue.issues = null;
-            issue.message = "Proceeding without update check";
-
-            logger.error("bootstrap", "Failed to parse response: " + e.getMessage());
-
-            return false;
-        } catch (IOException e) {
-            report.setAppState(AppState.CONTINUE);
-            issue.status = Status.UPDATE_CHECK_FAILED;
-            issue.issues = null;
-            issue.message = "Proceeding without update check";
-
-            logger.error("bootstrap", "Failed to check for updates: " + e.getMessage());
-
-            return false;
-        } catch (InterruptedException e) {
-            report.setAppState(AppState.CONTINUE);
-            issue.status = Status.UPDATE_CHECK_FAILED;
-            issue.issues = null;
-            issue.message = "Proceeding without update check";
-
-            logger.error("bootstrap", "Failed to check for updates: " + e.getMessage());
+            this.job.logs.add("error<>Server request for version meta was interrupted");
 
             Thread.currentThread().interrupt();
 
-            return false;
-        } catch (Exception e){
-            logger.error("bootstrap", "Failed to validate version: " + e.getMessage());
-        } finally{
-            if (issue.status != null) report.reports.add(issue);
+        } catch (NoSuchFieldException | IllegalAccessException e){
+            /*
+            This error is not user/environment caused. This is a development bug. Generally
+            application is terminated because, this may cause unexpected behaviors
+            */
+
+            this.report.setAppState(AppState.TERMINATE);
+
+            this.logger.error(
+                "bootstrap", 
+                "Reflection error @ DataClasses.plugins" + " | " + e.getMessage()
+            );
+
+            this.job.logs.add("critical<>" + e.getMessage());
+        }
+    }
+
+    private boolean format() {
+        /*
+        A particular module's version is valid if it matches the RegEx below. If a particular
+        version string is not valid, we abort the startup of the application (for now). In future
+        versions, can suspend afected modules and continue to application.
+        */
+
+        for (String key : this.ver.stringPropertyNames()) {
+            String version = this.ver.getProperty(key);
+
+            if (!version.matches("^[0-9]+\\.[0-9]+\\.[0-9]$")) {
+                // The version of this module is not in the valid form.
+
+                this.logger.error(
+                    "bootstrap", 
+                    "Invalid version format | " + key + "=" + version
+                );
+
+                this.job.logs.add(
+                    "critical<>Invalid version format | " + key +"=" + version
+                );
+
+                return false;
+            }
         }
 
         return true;
     }
 
-    public static boolean validate(
-            ProtoMet server_inc,
-            Properties v_inc,
-            Report report,
-            Log logger_inc) throws Exception {
-        server = server_inc;
-        VERSIONS = v_inc;
-        logger = logger_inc;
+    @Override
+    public void run(){
+        this.logger.info("bootstrap", "Started version and update check");
 
-        if (versionFormat(report) && updateCheck(report))
-            return true;
+        if (!this.format()){
+            // Stop application startup
+            
+            this.logger.error(
+                "bootstrap", 
+                "Application startup terminated because of invalid version format"
+            );
 
-        return false;
+            this.job.logs.add(
+                "error<>Application startup terminated because of invalid version format"
+            );
+        }
+
+        this.metadata();
+        this.appUpdate();
+        this.pluginUpate();
+
+        this.report.jobs.add(this.job);
+    }
+    
+    private Version(Report report, Log logger, ProtoMet server, Properties ver){
+        this.report = report;
+        this.logger = logger;
+        this.server = server;
+        this.ver = ver;
+
+        this.job = new Job();
+        this.job.type = JobType.VERSION;
     }
 }

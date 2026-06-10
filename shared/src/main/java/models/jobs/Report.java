@@ -18,8 +18,8 @@ public class Report {
 
     public enum JobType{
         SCHEMA,
-        AUTH,
-        COMMAND_ROUTER
+        VERSION,
+        AUTH
     }
 
     public static class Job{

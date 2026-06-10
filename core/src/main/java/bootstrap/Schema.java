@@ -200,7 +200,7 @@ public class Schema implements Runnable{
     
     @Override
     public void run(){
-        this.logger.info("bootstrap", "Started schema and format validation");
+        this.logger.info("bootstrap", "Started schema format validation");
         
         // Make sure directories exist already
         FileIO.createAppFileDirs();
@@ -224,13 +224,17 @@ public class Schema implements Runnable{
             this.job.logs.add("error<>File parse issue: Unknown file"); // oops :)
         }
 
+        this.report.jobs.add(this.job);
         this.rules.clear();
     }
 
     private Schema(Report report, Log logger){
         this.report = report;
         this.logger = logger;
-        this.job.type = JobType.SCHEMA;
+
         this.rules = new HashMap<>();
+
+        this.job = new Job();
+        this.job.type = JobType.SCHEMA;
     }
 }
