@@ -1,9 +1,9 @@
 package cli.interaction.auth;
 
 import cli.utils.tools.ConsoleIO;
-import models.auth.AuthInteractor;
+import models.auth.Provider;
 
-public class CLIAuthInteractor implements AuthInteractor {
+public class CLIAuthInteractor implements Provider {
     private ConsoleIO io;
     
     public String getUsername(){

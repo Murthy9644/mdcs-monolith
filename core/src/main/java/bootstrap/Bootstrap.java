@@ -20,7 +20,7 @@ It may be noted that user state resolution phase is executed after the remaining
 bootstrap. It is called independently by the master and not as a parallel worker.
 */
 
-public class Bootstrap {
+public class Bootstrap implements Runnable{
 
     /*
     Processes like schema validation, version validation are independent of each other and thus 
@@ -30,7 +30,11 @@ public class Bootstrap {
     context switching for CPU.
     */
 
-    public static Report run(ProtoMet server, Properties VERSIONS){
+    private ProtoMet server;
+    private Properties vers;
+
+    @Override
+    public void run(){
         Report report = new Report();
         Log logger = new Log();
 
@@ -40,7 +44,7 @@ public class Bootstrap {
         Thread sch_worker = new Thread(schema);
         sch_worker.setDaemon(true);
 
-        Version version = new Version(report, logger, server, VERSIONS);
+        Version version = new Version(report, logger, this.server, this.vers);
         Thread ver_worker = new Thread(version);
         ver_worker.setDaemon(true);
 
@@ -84,7 +88,10 @@ public class Bootstrap {
 
         try { logger.flush(); } 
         catch (IOException e) { }
+    }
 
-        return report;
+    public Bootstrap(ProtoMet server, Properties vers){
+        this.server = server;
+        this.vers = vers;
     }
 }

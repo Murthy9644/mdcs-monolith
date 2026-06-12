@@ -7,7 +7,7 @@ import auth.AuthHandler;
 import cli.helpers.HelperThreads;
 import cli.utils.tools.ConsoleIO;
 import models.PrintTask;
-import models.auth.SignupResponse.AuthState;
+import models.auth.State.AuthState;
 import network.ProtoMet;
 
 public class AuthPipe {

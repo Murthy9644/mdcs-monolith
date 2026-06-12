@@ -28,9 +28,10 @@ public class Http {
         }
     }
 
-    public static abstract class Response{
+    public static abstract class Response<T>{
         public boolean status;
         public String error;
         public String message;
+        public T body;
     }
 }

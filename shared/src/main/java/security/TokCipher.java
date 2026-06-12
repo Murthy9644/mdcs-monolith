@@ -5,7 +5,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import java.util.Base64;
 
-public class TokenCipher {
+public class TokCipher {
     private static final String ALGO = "AES/GCM/NoPadding";
     private static final int TAG_LENGTH = 128;
     private static SecretKey secret_key;

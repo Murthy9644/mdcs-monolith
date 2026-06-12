@@ -21,8 +21,13 @@ public class Network {
         }
         
         public static class Body{
-            public App app;
+            public App app = new App();
             public Map<String, String> plugins = new HashMap<>();
+        }
+
+        public UpdReq(){
+            this.endpoint = "/version/check";
+            this.addHeader("Content-type", "application/json");
         }
     }
 

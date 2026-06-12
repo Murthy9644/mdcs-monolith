@@ -177,9 +177,7 @@ public class Version implements Runnable{
 
             // Final object to send to server
             UpdReq message = new UpdReq();
-
-            message.endpoint = "/version/check";
-            message.addHeader("Content-type", "application/json");
+            message.body = new UpdReq.Body();
             
             message.body.app.current_version = this.ver.getProperty("app.version");
 
