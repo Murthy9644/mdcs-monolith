@@ -1,4 +1,4 @@
-package auth.accounts;
+package auth;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
@@ -22,38 +22,38 @@ import security.TokCipher;
 import utils.NetErrors;
 
 /**
- * Manages account creation, user validation, and registration of the user's first device.
+ * Manages account creation, user validation, and enrollment of the user's first device.
  *
  * The first device is automatically trusted and marked as the primary device,
- * which is later used for registering additional devices and other account operations.
+ * which is later used for enrolling additional devices and other account operations.
  *
  * Registration phases:
  * - Account creation
  * - Account validation
- * - First device registration
+ * - First device enrollment
  */
 
 public class Register implements Runnable{
 
     /*
-    What if user creation and validation succeeded but first device registration failed? User
+    What if user creation and validation succeeded but first device enrollment failed? User
     won't be able to register the device during signup.
 
     In such cases, we have two ideas.
         1. Immediately trigger the login state and let user sign in to trust their device.
-        2. Mark user as VERIFIED and let them manually register the device later.
+        2. Mark user as VERIFIED and let them manually enroll the device later.
 
-    2nd one is good as it gives full control of which device to make as primary to user. It will
+    2nd one is good as it gives full control of which device to make primary to user. It will
     be implemented in future versions.
 
     For now, we maintain 3 states for a user account.
         UNVERIFIED -> After user creation
         VERIFIED   -> After user validation
-        ONBOARDED  -> After first device registration
+        ONBOARDED  -> After first device enrollment
 
     So that if:
         User was created and not validated => OTP verification in next login.
-        User created and validated but device not registered => Device registration in next login.
+        User created and validated but device not enrolled => Device enrollment in next login.
 
     That means, we should make the login flow capable of getting the state codes from server for
     this case :)
@@ -120,6 +120,11 @@ public class Register implements Runnable{
             res.body().toString(), 
             ValidateUsrRes.class
         );
+
+        /*
+        If the OTP is incorrect, need to let the user try again. Current sequence discards the
+        OTP entirely, requests new one. That is bad UX. Need to work on that.
+        */
 
         if (!payload.status){
             // Auth failed due to some user / environment related issue
@@ -253,11 +258,7 @@ public class Register implements Runnable{
         this.logger.info("auth-signup", "Starting user registration");
         
         try{
-            auth.device.Register onboard = new auth.device.Register(
-                server, 
-                mails, 
-                callbacks
-            );
+            Enroll enroll = new Enroll(server, mails, callbacks);
 
             this.state.set(this.createUsr());
 
@@ -265,7 +266,7 @@ public class Register implements Runnable{
                 this.state.set(this.validateUsr());
 
             if (this.state.get() == AuthState.SUCCESS)
-                this.state.set(onboard.firstDevice(this.device, this.logger));
+                this.state.set(enroll.firstDevice(this.device, this.logger));
 
             if (this.state.get() == AuthState.RECOVER){
                 this.user.logged_in = false;
@@ -341,7 +342,7 @@ public class Register implements Runnable{
 
     /*
     As this is a worker (thread), i mean, run() can't take parameters or return values right, so
-    we will get the AuthState object from caller and fill it with state. This will also allow us
+    we will get the State object from caller and fill it with state. This will also allow us
     to not worry about creating objects locally (-_-)
     */
     

@@ -2,7 +2,7 @@ package bootstrap
 
 import "github.com/joho/godotenv"
 
-func LoadEnv() error {
+func env() error {
 	err := godotenv.Load()
 
 	if err != nil {

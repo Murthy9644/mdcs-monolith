@@ -1,4 +1,4 @@
-package auth.accounts;
+package auth;
 
 public class Login {
     //

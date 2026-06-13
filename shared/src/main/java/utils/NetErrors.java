@@ -47,7 +47,7 @@ public class NetErrors {
         );
 
         err.put(
-            "DUPLICATE_USER", 
+            "DUPLICATE_USR", 
             "User with this email already exists"
         );
 

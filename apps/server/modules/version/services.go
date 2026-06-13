@@ -1,7 +1,7 @@
 package version
 
 import (
-	"mdcs-server/core/bootstrap"
+	"mdcs-server/data"
 	"mdcs-server/tools/version"
 )
 
@@ -20,7 +20,7 @@ func responseBuilder(update_check_data UpdateCheckRequest) (UpdateCheckResponse,
 
 	response.App = app
 	response.Plugins = plugins
-	response.Changes = bootstrap.Metadata.Changes
+	response.Changes = data.Metadata.Changes
 
 	return response, nil
 }
@@ -36,14 +36,14 @@ func criticalUpdateCheck(update_check_data UpdateCheckRequest) (AppData, error) 
 		return AppData{}, err
 	}
 
-	min_sup_ver, err := version.Parse(bootstrap.Metadata.App.MinimumSupportedVersion)
+	min_sup_ver, err := version.Parse(data.Metadata.App.MinimumSupportedVersion)
 	if err != nil {
 		return AppData{}, err
 	}
 
 	var app_data AppData
 	app_data.CurrentVersion = update_check_data.App["current_version"]
-	app_data.AvailableVersion = bootstrap.Metadata.App.LatestVersion
+	app_data.AvailableVersion = data.Metadata.App.LatestVersion
 	app_data.CriticalUpdate = version.Lower(curr_app_ver, min_sup_ver)
 
 	return app_data, nil
@@ -65,7 +65,7 @@ func pluginCompatAndUpCheck(update_check_data UpdateCheckRequest) (map[string]Pl
 	for plugin_name, installed_ver := range update_check_data.Plugins {
 		var plugin_res PluginData
 
-		plugin_meta, exists := bootstrap.Metadata.Plugins[plugin_name]
+		plugin_meta, exists := data.Metadata.Plugins[plugin_name]
 
 		if !exists {
 			continue

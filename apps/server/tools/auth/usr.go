@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math/big"
-	"mdcs-server/core/models"
 	"mdcs-server/data/repo"
+	"mdcs-server/models"
 	"mdcs-server/tools"
 	"os"
 	"time"
@@ -15,7 +15,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func SendOtp(user_id string, email string) error {
+func SendOtp(user_id, email string) error {
 	n, err := rand.Int(rand.Reader, big.NewInt(900000))
 
 	if err != nil {
@@ -29,7 +29,7 @@ func SendOtp(user_id string, email string) error {
 		bcrypt.DefaultCost,
 	)
 
-	message := fmt.Sprintf(
+	msg := fmt.Sprintf(
 		"From: %s\r\n"+
 			"To: %s\r\n"+
 			"Subject: MDCS Verification\r\n"+
@@ -43,7 +43,10 @@ func SendOtp(user_id string, email string) error {
 
 				<p>Hi! Thanks for downloading MDCS</p>
 
-				<p>If you have any queries or feedback, feel free to reply to this email.</p>
+				<p>
+					If you have any queries or feedback, feel free to reply to this
+					email.
+				</p>
 				
 				<p>Your OTP is:</p>
 
@@ -56,7 +59,7 @@ func SendOtp(user_id string, email string) error {
 		os.Getenv("EMAIL"), email, otp,
 	)
 
-	err = tools.SendEmail(email, []byte(message))
+	err = tools.SendEmail(email, []byte(msg))
 
 	if err != nil {
 		return err
@@ -64,13 +67,13 @@ func SendOtp(user_id string, email string) error {
 
 	err = repo.StoreOtp(
 		user_id,
-		models.OTP{OTP: string(otp_hash), SentAt: time.Now()},
+		models.OTP{OTP: string(otp_hash), Sent: time.Now()},
 	)
 
 	return err
 }
 
-func GenAuthToken(user_id string) (string, error) {
+func GenAuthTok(user_id string) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": user_id,
 		"exp":     time.Now().Add(60 * time.Minute).Unix(),
@@ -82,7 +85,7 @@ func GenAuthToken(user_id string) (string, error) {
 	return token.SignedString([]byte(os.Getenv("JWT_KEY")))
 }
 
-func GenRefreshToken(user_id string) (string, error) {
+func GenRefreshTok(user_id string) (string, error) {
 	key := make([]byte, 32)
 	_, err := rand.Read(key)
 
@@ -97,7 +100,7 @@ func GenRefreshToken(user_id string) (string, error) {
 		bcrypt.DefaultCost,
 	)
 
-	err = repo.StoreRefreshToken(user_id, string(hashed))
+	err = repo.StoreRefreshTok(user_id, string(hashed))
 
 	return token, err
 }

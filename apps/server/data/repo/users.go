@@ -2,28 +2,27 @@ package repo
 
 import (
 	"errors"
-	"mdcs-server/core/models"
 	"mdcs-server/data"
+	"mdcs-server/models"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-// Create new user entry in the users.json
-// Returns the user id if entry written or returns error
 /*
+Create new user entry in the users.json
+Returns the user id if entry written or returns error
+
 Right now, there are no possible errors to return but, kept "just in case"
 */
-func CreateUser(user models.UserAttrs) (string, error) {
-	user_id := uuid.NewString()
-	data.Store.Users[user_id] = user
+func CreateUsr(usr models.UserAttrs) (string, error) {
+	usr_id := uuid.NewString()
+	data.Store.Users[usr_id] = usr
 
-	return user_id, nil
+	return usr_id, nil
 }
 
-// Find the user entry by email
-// Returns models.UserAttrs type
-func FindUserByEmail(email string) (models.UserAttrs, error) {
+func UsrByEmail(email string) (models.UserAttrs, error) {
 	for _, user := range data.Store.Users {
 
 		if user.Email == email {
@@ -60,17 +59,17 @@ func GetOtp(user_id string) (models.OTP, error) {
 func SetVerified(user_id string) error {
 	user := data.Store.Users[user_id]
 	user.Otp = models.OTP{}
-	user.Verified = true
+	user.Status = "VERIFIED"
 
 	data.Store.Users[user_id] = user
 
 	return nil
 }
 
-func StoreRefreshToken(user_id, token string) error {
+func StoreRefreshTok(user_id, token string) error {
 	user := data.Store.Users[user_id]
-	user.AccessToken.RefreshToken = token
-	user.AccessToken.CreatedAt = time.Now()
+	user.RefreshTok.Token = token
+	user.RefreshTok.Created = time.Now()
 
 	data.Store.Users[user_id] = user
 

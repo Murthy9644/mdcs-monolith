@@ -1,4 +1,4 @@
-package auth.device;
+package auth;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
@@ -17,21 +17,18 @@ import network.ProtoMet;
 import utils.NetErrors;
 
 /**
- * Manages device registration, first device registration, device trusting, primary device tagging
+ * Manages device enrollment, first device enrollment, device trusting, primary device tagging
  */
 
-public class Register{
+public class Enroll{
     private ProtoMet server;
     private BlockingQueue<Mail> mails;
     private Provider callbacks;
 
     /*
-    First device registration process is not being implemented as a new worker now because, later
-    when general registration process differs in the process from this, we may need to split the
-    classes.
-
-    Later, when general registration and first device registration differ in execution, we split
-    it to different class or keep as separate method as required.
+    First device enrollment process is not being implemented as a new worker now because, later
+    when general enrollment process differs in the process from this, we may need to split the
+    classes or keep as separate method as required.
     */
 
     /**
@@ -48,7 +45,7 @@ public class Register{
      */
     public AuthState firstDevice(Device device, Log logger)
     throws IOException, InterruptedException{
-        logger.info("auth.firstDevice", "Starting first device registration");
+        logger.info("auth.firstDevice", "Starting first device enrollment");
 
         device.device_name = this.callbacks.deviceName();
         device.workspace_name = this.callbacks.workspaceName();
@@ -69,7 +66,7 @@ public class Register{
 
         if (res.statusCode() >= 500){
             /*
-            Internal server error has occured. Account is created but device is not registered.
+            Internal server error has occured. Account is created but device is not enrolled.
             So return RECOVER code so that login is triggered.
             */
 
@@ -96,11 +93,11 @@ public class Register{
         );
 
         if (!payload.status){
-            // Device registration failed due to user / environment related issue
+            // Device enrollment failed due to user / environment related issue
 
             logger.network(
                 "auth.firstDevice", 
-                "Device registration failed due to user or environment issue"
+                "Device enrollment failed due to user or environment issue"
             );
 
             Print mail = new Print();
@@ -118,13 +115,13 @@ public class Register{
 
         logger.info(
             "auth.firstDevice", 
-            "Device registered successfully and marked as primary"
+            "Device enrolled successfully and marked as primary"
         );
         
         return AuthState.SUCCESS;
     }
     
-    public Register(ProtoMet server, BlockingQueue<Mail> mails, Provider callbacks){
+    public Enroll(ProtoMet server, BlockingQueue<Mail> mails, Provider callbacks){
         this.server = server;
         this.mails = mails;
         this.callbacks = callbacks;
