@@ -14,10 +14,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import fileio.FileIO;
 import fileio.DataClasses.*;
 import logger.Log;
-import models.jobs.Report;
-import models.jobs.Report.AppState;
-import models.jobs.Report.Job;
-import models.jobs.Report.JobType;
+import models.bootstrap.Jobs;
+import models.postals.Report;
+import models.postals.Report.AppState;
+import models.postals.Report.JobType;
 
 /*
 Validates schema and format of the application files, tries recovery or attempts backup or creates
@@ -26,7 +26,7 @@ default files in case of failure
 
 public class Schema implements Runnable{
     private Report report;
-    private Job job;
+    private Jobs.Schema job;
     private Log logger;
     private Map<Class<? extends HasPath>, List<FieldRules>> rules;
 
@@ -244,7 +244,7 @@ public class Schema implements Runnable{
 
         this.rules = new HashMap<>();
 
-        this.job = new Job();
+        this.job = new Jobs.Schema();
         this.job.type = JobType.SCHEMA;
     }
 }

@@ -1,6 +1,6 @@
-package cli.interaction.auth;
+package cli.interact.auth;
 
-import cli.utils.tools.ConsoleIO;
+import cli.utils.ConsoleIO;
 import models.auth.Provider;
 
 public class CLIAuthInteractor implements Provider {

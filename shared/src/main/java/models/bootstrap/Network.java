@@ -31,7 +31,7 @@ public class Network {
         }
     }
 
-    public static class UpdRes extends Response{
+    public static class UpdRes extends Response<UpdRes.Body>{
 
         public static class App{
             public String cur_ver;
@@ -48,7 +48,10 @@ public class Network {
 
         public static class Body{
             public App app;
+
+            // plugin name -> Plugin
             public Map<String, Plugin> plugins;
+            
             public List<String> changes;
         }
 

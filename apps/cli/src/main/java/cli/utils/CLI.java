@@ -1,10 +1,8 @@
-package cli.utils.command_util;
+package cli.utils;
 
 import java.util.Properties;
 
-import cli.utils.tools.ConsoleIO;
-
-public class CLIHandler {
+public class CLI {
     ConsoleIO io;
     Properties APP, VERSIONS;
 
@@ -13,7 +11,7 @@ public class CLIHandler {
         System.out.flush();
     }
 
-    public CLIHandler(ConsoleIO inou, Properties APP, Properties VERSIONS){
+    public CLI(ConsoleIO inou, Properties APP, Properties VERSIONS){
         this.io = inou;
         this.APP = APP;
         this.VERSIONS = VERSIONS;

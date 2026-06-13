@@ -1,4 +1,4 @@
-package models.jobs;
+package models.postals;
 
 import java.util.concurrent.CountDownLatch;
 

@@ -1,16 +1,16 @@
-package cli.utils.tools;
+package cli.utils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class ConfigLoader{
+public class Config{
     public Properties property;
     
-    public ConfigLoader(String filename) throws IOException{
+    public Config(String filename) throws IOException{
         
         try (
-            InputStream reader = ConfigLoader.class
+            InputStream reader = Config.class
                 .getClassLoader()
                 .getResourceAsStream(filename)
         ){

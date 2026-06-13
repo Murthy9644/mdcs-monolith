@@ -1,4 +1,4 @@
-package models.jobs;
+package models.postals;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +23,7 @@ public class Report {
         AUTH
     }
 
-    public static class Job{
+    public static abstract class Job{
         public JobType type;
         public List<String> logs = new ArrayList<>();
     }

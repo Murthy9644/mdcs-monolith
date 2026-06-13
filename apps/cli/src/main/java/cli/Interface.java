@@ -1,13 +1,13 @@
-package cli.interaction.base;
+package cli;
 
 import java.util.Properties;
 
-import cli.utils.command_util.CLIHandler;
-import cli.utils.tools.ConsoleIO;
+import cli.utils.CLI;
+import cli.utils.ConsoleIO;
 
 public class Interface {
     private ConsoleIO io;
-    private CLIHandler handler;
+    private CLI handler;
 
     public void begin(){
         String command;
@@ -31,6 +31,6 @@ public class Interface {
     
     public Interface(ConsoleIO io, Properties APP, Properties VERSIONS){
         this.io = io;
-        this.handler = new CLIHandler(io, APP, VERSIONS);
+        this.handler = new CLI(io, APP, VERSIONS);
     }
 }

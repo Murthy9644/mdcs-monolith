@@ -7,13 +7,13 @@ import java.util.Map;
 import java.util.Properties;
 
 import logger.Log;
+import models.bootstrap.Jobs;
 import models.bootstrap.Network;
 import models.bootstrap.Network.UpdReq;
 import models.bootstrap.Network.UpdRes;
-import models.jobs.Report;
-import models.jobs.Report.AppState;
-import models.jobs.Report.Job;
-import models.jobs.Report.JobType;
+import models.postals.Report;
+import models.postals.Report.AppState;
+import models.postals.Report.JobType;
 import network.ProtoMet;
 import fileio.DataClasses;
 import fileio.FileIO;
@@ -31,7 +31,7 @@ application aswell.
 
 public class Version implements Runnable{
     private Report report;
-    private Job job;
+    private Jobs.Version job;
     private Log logger;
     private ProtoMet server;
     private Properties ver;
@@ -72,9 +72,18 @@ public class Version implements Runnable{
                     "Plugin update available [" + name + "|" + curr_ver + "|" + avail_ver + "]"
                 );
 
-                this.job.logs.add("_<>- " + name);
-                this.job.logs.add("_<>Current version: " + curr_ver);
-                this.job.logs.add("_<>Available version: " + avail_ver);
+                Jobs.Version.Update update = new Jobs.Version.Update();
+
+                update.type = Jobs.Version.UpdateTypes.PLUGIN;
+
+                update.name = name;
+
+                update.curr_ver = this.ver_meta.body.plugins.get(name).curr_ver;
+                update.avail_ver = this.ver_meta.body.plugins.get(name).avail_ver;
+
+                update.changes = this.ver_meta.body.changes;
+                
+                this.job.updates.add(update);
             }
         }
         
@@ -125,9 +134,18 @@ public class Version implements Runnable{
                 "New (critical) update available for installation"
             );
 
-            this.job.logs.add("info<>New (critical) update available for installation");
-            this.job.logs.add("_<>Current version: " + curr_ver);
-            this.job.logs.add("_<>Available version: " + avail_ver);
+            Jobs.Version.Update update = new Jobs.Version.Update();
+
+            update.type = Jobs.Version.UpdateTypes.CRITICAL;
+
+            update.name = "Application";
+
+            update.curr_ver = this.ver_meta.body.app.cur_ver;
+            update.avail_ver = this.ver_meta.body.app.avail_ver;
+
+            update.changes = this.ver_meta.body.changes;
+            
+            this.job.updates.add(update);
 
             this.report.setAppState(AppState.BLOCK);
 
@@ -150,9 +168,21 @@ public class Version implements Runnable{
                 "New update available for installation"
             );
 
-            this.job.logs.add("info<>New update available for installation");
-            this.job.logs.add("_<>Current version: " + curr_ver);
-            this.job.logs.add("_<>Available version: " + avail_ver);
+            Jobs.Version.Update update = new Jobs.Version.Update();
+
+            // Optional and patch updates are combined to optional. Because I don't see any great
+            // difference between them
+
+            update.type = Jobs.Version.UpdateTypes.OPTIONAL;
+
+            update.name = "Application";
+
+            update.curr_ver = this.ver_meta.body.app.cur_ver;
+            update.avail_ver = this.ver_meta.body.app.avail_ver;
+
+            update.changes = this.ver_meta.body.changes;
+            
+            this.job.updates.add(update);
         }
     }
 
@@ -301,7 +331,7 @@ public class Version implements Runnable{
         this.server = server;
         this.ver = ver;
 
-        this.job = new Job();
+        this.job = new Jobs.Version();
         this.job.type = JobType.VERSION;
     }
 }

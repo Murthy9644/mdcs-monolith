@@ -1,11 +1,11 @@
-package cli.interaction.auth;
+package cli.interact.auth;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import auth.AuthHandler;
 import cli.helpers.HelperThreads;
-import cli.utils.tools.ConsoleIO;
+import cli.utils.ConsoleIO;
 import models.PrintTask;
 import models.auth.State.AuthState;
 import network.ProtoMet;

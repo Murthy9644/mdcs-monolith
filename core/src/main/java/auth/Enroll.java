@@ -11,8 +11,8 @@ import models.auth.Provider;
 import models.auth.Network.RegisterDeviceReq;
 import models.auth.Network.RegisterDeviceRes;
 import models.auth.State.AuthState;
-import models.jobs.Envelope.Mail;
-import models.jobs.Envelope.Print;
+import models.postals.Envelope.Mail;
+import models.postals.Envelope.Print;
 import network.ProtoMet;
 import utils.NetErrors;
 
