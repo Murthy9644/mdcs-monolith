@@ -3,10 +3,10 @@ package cli.interact.auth;
 import cli.utils.ConsoleIO;
 import models.auth.Provider;
 
-public class CLIAuthInteractor implements Provider {
+public class CLIProvider implements Provider {
     private ConsoleIO io;
     
-    public String getUsername(){
+    public String username(){
         this.io.muted("Username: ");
         String username = "";
 
@@ -17,7 +17,7 @@ public class CLIAuthInteractor implements Provider {
         return username;
     }
     
-    public String getEmail(){
+    public String email(){
         this.io.muted("Email: ");
         String email = "";
 
@@ -39,7 +39,7 @@ public class CLIAuthInteractor implements Provider {
         this.io.print("Password must be atleast 6 digits long\n");
     }
     
-    public String getPassword(){
+    public String pswd(){
         this.io.muted("Create password: ");
         String pswd = "";
 
@@ -49,7 +49,7 @@ public class CLIAuthInteractor implements Provider {
         return pswd;
     }
     
-    public String confirmPassword(){
+    public String confirmPswd(){
         this.io.muted("Confirm password: ");
         String conf = "";
 
@@ -63,7 +63,7 @@ public class CLIAuthInteractor implements Provider {
         this.io.error("Passwords DO NOT match\n");
     }
     
-    public String getOTP(){
+    public String otp(){
         this.io.print("OTP has been sent to your email.\nPlease enter it here: ");
         String otp = "";
 
@@ -73,7 +73,7 @@ public class CLIAuthInteractor implements Provider {
         return otp;
     }
     
-    public String getDeviceName(){
+    public String deviceName(){
         this.io.muted("Set device name: ");
         String name = "";
 
@@ -83,7 +83,7 @@ public class CLIAuthInteractor implements Provider {
         return name;
     }
     
-    public String getWorkspaceName(){
+    public String workspaceName(){
         this.io.muted("Set workspace name: ");
         String name = "";
 
@@ -93,7 +93,7 @@ public class CLIAuthInteractor implements Provider {
         return name;
     }
 
-    public CLIAuthInteractor(ConsoleIO io){
+    public CLIProvider(ConsoleIO io){
         this.io = io;
     }
 }

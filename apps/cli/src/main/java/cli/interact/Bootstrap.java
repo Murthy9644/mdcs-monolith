@@ -39,7 +39,8 @@ public class Bootstrap {
                 ". " + update.type.toString() + " update available for " + update.name + "\n"
             );
 
-            this.io.print("\nCurrent Version: "); this.io.muted(update.curr_ver + "\n");
+            this.io.print("\nCurrent Version: ");
+            this.io.muted(update.curr_ver + "\n");
 
             this.io.print("Available Version: " + update.avail_ver + "\n");
 
@@ -48,26 +49,20 @@ public class Bootstrap {
             for (String change : update.changes)
                 this.io.print("\t- " + change + "\n");
 
-            if (update.type == Version.UpdateTypes.CRITICAL){
+            if (update.type == Version.UpdateTypes.CRITICAL)
                 this.io.critical("Update is mandatory to continue to the application.\n");
-                this.io.critical("please enter: yes (or) no\n");
+            
+            this.io.info("Do you want to install the update(s)? yes (or) no\n");
+            this.io.print("please enter: yes (or) no\n");
 
-                String choice = this.io.ask();
+            String choice = this.io.ask();
 
-                if (choice.equalsIgnoreCase("yes")){
-                    // yup
-                }
-
-                return false;
-            } else {
-                this.io.info("Do you want to install the update(s)? yes (or) no\n");
-                
-                String choice = this.io.ask();
-
-                if (choice.equalsIgnoreCase("yes")){
-                    // another yup
-                }
+            if (choice.equalsIgnoreCase("yes")){
+                // yup
+                // placeholder
             }
+
+            if (update.type == Version.UpdateTypes.CRITICAL) return false;
         }
         
         return true;
@@ -99,9 +94,9 @@ public class Bootstrap {
      */
     public boolean attend(){
         Supervise supervisor = new Supervise(this.server, this.VERSIONS, this.report);
+        Thread bootstrap = new Thread(supervisor);
 
         try{
-            Thread bootstrap = new Thread(supervisor);
             bootstrap.setDaemon(true);
 
             bootstrap.start();
@@ -110,6 +105,7 @@ public class Bootstrap {
             // Not an error, but intentional. Stop the application because, we don't klnow the
             // cause
 
+            bootstrap.interrupt();
             return false;
         }
 

@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Properties;
 
 import cli.interact.Bootstrap;
+import cli.interact.Interface;
+import cli.interact.auth.Onboard;
 import cli.utils.Config;
 import cli.utils.ConsoleIO;
 import network.ProtoMet;
@@ -22,10 +24,14 @@ public class App {
     public void start() {
         String header = this.APP.getProperty("app.name");
 
-        if (!(new Bootstrap(this.server, this.VERSIONS).attend())) return;
-
         header += " v" + this.VERSIONS.getProperty("app.version") + "\n";
         this.io.heading(header);
+
+        if (!(new Bootstrap(this.server, this.VERSIONS).attend()))
+            return;
+
+        if (!(new Onboard(this.io, this.server).init()))
+            return;
         
         new Interface(this.io, this.APP, this.VERSIONS).begin();
     }

@@ -1,6 +1,8 @@
 package models.auth;
 
-public class State {
+import models.postals.Report.Job;
+
+public class State extends Job{
 
     public enum AuthState{
         SUCCESS,
@@ -30,7 +32,5 @@ public class State {
         this.state = to;
     }
 
-    public AuthState get(){
-        return this.state;
-    }
+    public AuthState get(){ return this.state; }
 }

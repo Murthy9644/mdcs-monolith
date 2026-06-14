@@ -2,7 +2,6 @@ package auth;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
-import java.util.concurrent.BlockingQueue;
 
 import fileio.FileIO;
 import fileio.DataClasses.Accounts;
@@ -15,8 +14,7 @@ import models.auth.Network.CreateUsrRes;
 import models.auth.Network.ValidateUsrReq;
 import models.auth.Network.ValidateUsrRes;
 import models.auth.State.AuthState;
-import models.postals.Envelope.Mail;
-import models.postals.Envelope.Print;
+import models.postals.Report;
 import network.ProtoMet;
 import security.TokCipher;
 import utils.NetErrors;
@@ -60,9 +58,9 @@ public class Register implements Runnable{
     */
 
     private ProtoMet server;
-    private BlockingQueue<Mail> mails;
     private Provider callbacks;
-    private State state;
+    private Report report;
+    private State job;
     private Log logger;
     private Accounts user;
     private Device device;
@@ -71,11 +69,10 @@ public class Register implements Runnable{
      * Validate user account with OTP and set the user as verified after successful validation.
      * Assumes account has been created previously (ofcourse bro)
      * 
-     * @return AuthState
      * @throws IOException
      * @throws InterruptedException
      */
-    private AuthState validateUsr()
+    private void validateUsr()
     throws IOException, InterruptedException{
         this.logger.info("auth.validateUsr", "Starting user account validation");
 
@@ -97,23 +94,19 @@ public class Register implements Runnable{
         );
 
         if (res.statusCode() >= 500){
-            // Some internal server error has occured. Return termination code
+            // Some internal server error has occured. Return recovery code because, need to
+            // recover from Unverified state
 
             this.logger.network(
                 "auth.validateUsr", 
                 "Internal server error has occured"
             );
 
-            Print mail = new Print();
+            this.job.logs.add(
+                "critical<>An internal server error occurred. Please try again later."
+            );
 
-            mail.sender_id = Thread.currentThread().threadId();
-
-            mail.line = 
-                "critical<>Signup: An internal server error occurred. Please try again later.";
-
-            this.mails.offer(mail);
-
-            return AuthState.RECOVER;
+            this.job.set(AuthState.RECOVER);
         }
 
         ValidateUsrRes payload = FileIO.toObject(
@@ -134,14 +127,8 @@ public class Register implements Runnable{
                 "User validation failed due to user or environment issue"
             );
 
-            Print mail = new Print();
-
-            mail.sender_id = Thread.currentThread().threadId();
-            mail.line = "error<>Signup: " + NetErrors.err.get(payload.error);
-
-            this.mails.offer(mail);
-
-            return AuthState.RECOVER;
+            this.job.logs.add("error<>" + NetErrors.err.get(payload.error));
+            this.job.set(AuthState.RECOVER);
         }
 
         this.user.auth_token = TokCipher.encrypt(payload.body.auth_tok);
@@ -151,8 +138,6 @@ public class Register implements Runnable{
             "auth.validateUsr",
             "User account verified successfully | User validated"
         );
-
-        return AuthState.SUCCESS;
     }
 
     /**
@@ -162,11 +147,10 @@ public class Register implements Runnable{
      * In cases of business failures or internal server errors, the OTP is not sent, so it is fine
      * to neglect that case.
      * 
-     * @return AuthState
      * @throws IOException
      * @throws InterruptedException
      */
-    private AuthState createUsr()
+    private void createUsr()
     throws IOException, InterruptedException{
         this.logger.info("auth.createUsr", "Creating user account");
 
@@ -208,16 +192,11 @@ public class Register implements Runnable{
                 "Internal server error has occured"
             );
 
-            Print mail = new Print();
+            this.job.logs.add(
+                "critical<>An internal server error occurred. Please try again later."
+            );
 
-            mail.sender_id = Thread.currentThread().threadId();
-
-            mail.line = 
-                "critical<>Signup: An internal server error occurred. Please try again later.";
-
-            this.mails.offer(mail);
-
-            return AuthState.TERMINATE;
+            this.job.set(AuthState.TERMINATE);
         }
 
         CreateUsrRes payload = FileIO.toObject(
@@ -236,43 +215,38 @@ public class Register implements Runnable{
                 "User creation failed due to user or environment issue"
             );
 
-            Print mail = new Print();
-
-            mail.sender_id = Thread.currentThread().threadId();
-            mail.line = "error<>Signup: " + NetErrors.err.get(payload.error);
-
-            this.mails.offer(mail);
-
-            return AuthState.RETRY;
+            this.job.logs.add("error<>" + NetErrors.err.get(payload.error));
+            this.job.set(AuthState.RETRY);
         }
 
         this.user.user_id = payload.body.user_id;
 
         this.logger.info("auth.createusr", "User account created successfully");
-
-        return AuthState.SUCCESS;
     }
 
     @Override
     public void run(){
-        this.logger.info("auth-signup", "Starting user registration");
+        this.logger.info("auth", "Starting user registration");
+
+        this.job.type = Report.JobType.AUTH;
         
         try{
-            Enroll enroll = new Enroll(server, mails, callbacks);
+            Enroll enroll = new Enroll(this.server, this.job, this.callbacks);
 
-            this.state.set(this.createUsr());
+            this.createUsr();
 
-            if (this.state.get() == AuthState.SUCCESS)
-                this.state.set(this.validateUsr());
+            if (this.job.get() == AuthState.SUCCESS)
+                this.validateUsr();
 
-            if (this.state.get() == AuthState.SUCCESS)
-                this.state.set(enroll.firstDevice(this.device, this.logger));
+            if (this.job.get() == AuthState.SUCCESS)
+                enroll.firstDevice(this.device, this.logger);
 
-            if (this.state.get() == AuthState.RECOVER){
+            if (this.job.get() == AuthState.RECOVER)
                 this.user.logged_in = false;
 
-                return;
-            }
+            else
+                this.user.logged_in = true;
+
         } catch (IOException e){
             /*
             This means, server couldn't be contacted. This can cause due to:
@@ -285,20 +259,12 @@ public class Register implements Runnable{
             */
 
             this.logger.network(
-                "auth-signup", 
+                "auth", 
                 "Unable to contact the server | " + e.getMessage()
             );
 
-            Print mail = new Print();
-
-            mail.sender_id = Thread.currentThread().threadId();
-            mail.line = "critical<>Unable to contact the server. Please try again later";
-
-            this.mails.offer(mail);
-
-            this.state.set(AuthState.TERMINATE);
-
-            return;
+            this.job.logs.add("critical<>Unable to contact the server. Please try again later");
+            this.job.set(AuthState.TERMINATE);
         } catch (InterruptedException e){
             /*
             This is more of an internal / system event. No need to prompt user about it. Because,
@@ -306,37 +272,40 @@ public class Register implements Runnable{
             is being shut down).
             */
 
-            this.logger.error("auth-signup", "Thread was interrupted");
+            this.logger.error("auth", "Thread was interrupted");
 
-            Thread.currentThread().interrupt();
-            this.state.set(AuthState.TERMINATE);
+            this.job.set(AuthState.TERMINATE);
+        } finally{
             
-            return;
-        }
+            try {
+                // Write the user and device details into the file
 
-        this.user.logged_in = true;
+                FileIO.fileWrite(this.user);
+                FileIO.fileWrite(this.device);
 
-        try {
-            // Write the user and device details into the file
+                this.logger.info("auth", "User and device data persisted");
+            } catch (Exception e) {
+                /*
+                User is signed in but we can't persist the data for the next time. In such cases,
+                treat user as signed out but account creation is suucessful and ask for log in using
+                email and password.
+                */
 
-            FileIO.fileWrite(this.user);
-            FileIO.fileWrite(this.device);
+                this.logger.error(
+                    "auth", 
+                    "Failed to persist user and device data"
+                );
 
-            this.logger.info("auth-signup", "User and device data persisted");
-        } catch (Exception e) {
-            /*
-            User is signed in but we can't persist the data for the next time. In such cases,
-            treat user as signed out but account creation is suucessful and ask for log in using
-            email and password.
-            */
+                this.user.logged_in = false;
+                this.job.set(AuthState.RECOVER);
+            }
 
-            this.logger.error(
-                "auth-signup", 
-                "Failed to persist user and device data"
-            );
+            // Flush the logs
+            try { this.logger.flush(); }
+            catch (IOException e) { }
 
-            this.user.logged_in = false;
-            this.state.set(AuthState.RECOVER);
+            // Add the job
+            this.report.jobs.add(this.job);
         }
     }
 
@@ -346,18 +315,14 @@ public class Register implements Runnable{
     to not worry about creating objects locally (-_-)
     */
     
-    public Register(
-        ProtoMet server, 
-        BlockingQueue<Mail> mails, 
-        Provider callbacks,
-        State state
-    ){
+    public Register(ProtoMet server, Report report, Provider callbacks){
         this.server = server;
-        this.mails = mails;
         this.callbacks = callbacks;
-        this.state = state;
+        this.report = report;
 
         this.logger = new Log();
+
+        this.job = new State();
 
         this.user = new Accounts();
         this.device = new Device();

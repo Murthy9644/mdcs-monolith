@@ -2,17 +2,15 @@ package auth;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
-import java.util.concurrent.BlockingQueue;
 
 import fileio.FileIO;
 import fileio.DataClasses.Device;
 import logger.Log;
 import models.auth.Provider;
+import models.auth.State;
 import models.auth.Network.RegisterDeviceReq;
 import models.auth.Network.RegisterDeviceRes;
 import models.auth.State.AuthState;
-import models.postals.Envelope.Mail;
-import models.postals.Envelope.Print;
 import network.ProtoMet;
 import utils.NetErrors;
 
@@ -22,7 +20,7 @@ import utils.NetErrors;
 
 public class Enroll{
     private ProtoMet server;
-    private BlockingQueue<Mail> mails;
+    private State job;
     private Provider callbacks;
 
     /*
@@ -43,7 +41,7 @@ public class Enroll{
      * @throws IOException
      * @throws InterruptedException
      */
-    public AuthState firstDevice(Device device, Log logger)
+    public void firstDevice(Device device, Log logger)
     throws IOException, InterruptedException{
         logger.info("auth.firstDevice", "Starting first device enrollment");
 
@@ -75,16 +73,11 @@ public class Enroll{
                 "Internal server error has occured"
             );
 
-            Print mail = new Print();
+            this.job.logs.add(
+                "critical<>An internal server error occurred. Please try again later."
+            );
 
-            mail.sender_id = Thread.currentThread().threadId();
-
-            mail.line = 
-                "critical<>Signup: An internal server error occurred. Please login again.";
-
-            this.mails.offer(mail);
-
-            return AuthState.RECOVER;
+            this.job.set(AuthState.RECOVER);
         }
 
         RegisterDeviceRes payload = FileIO.toObject(
@@ -100,14 +93,8 @@ public class Enroll{
                 "Device enrollment failed due to user or environment issue"
             );
 
-            Print mail = new Print();
-
-            mail.sender_id = Thread.currentThread().threadId();
-            mail.line = "error<>Signup: " + NetErrors.err.get(payload.error);
-
-            this.mails.offer(mail);
-
-            return AuthState.RECOVER;
+            this.job.logs.add("error<>" + NetErrors.err.get(payload.error));
+            this.job.set(AuthState.RETRY);
         }
 
         device.device_id = payload.body.device_id;
@@ -117,13 +104,11 @@ public class Enroll{
             "auth.firstDevice", 
             "Device enrolled successfully and marked as primary"
         );
-        
-        return AuthState.SUCCESS;
     }
     
-    public Enroll(ProtoMet server, BlockingQueue<Mail> mails, Provider callbacks){
+    public Enroll(ProtoMet server, State job, Provider callbacks){
         this.server = server;
-        this.mails = mails;
+        this.job = job;
         this.callbacks = callbacks;
     }
 }

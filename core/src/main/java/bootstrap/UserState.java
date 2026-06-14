@@ -59,7 +59,7 @@ public class UserState {
         // If any of the below important fields are empty, that means, this is the first run of
         // the application on current device.
         if (
-            acc.user_id == ""
+            acc.user_id.isEmpty()
             || (acc.username == null || acc.username.isEmpty())
             || (acc.email == null || acc.email.isEmpty())
             || (acc.auth_token == null || acc.auth_token.isEmpty())
@@ -72,11 +72,14 @@ public class UserState {
         String usr_state = this.state();
 
         this.logger.info("bootstrap", "User state resolved to " + usr_state);
+
+        try { this.logger.flush(); }
+        catch (IOException e) { }
         
         return usr_state;
     }
     
-    public UserState(Log logger){
-        this.logger = logger;
+    public UserState(){
+        this.logger = new Log();
     }
 }
