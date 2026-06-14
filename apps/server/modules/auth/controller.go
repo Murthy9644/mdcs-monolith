@@ -9,10 +9,10 @@ import (
 
 // Write user entry and return user id
 func signup(res http.ResponseWriter, req *http.Request) {
-	data := req.Context().Value(SUpDataKey).(SignupReq)
+	data := req.Context().Value(SUpDataKey).(CreateUsrReq)
 	var respld Response
 
-	user_id, err := registerUser(data)
+	user_id, err := createUsr(data)
 
 	if err != nil {
 		respld.Status = false
@@ -51,8 +51,9 @@ func signup(res http.ResponseWriter, req *http.Request) {
 	res.Write(payload)
 }
 
-func verifyUser(res http.ResponseWriter, req *http.Request) {
-	data := req.Context().Value(VerAccDataKey).(VerifyAccReq)
+func verifyUsr(res http.ResponseWriter, req *http.Request) {
+	data := req.Context().Value(VerAccDataKey).(ValidateUsrReq)
+
 	var respld Response
 
 	err := verifyOtp(data)
@@ -75,14 +76,15 @@ func verifyUser(res http.ResponseWriter, req *http.Request) {
 	}
 
 	respld.Body = map[string]string{}
-	respld.Body["auth_token"], err = auth.GenAuthToken(data.UserId)
+	respld.Body["auth_token"], err = auth.GenAuthTok(data.UserId)
 
 	if err != nil {
 		fmt.Println(err)
+
 		respld.Status = false
 		respld.Body = nil
 		respld.Error = "REGISTRATION_FAILED"
-		respld.Message = "Registration failed"
+		respld.Message = "Validation failed"
 
 		payload, err := json.Marshal(respld)
 
@@ -95,11 +97,11 @@ func verifyUser(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	respld.Body["refresh_token"], _ = auth.GenRefreshToken(data.UserId)
+	respld.Body["refresh_token"], _ = auth.GenRefreshTok(data.UserId)
 
 	respld.Status = true
 	respld.Error = ""
-	respld.Message = "Registration successful"
+	respld.Message = "Validation successful"
 
 	payload, err := json.Marshal(respld)
 

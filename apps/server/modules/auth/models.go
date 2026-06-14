@@ -1,12 +1,12 @@
 package auth
 
-type SignupReq struct {
+type CreateUsrReq struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-type VerifyAccReq struct {
+type ValidateUsrReq struct {
 	UserId string `json:"user_id"`
 	Email  string `json:"email"`
 	OTP    string `json:"otp"`

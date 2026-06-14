@@ -18,7 +18,7 @@ password must contain atleast one
 password must be atleast 6 chars long
 */
 // Check for email structure: example@email.com
-func pswdCheck(next http.HandlerFunc) http.HandlerFunc {
+func checkPswd(next http.HandlerFunc) http.HandlerFunc {
 	var tests = map[*regexp.Regexp]string{
 		regexp.MustCompile(`[A-Z]+`):       "MISSING_UPPERCASE",
 		regexp.MustCompile(`[a-z]+`):       "MISSING_LOWERCASE",
@@ -29,7 +29,7 @@ func pswdCheck(next http.HandlerFunc) http.HandlerFunc {
 	emailtest := regexp.MustCompile(`^[a-zA-Z\d._%+-]+@(([a-z]+\.)[a-z]+)$`)
 
 	return func(res http.ResponseWriter, req *http.Request) {
-		var data SignupReq
+		var data CreateUsrReq
 		err := json.NewDecoder(req.Body).Decode(&data)
 		defer req.Body.Close()
 
@@ -119,8 +119,10 @@ func pswdCheck(next http.HandlerFunc) http.HandlerFunc {
 func requireOtp(next http.HandlerFunc) http.HandlerFunc {
 
 	return func(res http.ResponseWriter, req *http.Request) {
-		var data VerifyAccReq
+		var data ValidateUsrReq
+
 		err := json.NewDecoder(req.Body).Decode(&data)
+
 		defer req.Body.Close()
 
 		if err != nil || data.UserId == "" || data.Email == "" || data.OTP == "" {

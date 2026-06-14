@@ -7,24 +7,29 @@
 ## Clean Build
 
 - `mvn clean`
-> Deletes all previously generated build outputs (`target/` folders) across all modules. Does not compile anything. Useful when builds start behaving unexpectedly.
+> Deletes all previously generated build outputs (`target/` folders) across all modules. Does not 
+compile anything. Useful when builds start behaving unexpectedly.
 
 ---
 
 - `mvn clean compile`
-> Removes old build outputs and compiles all modules (.java → .class). Compiled files are generated inside each module’s `target/classes` directory.
+> Removes old build outputs and compiles all modules (.java → .class). Compiled files are generated 
+inside each module’s `target/classes` directory.
 
 ---
 
 - `mvn clean install`
-> Full production-style build. Cleans everything, compiles all modules, runs tests, packages JARs, and installs them into the local Maven repository (`~/.m2`). Ensures all modules are built in correct dependency order.
+> Full production-style build. Cleans everything, compiles all modules, runs tests, packages JARs, 
+and installs them into the local Maven repository (`~/.m2`). Ensures all modules are built in 
+correct dependency order.
 
 ---
 
 ## Compile Only
 
 - `mvn compile`
-> Compiles all modules without running tests or packaging. Outputs `.class` files inside each module’s `target/classes` folder.
+> Compiles all modules without running tests or packaging. Outputs `.class` files inside each 
+module’s `target/classes` folder.
 
 ---
 
@@ -51,7 +56,8 @@
 ## Packaging
 
 - `mvn package`
-> Compiles code and creates JAR files for each module inside their `target/` folders. Does not install them to `.m2`.
+> Compiles code and creates JAR files for each module inside their `target/` folders. Does not 
+install them to `.m2`.
 
 ---
 

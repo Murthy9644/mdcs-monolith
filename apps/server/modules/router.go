@@ -13,10 +13,10 @@ func Router(mux *http.ServeMux) {
 	})
 
 	var auth_mux *http.ServeMux = http.NewServeMux()
-	auth.RegisterRoutes(auth_mux)
+	auth.Routes(auth_mux)
 
 	var ver_mux *http.ServeMux = http.NewServeMux()
-	version.RegisterRoutes(ver_mux)
+	version.Routes(ver_mux)
 
 	mux.Handle("/auth/", http.StripPrefix("/auth", auth_mux))
 	mux.Handle("/version/", http.StripPrefix("/version", ver_mux))

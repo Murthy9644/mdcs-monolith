@@ -14,36 +14,36 @@ import (
 )
 
 func main() {
-	if !bootstrap.BootstrapHandler() {
+	if !bootstrap.Run() {
 		return
 	}
 
 	mux := http.NewServeMux()
 	modules.Router(mux)
 
-	mux_final := http.StripPrefix("/mdcs", mux)
+	app := http.StripPrefix("/mdcs", mux)
 
 	// Shutdown channel and hook
-	// Buffer size 1 is enough because, will be catching one signal at a
-	// time and channel waits till that's read
+	// Buffer size 1 is enough because, will be catching one signal at a time
+	// and channel waits till that's read
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
 		<-sigchan
 
-		fmt.Println("Attempting cache flush")
-		err := data.FlushFiles()
+		fmt.Println("process: Attempting cache flush")
+		err := data.Flush()
 
 		if err != nil {
-			fmt.Println("Flush failed: ", err)
+			fmt.Println("fatal: Flush failed: ", err)
 		} else {
-			fmt.Println("Flush successful")
+			fmt.Println("success: Flush successful")
 		}
 
 		os.Exit(0)
 	}()
 
-	fmt.Println("\nServer listening at :1097")
-	http.ListenAndServe("0.0.0.0:1097", mux_final)
+	fmt.Println("process: Server listening at :1097")
+	http.ListenAndServe("0.0.0.0:1097", app)
 }

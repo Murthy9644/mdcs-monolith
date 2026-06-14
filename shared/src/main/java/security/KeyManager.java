@@ -7,8 +7,8 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import file_io.DataClasses;
-import file_io.FileIO;
+import fileio.DataClasses;
+import fileio.FileIO;
 
 public class KeyManager {
     
@@ -25,7 +25,7 @@ public class KeyManager {
 
     public static SecretKey getKey()
     throws IOException{
-        String cikey = FileIO.fileRead(DataClasses.Secrets.getCiPath());
+        String cikey = FileIO.fileRead(DataClasses.Cikey.getCiPath());
 
         if (cikey != null && !cikey.isEmpty()){
             byte[] decoded_key = Base64.getDecoder().decode(cikey);
@@ -37,7 +37,7 @@ public class KeyManager {
         byte[] key_bytes = secret_key.getEncoded();
         String encoded_key = Base64.getEncoder().encodeToString(key_bytes);
 
-        FileIO.fileWrite(DataClasses.Secrets.getCiPath(), encoded_key, "_");
+        FileIO.fileWrite(DataClasses.Cikey.getCiPath(), encoded_key, "_");
 
         return secret_key;
     }
