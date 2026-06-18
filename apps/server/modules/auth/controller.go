@@ -52,7 +52,7 @@ func signup(res http.ResponseWriter, req *http.Request) {
 }
 
 func verifyUsr(res http.ResponseWriter, req *http.Request) {
-	data := req.Context().Value(VerAccDataKey).(ValidateUsrReq)
+	data := req.Context().Value(VerUsrDataKey).(ValidateUsrReq)
 
 	var respld Response
 
@@ -102,6 +102,51 @@ func verifyUsr(res http.ResponseWriter, req *http.Request) {
 	respld.Status = true
 	respld.Error = ""
 	respld.Message = "Validation successful"
+
+	payload, err := json.Marshal(respld)
+
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res.Write(payload)
+}
+
+func handleFirstEnroll(res http.ResponseWriter, req *http.Request) {
+	data := req.Context().Value(RegDevDataKey).(RegisterDeviceReq)
+
+	var respld Response
+
+	wid, did, err := firstEnroll(data)
+
+	if err != nil {
+		respld.Status = false
+		respld.Body = nil
+		respld.Error = err.Error()
+		respld.Message = "Device enrollment failed"
+
+		payload, err := json.Marshal(respld)
+
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		res.Write(payload)
+		return
+	}
+
+	respld.Status = true
+
+	respld.Body = map[string]string{}
+	respld.Body["device_id"] = did
+	respld.Body["device_name"] = data.DeviceName
+	respld.Body["workspace_id"] = wid
+	respld.Body["workspace_name"] = data.WorkspaceName
+
+	respld.Error = ""
+	respld.Message = "Device enrolled successfully"
 
 	payload, err := json.Marshal(respld)
 

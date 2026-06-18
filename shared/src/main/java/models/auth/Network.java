@@ -75,7 +75,7 @@ public class Network {
         }
 
         public RegisterDeviceReq(){
-            this.endpoint = "/auth/device/register";
+            this.endpoint = "/auth/device/enroll";
             this.addHeader("Content-type", "application/json");
         }
     }

@@ -30,7 +30,7 @@ func UsrByEmail(email string) (models.UserAttrs, error) {
 		}
 	}
 
-	return models.UserAttrs{}, errors.New("no such user found")
+	return models.UserAttrs{}, errors.New("USER_NOT_FOUND")
 }
 
 func StoreOtp(user_id string, otp_det models.OTP) error {

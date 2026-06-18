@@ -145,7 +145,49 @@ func requireOtp(next http.HandlerFunc) http.HandlerFunc {
 
 		con := context.WithValue(
 			req.Context(),
-			VerAccDataKey, data,
+			VerUsrDataKey, data,
+		)
+
+		next(res, req.WithContext(con))
+	}
+}
+
+func enrollDetails(next http.HandlerFunc) http.HandlerFunc {
+
+	return func(res http.ResponseWriter, req *http.Request) {
+		var data RegisterDeviceReq
+
+		err := json.NewDecoder(req.Body).Decode(&data)
+
+		defer req.Body.Close()
+
+		switch {
+		case err != nil,
+			data.DeviceName == "",
+			data.WorkspaceName == "",
+			data.UserId == "":
+
+			payload, err := json.Marshal(
+				Response{
+					Status:  false,
+					Body:    nil,
+					Error:   "INVALID_DATA",
+					Message: "Failed to parse data",
+				},
+			)
+
+			if err != nil {
+				http.Error(res, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			res.Write(payload)
+			return
+		}
+
+		con := context.WithValue(
+			req.Context(),
+			RegDevDataKey, data,
 		)
 
 		next(res, req.WithContext(con))
