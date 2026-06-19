@@ -78,6 +78,8 @@ public class Enroll{
             );
 
             this.job.set(AuthState.RECOVER);
+
+            return;
         }
 
         RegisterDeviceRes payload = FileIO.toObject(

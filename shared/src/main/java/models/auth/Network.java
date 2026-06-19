@@ -89,4 +89,45 @@ public class Network {
             public String workspace_name;
         }
     }
+
+    public static class LoginReq extends Request<LoginReq.Body>{
+
+        public static class Body{
+            public String email;
+            public String password;
+            public String workspace_id;
+            public String device_id;
+
+            public Body(
+                String email, 
+                String password,
+                String workspace_id, 
+                String device_id
+            ){
+                this.email = email;
+                this.password = password;
+                this.workspace_id = workspace_id;
+                this.device_id = device_id;
+            }
+        }
+
+        public LoginReq(){
+            this.endpoint = "auth/user/login";
+            this.addHeader("Content-type", "application/json");
+        }
+    }
+
+    public static class LoginRes extends Response<LoginRes.Body>{
+
+        public static class Body{
+            public String user_id;
+            public String username;
+            public String workspace_id;
+            public String device_id;
+            public String workpsace_name;
+            public String device_name;
+            public String auth_tok;
+            public String refresh_tok;
+        }
+    }
 }

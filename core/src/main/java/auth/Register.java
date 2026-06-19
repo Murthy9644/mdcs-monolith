@@ -107,6 +107,8 @@ public class Register implements Runnable{
             );
 
             this.job.set(AuthState.RECOVER);
+
+            return;
         }
 
         ValidateUsrRes payload = FileIO.toObject(
@@ -197,6 +199,8 @@ public class Register implements Runnable{
             );
 
             this.job.set(AuthState.TERMINATE);
+
+            return;
         }
 
         CreateUsrRes payload = FileIO.toObject(
