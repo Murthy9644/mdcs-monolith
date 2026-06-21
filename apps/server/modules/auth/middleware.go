@@ -18,7 +18,7 @@ password must contain atleast one
 password must be atleast 6 chars long
 */
 // Check for email structure: example@email.com
-func checkPswd(next http.HandlerFunc) http.HandlerFunc {
+func validateCreds(next http.HandlerFunc) http.HandlerFunc {
 	var tests = map[*regexp.Regexp]string{
 		regexp.MustCompile(`[A-Z]+`):       "MISSING_UPPERCASE",
 		regexp.MustCompile(`[a-z]+`):       "MISSING_LOWERCASE",
@@ -155,7 +155,7 @@ func requireOtp(next http.HandlerFunc) http.HandlerFunc {
 func enrollDetails(next http.HandlerFunc) http.HandlerFunc {
 
 	return func(res http.ResponseWriter, req *http.Request) {
-		var data RegisterDeviceReq
+		var data EnrollDeviceReq
 
 		err := json.NewDecoder(req.Body).Decode(&data)
 
@@ -187,7 +187,50 @@ func enrollDetails(next http.HandlerFunc) http.HandlerFunc {
 
 		con := context.WithValue(
 			req.Context(),
-			RegDevDataKey, data,
+			EnrollDeviceDataKey, data,
+		)
+
+		next(res, req.WithContext(con))
+	}
+}
+
+func loginCreds(next http.HandlerFunc) http.HandlerFunc {
+
+	return func(res http.ResponseWriter, req *http.Request) {
+		var data LoginReq
+
+		err := json.NewDecoder(req.Body).Decode(&data)
+
+		defer req.Body.Close()
+
+		switch {
+		case err != nil,
+			data.Email == "",
+			data.Password == "",
+			data.DeviceId == "",
+			data.WorkspaceId == "":
+
+			payload, err := json.Marshal(
+				Response{
+					Status:  false,
+					Body:    nil,
+					Error:   "MISSING_DATA",
+					Message: "Required data not found",
+				},
+			)
+
+			if err != nil {
+				http.Error(res, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			res.Write(payload)
+			return
+		}
+
+		con := context.WithValue(
+			req.Context(),
+			LoginDataKey, data,
 		)
 
 		next(res, req.WithContext(con))

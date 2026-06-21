@@ -8,8 +8,8 @@ import fileio.DataClasses.Device;
 import logger.Log;
 import models.auth.Provider;
 import models.auth.State;
-import models.auth.Network.RegisterDeviceReq;
-import models.auth.Network.RegisterDeviceRes;
+import models.auth.Network.EnrollDeviceReq;
+import models.auth.Network.EnrollDeviceRes;
 import models.auth.State.AuthState;
 import network.ProtoMet;
 import utils.NetErrors;
@@ -33,7 +33,7 @@ public class Enroll{
      * If this method has been provoked, it is assumed that user has been already created and
      * validated.
      * 
-     * Populates the supplied Device instance with the registered device details.
+     * Populates the supplied Device instance with the enrolled device details.
      * 
      * @param device
      * @param logger
@@ -48,9 +48,9 @@ public class Enroll{
         device.device_name = this.callbacks.deviceName();
         device.workspace_name = this.callbacks.workspaceName();
 
-        RegisterDeviceReq message = new RegisterDeviceReq();
+        EnrollDeviceReq message = new EnrollDeviceReq();
 
-        message.body = new RegisterDeviceReq.Body(
+        message.body = new EnrollDeviceReq.Body(
             device.device_name, 
             device.workspace_name
         );
@@ -82,9 +82,9 @@ public class Enroll{
             return;
         }
 
-        RegisterDeviceRes payload = FileIO.toObject(
+        EnrollDeviceRes payload = FileIO.toObject(
             res.body().toString(), 
-            RegisterDeviceRes.class
+            EnrollDeviceRes.class
         );
 
         if (!payload.status){

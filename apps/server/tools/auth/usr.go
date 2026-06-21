@@ -73,9 +73,9 @@ func SendOtp(user_id, email string) error {
 	return err
 }
 
-func GenAuthTok(user_id string) (string, error) {
+func GenAuthTok(uid string) (string, error) {
 	claims := jwt.MapClaims{
-		"user_id": user_id,
+		"user_id": uid,
 		"exp":     time.Now().Add(60 * time.Minute).Unix(),
 		"iat":     time.Now().Unix(),
 	}
@@ -85,7 +85,7 @@ func GenAuthTok(user_id string) (string, error) {
 	return token.SignedString([]byte(os.Getenv("JWT_KEY")))
 }
 
-func GenRefreshTok(user_id string) (string, error) {
+func GenRefreshTok(uid string) (string, error) {
 	key := make([]byte, 32)
 	_, err := rand.Read(key)
 
@@ -100,7 +100,7 @@ func GenRefreshTok(user_id string) (string, error) {
 		bcrypt.DefaultCost,
 	)
 
-	err = repo.StoreRefreshTok(user_id, string(hashed))
+	err = repo.StoreRefreshTok(uid, string(hashed))
 
 	return token, err
 }

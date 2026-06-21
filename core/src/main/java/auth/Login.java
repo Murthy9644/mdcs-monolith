@@ -87,6 +87,21 @@ public class Login implements Runnable{
             this.job.logs.add("error<>" + NetErrors.err.get(payload.error));
             this.job.set(AuthState.RETRY);
         }
+
+        /*
+        Some details might already be available in user but, it is better to write all of them
+        again. Because, in some cases when user is logging in on a new device, file may not have
+        all the data.
+        */
+        this.user.user_id = payload.body.user_id;
+        this.user.username = payload.body.username;
+        this.user.auth_token = payload.body.auth_tok;
+        this.user.refresh_token = payload.body.refresh_tok;
+        
+        /*
+        But the device and workspace details are not required to write again. Because, if the
+        details were not available, the device enrollment would be triggered.
+        */
     }
 
     @Override

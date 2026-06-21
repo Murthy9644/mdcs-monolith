@@ -37,5 +37,18 @@ func WorkspaceByName(uid, wname string) (models.WorkspaceAttrs, error) {
 		}
 	}
 
-	return models.WorkspaceAttrs{}, errors.New("NO_WORKSPACE_FOUND")
+	return models.WorkspaceAttrs{}, errors.New("WORKSPACE_NOT_FOUND")
+}
+
+func WorkspaceById(uid, wid string) (models.WorkspaceAttrs, error) {
+	workspaces := data.Store.Workspaces[uid]
+
+	for _, workspace := range workspaces {
+
+		if workspace.WId == wid {
+			return workspace, nil
+		}
+	}
+
+	return models.WorkspaceAttrs{}, errors.New("WORKSPACE_NOT_FOUND")
 }

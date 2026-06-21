@@ -19,5 +19,17 @@ func DeviceByName(wid, dname string) (models.DeviceAttrs, error) {
 		}
 	}
 
-	return models.DeviceAttrs{}, errors.New("NO_DEVICE_FOUND")
+	return models.DeviceAttrs{}, errors.New("DEVICE_NOT_FOUND")
+}
+
+func DeviceById(wid, did string) (models.DeviceAttrs, error) {
+
+	for _, device := range data.Store.Devices[wid] {
+
+		if device.DId == did {
+			return device, nil
+		}
+	}
+
+	return models.DeviceAttrs{}, errors.New("DEVICE_NOT_FOUND")
 }

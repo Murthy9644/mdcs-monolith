@@ -22,15 +22,16 @@ func CreateUsr(usr models.UserAttrs) (string, error) {
 	return usr_id, nil
 }
 
-func UsrByEmail(email string) (models.UserAttrs, error) {
-	for _, user := range data.Store.Users {
+func UsrByEmail(email string) (string, models.UserAttrs, error) {
+
+	for user_id, user := range data.Store.Users {
 
 		if user.Email == email {
-			return user, nil
+			return user_id, user, nil
 		}
 	}
 
-	return models.UserAttrs{}, errors.New("USER_NOT_FOUND")
+	return "", models.UserAttrs{}, errors.New("USER_NOT_FOUND")
 }
 
 func StoreOtp(user_id string, otp_det models.OTP) error {

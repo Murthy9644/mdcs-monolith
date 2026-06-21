@@ -2,13 +2,12 @@ package auth
 
 import (
 	"encoding/json"
-	"fmt"
-	"mdcs-server/tools/auth"
+	"mdcs-server/data/repo"
 	"net/http"
 )
 
 // Write user entry and return user id
-func signup(res http.ResponseWriter, req *http.Request) {
+func register(res http.ResponseWriter, req *http.Request) {
 	data := req.Context().Value(SUpDataKey).(CreateUsrReq)
 	var respld Response
 
@@ -75,29 +74,15 @@ func verifyUsr(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	respld.Body = map[string]string{}
-	respld.Body["auth_token"], err = auth.GenAuthTok(data.UserId)
+	auth_tok, refresh_tok, err := getAccessTokens(data.UserId)
 
 	if err != nil {
-		fmt.Println(err)
-
-		respld.Status = false
-		respld.Body = nil
-		respld.Error = "REGISTRATION_FAILED"
-		respld.Message = "Validation failed"
-
-		payload, err := json.Marshal(respld)
-
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		res.Write(payload)
-		return
+		// This is not error, it will be automatically rectified in next user login
 	}
 
-	respld.Body["refresh_token"], _ = auth.GenRefreshTok(data.UserId)
+	respld.Body = map[string]string{}
+	respld.Body["auth_tok"] = auth_tok
+	respld.Body["refresh_tok"] = refresh_tok
 
 	respld.Status = true
 	respld.Error = ""
@@ -114,7 +99,7 @@ func verifyUsr(res http.ResponseWriter, req *http.Request) {
 }
 
 func handleFirstEnroll(res http.ResponseWriter, req *http.Request) {
-	data := req.Context().Value(RegDevDataKey).(RegisterDeviceReq)
+	data := req.Context().Value(EnrollDeviceDataKey).(EnrollDeviceReq)
 
 	var respld Response
 
@@ -147,6 +132,89 @@ func handleFirstEnroll(res http.ResponseWriter, req *http.Request) {
 
 	respld.Error = ""
 	respld.Message = "Device enrolled successfully"
+
+	payload, err := json.Marshal(respld)
+
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res.Write(payload)
+}
+
+func login(res http.ResponseWriter, req *http.Request) {
+	data := req.Context().Value(LoginDataKey).(LoginReq)
+
+	var respld Response
+
+	err := checkPswd(data)
+
+	if err != nil {
+		respld.Status = false
+		respld.Body = nil
+		respld.Error = err.Error()
+		respld.Message = "Invalid email or password"
+
+		payload, err := json.Marshal(respld)
+
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		res.Write(payload)
+		return
+	}
+
+	user_id, usr, err := workspaceDeviceMapUsr(
+		data.Email,
+		data.WorkspaceId,
+		data.DeviceId,
+	)
+
+	if err != nil {
+		respld.Status = false
+		respld.Body = nil
+		respld.Error = err.Error()
+		respld.Message = "Workspace or device not enrolled"
+
+		payload, err := json.Marshal(respld)
+
+		if err != nil {
+			http.Error(res, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		res.Write(payload)
+		return
+	}
+
+	auth_tok, refresh_tok, err := getAccessTokens(user_id)
+
+	if err != nil {
+		// This is not error, it will be automatically rectified in next user login
+		// Also, user should be prompted for login next time instead of continuing
+	}
+
+	respld.Body = map[string]string{}
+
+	respld.Body["user_id"] = user_id
+	respld.Body["username"] = usr.Username
+	respld.Body["workspace_id"] = data.WorkspaceId
+	respld.Body["device_id"] = data.DeviceId
+	respld.Body["auth_tok"] = auth_tok
+	respld.Body["refresh_tok"] = refresh_tok
+
+	device, _ := repo.DeviceById(data.WorkspaceId, data.DeviceId)
+	workspace, _ := repo.WorkspaceById(user_id, data.WorkspaceId)
+
+	respld.Body["workspace_name"] = workspace.WName
+	respld.Body["device_name"] = device.DName
+
+	respld.Status = true
+	respld.Error = ""
+	respld.Message = "Validation successful"
 
 	payload, err := json.Marshal(respld)
 

@@ -11,6 +11,23 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Generate and store auth tokens
+func getAccessTokens(uid string) (string, string, error) {
+	auth_tok, err := auth.GenAuthTok(uid)
+
+	if err != nil {
+		return "", "", errors.New("TOK_GEN_ERR")
+	}
+
+	refresh_tok, err := auth.GenRefreshTok(uid)
+
+	if err != nil {
+		return "", "", errors.New("TOK_GEN_ERR")
+	}
+
+	return auth_tok, refresh_tok, nil
+}
+
 // Create a new user after validating uniqueness and hashing password.
 func createUsr(data CreateUsrReq) (string, error) {
 	hashed, err := bcrypt.GenerateFromPassword(
@@ -29,7 +46,7 @@ func createUsr(data CreateUsrReq) (string, error) {
 		Status:   "UNVERIFIED",
 	}
 
-	if _, err := repo.UsrByEmail(data.Email); err == nil {
+	if _, _, err := repo.UsrByEmail(data.Email); err == nil {
 		return "", errors.New("DUPLICATE_USR")
 	}
 
@@ -73,7 +90,7 @@ func verifyOtp(data ValidateUsrReq) error {
 	return repo.SetVerified(data.UserId)
 }
 
-func firstEnroll(data RegisterDeviceReq) (string, string, error) {
+func firstEnroll(data EnrollDeviceReq) (string, string, error) {
 	wid := uuid.NewString()
 	did := uuid.NewString()
 
@@ -88,12 +105,14 @@ func firstEnroll(data RegisterDeviceReq) (string, string, error) {
 		DName: data.DeviceName,
 	}
 
+	// Check if workspace with same name is available
 	if _, err := repo.WorkspaceByName(data.UserId, data.WorkspaceName); err == nil {
 		return "", "", errors.New("DUPLICATE_WORKSPACE")
 	}
 
 	repo.AddWorkspace(data.UserId, workspace)
 
+	// Check if device with same name is available
 	if _, err := repo.DeviceByName(wid, data.DeviceName); err == nil {
 		/*
 			First enroll is atomic. That means, if failed to add device then undo the
@@ -108,4 +127,40 @@ func firstEnroll(data RegisterDeviceReq) (string, string, error) {
 	repo.AddDevice(wid, device)
 
 	return wid, did, nil
+}
+
+func checkPswd(data LoginReq) error {
+	_, usr, err := repo.UsrByEmail(data.Email)
+
+	if err != nil {
+		return errors.New("INVALID_CREDS")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(usr.Password), []byte(data.Password))
+
+	if err != nil {
+		return errors.New("INVALID_CREDS")
+	}
+
+	return nil
+}
+
+func workspaceDeviceMapUsr(
+	email, workspace_id, device_id string,
+) (string, models.UserAttrs, error) {
+	user_id, usr, err := repo.UsrByEmail(email)
+
+	if err != nil {
+		return "", models.UserAttrs{}, errors.New("USER_NOT_FOUND")
+	}
+
+	if _, err := repo.WorkspaceById(user_id, workspace_id); err != nil {
+		return "", models.UserAttrs{}, err
+	}
+
+	if _, err := repo.DeviceById(workspace_id, device_id); err != nil {
+		return "", models.UserAttrs{}, err
+	}
+
+	return user_id, usr, nil
 }
