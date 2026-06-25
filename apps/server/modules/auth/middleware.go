@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"mdcs-server/modules/shared"
 	"net/http"
 	"regexp"
 )
@@ -35,7 +36,7 @@ func validateCreds(next http.HandlerFunc) http.HandlerFunc {
 
 		if err != nil {
 			payload, err := json.Marshal(
-				Response{
+				shared.Response{
 					Status:  false,
 					Body:    nil,
 					Error:   "INVALID_DATA",
@@ -52,7 +53,7 @@ func validateCreds(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		if len(data.Password) < 6 {
-			respld := Response{
+			respld := shared.Response{
 				Status:  false,
 				Body:    nil,
 				Error:   "SHORT_PASSWORD",
@@ -71,7 +72,7 @@ func validateCreds(next http.HandlerFunc) http.HandlerFunc {
 
 		for test, err := range tests {
 			if !test.MatchString(data.Password) {
-				respld := Response{
+				respld := shared.Response{
 					Status:  false,
 					Body:    nil,
 					Error:   err,
@@ -90,7 +91,7 @@ func validateCreds(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		if !emailtest.MatchString(data.Email) {
-			respld := Response{
+			respld := shared.Response{
 				Status:  false,
 				Body:    nil,
 				Error:   "INVALID_EMAIL",
@@ -127,7 +128,7 @@ func requireOtp(next http.HandlerFunc) http.HandlerFunc {
 
 		if err != nil || data.UserId == "" || data.Email == "" || data.OTP == "" {
 			payload, err := json.Marshal(
-				Response{
+				shared.Response{
 					Status:  false,
 					Body:    nil,
 					Error:   "INVALID_DATA",
@@ -168,7 +169,7 @@ func enrollDetails(next http.HandlerFunc) http.HandlerFunc {
 			data.UserId == "":
 
 			payload, err := json.Marshal(
-				Response{
+				shared.Response{
 					Status:  false,
 					Body:    nil,
 					Error:   "INVALID_DATA",
@@ -211,7 +212,7 @@ func loginCreds(next http.HandlerFunc) http.HandlerFunc {
 			data.WorkspaceId == "":
 
 			payload, err := json.Marshal(
-				Response{
+				shared.Response{
 					Status:  false,
 					Body:    nil,
 					Error:   "MISSING_DATA",

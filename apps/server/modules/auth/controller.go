@@ -3,30 +3,20 @@ package auth
 import (
 	"encoding/json"
 	"mdcs-server/data/repo"
+	"mdcs-server/modules/shared"
+	"mdcs-server/tools/auth"
 	"net/http"
 )
 
 // Write user entry and return user id
 func register(res http.ResponseWriter, req *http.Request) {
 	data := req.Context().Value(SUpDataKey).(CreateUsrReq)
-	var respld Response
+	var respld shared.Response
 
 	user_id, err := createUsr(data)
 
 	if err != nil {
-		respld.Status = false
-		respld.Body = nil
-		respld.Error = err.Error()
-		respld.Message = "Account creation failed"
-
-		payload, err := json.Marshal(respld)
-
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		res.Write(payload)
+		shared.ProcessErr(respld, err, res)
 		return
 	}
 
@@ -53,24 +43,12 @@ func register(res http.ResponseWriter, req *http.Request) {
 func verifyUsr(res http.ResponseWriter, req *http.Request) {
 	data := req.Context().Value(VerUsrDataKey).(ValidateUsrReq)
 
-	var respld Response
+	var respld shared.Response
 
 	err := verifyOtp(data)
 
 	if err != nil {
-		respld.Status = false
-		respld.Body = nil
-		respld.Error = err.Error()
-		respld.Message = "OTP verification failed"
-
-		payload, err := json.Marshal(respld)
-
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		res.Write(payload)
+		shared.ProcessErr(respld, err, res)
 		return
 	}
 
@@ -101,24 +79,12 @@ func verifyUsr(res http.ResponseWriter, req *http.Request) {
 func handleFirstEnroll(res http.ResponseWriter, req *http.Request) {
 	data := req.Context().Value(EnrollDeviceDataKey).(EnrollDeviceReq)
 
-	var respld Response
+	var respld shared.Response
 
 	wid, did, err := firstEnroll(data)
 
 	if err != nil {
-		respld.Status = false
-		respld.Body = nil
-		respld.Error = err.Error()
-		respld.Message = "Device enrollment failed"
-
-		payload, err := json.Marshal(respld)
-
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		res.Write(payload)
+		shared.ProcessErr(respld, err, res)
 		return
 	}
 
@@ -146,15 +112,38 @@ func handleFirstEnroll(res http.ResponseWriter, req *http.Request) {
 func login(res http.ResponseWriter, req *http.Request) {
 	data := req.Context().Value(LoginDataKey).(LoginReq)
 
-	var respld Response
+	var respld shared.Response
 
 	err := checkPswd(data)
 
 	if err != nil {
-		respld.Status = false
-		respld.Body = nil
-		respld.Error = err.Error()
-		respld.Message = "Invalid email or password"
+		shared.ProcessErr(respld, err, res)
+		return
+	}
+
+	user_id, usr, _ := repo.UsrByEmail(data.Email)
+
+	status := repo.GetStatus(user_id)
+
+	if status != "ONBOARDED" {
+		respld.Status = true
+
+		respld.Body = map[string]string{
+			"user_id":  user_id,
+			"username": usr.Username,
+			"phase":    status,
+		}
+
+		respld.Error = ""
+		respld.Message = "Login defered"
+
+		if status == "UNVERIFIED" {
+			auth.SendOtp(user_id, usr.Email)
+		}
+
+		if status == "VERIFIED" {
+			// Nothing to do, client will request for device enrollment.
+		}
 
 		payload, err := json.Marshal(respld)
 
@@ -164,29 +153,16 @@ func login(res http.ResponseWriter, req *http.Request) {
 		}
 
 		res.Write(payload)
-		return
 	}
 
-	user_id, usr, err := workspaceDeviceMapUsr(
+	err = workspaceDeviceMapUsr(
 		data.Email,
 		data.WorkspaceId,
 		data.DeviceId,
 	)
 
 	if err != nil {
-		respld.Status = false
-		respld.Body = nil
-		respld.Error = err.Error()
-		respld.Message = "Workspace or device not enrolled"
-
-		payload, err := json.Marshal(respld)
-
-		if err != nil {
-			http.Error(res, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		res.Write(payload)
+		shared.ProcessErr(respld, err, res)
 		return
 	}
 
@@ -197,22 +173,23 @@ func login(res http.ResponseWriter, req *http.Request) {
 		// Also, user should be prompted for login next time instead of continuing
 	}
 
-	respld.Body = map[string]string{}
-
-	respld.Body["user_id"] = user_id
-	respld.Body["username"] = usr.Username
-	respld.Body["workspace_id"] = data.WorkspaceId
-	respld.Body["device_id"] = data.DeviceId
-	respld.Body["auth_tok"] = auth_tok
-	respld.Body["refresh_tok"] = refresh_tok
-
 	device, _ := repo.DeviceById(data.WorkspaceId, data.DeviceId)
 	workspace, _ := repo.WorkspaceById(user_id, data.WorkspaceId)
 
-	respld.Body["workspace_name"] = workspace.WName
-	respld.Body["device_name"] = device.DName
-
 	respld.Status = true
+
+	respld.Body = map[string]string{
+		"user_id":        user_id,
+		"username":       usr.Username,
+		"workspace_id":   data.WorkspaceId,
+		"device_id":      data.DeviceId,
+		"workspace_name": workspace.WName,
+		"device_name":    device.DName,
+		"auth_tok":       auth_tok,
+		"refresh_tok":    refresh_tok,
+		"phase":          "ONBOARDED",
+	}
+
 	respld.Error = ""
 	respld.Message = "Validation successful"
 

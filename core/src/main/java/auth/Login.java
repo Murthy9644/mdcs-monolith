@@ -95,8 +95,13 @@ public class Login implements Runnable{
         */
         this.user.user_id = payload.body.user_id;
         this.user.username = payload.body.username;
-        this.user.auth_token = payload.body.auth_tok;
-        this.user.refresh_token = payload.body.refresh_tok;
+
+        if (payload.body.phase == "UNVERIFIED"){
+            //
+        }
+
+        // this.user.auth_token = payload.body.auth_tok;
+        // this.user.refresh_token = payload.body.refresh_tok;
         
         /*
         But the device and workspace details are not required to write again. Because, if the

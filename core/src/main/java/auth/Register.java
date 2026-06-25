@@ -72,7 +72,7 @@ public class Register implements Runnable{
      * @throws IOException
      * @throws InterruptedException
      */
-    private void validateUsr()
+    public void validateUsr()
     throws IOException, InterruptedException{
         this.logger.info("auth.validateUsr", "Starting user account validation");
 

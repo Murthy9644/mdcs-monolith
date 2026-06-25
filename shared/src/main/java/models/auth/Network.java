@@ -120,6 +120,7 @@ public class Network {
     public static class LoginRes extends Response<LoginRes.Body>{
 
         public static class Body{
+            public String phase;
             public String user_id;
             public String username;
             public String workspace_id;

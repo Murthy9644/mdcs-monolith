@@ -44,6 +44,7 @@ func main() {
 		os.Exit(0)
 	}()
 
-	fmt.Println("process: Server listening at :1097")
-	http.ListenAndServe("0.0.0.0:1097", app)
+	// Port should be moved to .env and is imported at run-time
+	fmt.Println("process: Server listening at :1800")
+	http.ListenAndServe("0.0.0.0:1800", app)
 }

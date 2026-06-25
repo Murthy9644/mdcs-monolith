@@ -87,7 +87,7 @@ func verifyOtp(data ValidateUsrReq) error {
 		return errors.New("INCORRECT_OTP")
 	}
 
-	return repo.SetVerified(data.UserId)
+	return repo.SetStatus(data.UserId, "VERIFIED")
 }
 
 func firstEnroll(data EnrollDeviceReq) (string, string, error) {
@@ -103,6 +103,13 @@ func firstEnroll(data EnrollDeviceReq) (string, string, error) {
 	var device = models.DeviceAttrs{
 		DId:   did,
 		DName: data.DeviceName,
+	}
+
+	// Check if user exists and is verified.
+	if status := repo.GetStatus(data.UserId); status == "NO_SUCH_USER" {
+		return "", "", errors.New(status)
+	} else if status != "VERIFIED" {
+		return "", "", errors.New("FORBIDDEN_ACCESS")
 	}
 
 	// Check if workspace with same name is available
@@ -125,6 +132,7 @@ func firstEnroll(data EnrollDeviceReq) (string, string, error) {
 	}
 
 	repo.AddDevice(wid, device)
+	repo.SetStatus(data.UserId, "ONBORADED")
 
 	return wid, did, nil
 }
@@ -147,20 +155,20 @@ func checkPswd(data LoginReq) error {
 
 func workspaceDeviceMapUsr(
 	email, workspace_id, device_id string,
-) (string, models.UserAttrs, error) {
-	user_id, usr, err := repo.UsrByEmail(email)
+) error {
+	user_id, _, err := repo.UsrByEmail(email)
 
 	if err != nil {
-		return "", models.UserAttrs{}, errors.New("USER_NOT_FOUND")
+		return errors.New("USER_NOT_FOUND")
 	}
 
 	if _, err := repo.WorkspaceById(user_id, workspace_id); err != nil {
-		return "", models.UserAttrs{}, err
+		return err
 	}
 
 	if _, err := repo.DeviceById(workspace_id, device_id); err != nil {
-		return "", models.UserAttrs{}, err
+		return err
 	}
 
-	return user_id, usr, nil
+	return nil
 }

@@ -25,13 +25,6 @@ type LoginReq struct {
 	DeviceId    string `json:"device_id"`
 }
 
-type Response struct {
-	Status  bool              `json:"status"`
-	Body    map[string]string `json:"body"`
-	Error   string            `json:"error"`
-	Message string            `json:"message"`
-}
-
 const (
 	SUpDataKey          string = "signup_req_data"
 	VerUsrDataKey       string = "verifyusr_req_data"

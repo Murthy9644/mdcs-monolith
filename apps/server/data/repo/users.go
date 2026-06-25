@@ -31,7 +31,7 @@ func UsrByEmail(email string) (string, models.UserAttrs, error) {
 		}
 	}
 
-	return "", models.UserAttrs{}, errors.New("USER_NOT_FOUND")
+	return "", models.UserAttrs{}, errors.New("NO_SUCH_USER")
 }
 
 func StoreOtp(user_id string, otp_det models.OTP) error {
@@ -50,21 +50,31 @@ func StoreOtp(user_id string, otp_det models.OTP) error {
 func GetOtp(user_id string) (models.OTP, error) {
 	user, exists := data.Store.Users[user_id]
 
-	if !exists {
+	if !exists || user.Status != "UNVERIFIED" {
 		return models.OTP{}, errors.New("NO_SUCH_USER")
 	}
 
 	return user.Otp, nil
 }
 
-func SetVerified(user_id string) error {
+func SetStatus(user_id, status string) error {
 	user := data.Store.Users[user_id]
 	user.Otp = models.OTP{}
-	user.Status = "VERIFIED"
+	user.Status = status
 
 	data.Store.Users[user_id] = user
 
 	return nil
+}
+
+func GetStatus(uid string) string {
+	usr, exists := data.Store.Users[uid]
+
+	if !exists {
+		return "NO_SUCH_USER"
+	}
+
+	return usr.Status
 }
 
 func StoreRefreshTok(user_id, token string) error {
