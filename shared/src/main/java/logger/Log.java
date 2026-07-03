@@ -5,14 +5,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-import file_io.FileIO;
+import fileio.FileIO;
 import utils.SystemUtils;
 
 public class Log{
-    public HashMap<String, ArrayList<String>> logs;
+    public Map<String, Queue<String>> logs;
 
     public static String formatTimestamp() {
         LocalDateTime time = LocalDateTime.now();
@@ -101,9 +103,9 @@ public class Log{
     }
 
     public Log(){
-        this.logs = new HashMap<>();
-        this.logs.put("App", new ArrayList<>());
-        this.logs.put("Network", new ArrayList<>());
-        this.logs.put("Error", new ArrayList<>());
+        this.logs = new ConcurrentHashMap<>();
+        this.logs.put("App", new ConcurrentLinkedQueue<>());
+        this.logs.put("Network", new ConcurrentLinkedQueue<>());
+        this.logs.put("Error", new ConcurrentLinkedQueue<>());
     }
 }

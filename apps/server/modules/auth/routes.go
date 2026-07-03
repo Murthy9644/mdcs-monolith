@@ -1,0 +1,9 @@
+package auth
+
+import "net/http"
+
+func Routes(mux *http.ServeMux) {
+	mux.HandleFunc("/user/signup", validateCreds(register))
+	mux.HandleFunc("/user/verify-otp", requireOtp(verifyUsr))
+	mux.HandleFunc("/device/enroll", enrollDetails(handleFirstEnroll))
+}

@@ -70,6 +70,7 @@ Backend → Frontend:
 Frontend inputs device creds [device_name, workspace_name]
     ↓
 Frontend → Backend:
+    - auth_token
     - workspace_name
     - device_name
     ↓
@@ -91,8 +92,9 @@ Frontend:
     - stores:
         user_id
         device_id
-        workspace_id
         device_name
+        workspace_id
+        workspace_name
     - securely caches session JWT
     ↓
 User enters main app

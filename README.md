@@ -1,24 +1,30 @@
 # MDCS (Multi Device Connectivity System)
-> A system that enables seamless communication between multiple user devices, allowing remote command execution and coordination.
+> A system that enables seamless communication between multiple user devices, allowing remote 
+command execution and coordination.
 
 ---
 
 ## Features (MVP)
 ### Common Clipboard
-Synchronizes clipboard content across all connected devices in real-time, allowing seamless copy-paste between devices.
+Synchronizes clipboard content across all connected devices in real-time, allowing seamless 
+copy-paste between devices.
 
 ### File Sharing
-Enables fast and secure transfer of files between connected devices without relying on third-party services.
+Enables fast and secure transfer of files between connected devices without relying on third-party 
+services.
 
 ### Open / Schedule Open Applications
-Allows users to remotely open applications on connected devices instantly or schedule them for later execution.
+Allows users to remotely open applications on connected devices instantly or schedule them for later
+execution.
 
 ### Process Scheduling
-Provides the ability to schedule (periodically) the execution of tasks across devices in a controlled and sequential manner.
+Provides the ability to schedule (periodically) the execution of tasks across devices in a 
+controlled and sequential manner.
 
 ### Protocols
 Framework for enabling/disabling system-level behaviors and security mechanisms.
-- Kavach &rarr; A security protocol that allows users to protect sensitive data by encrypting and optionally moving it to secure storage (e.g., external devices).
+- Kavach &rarr; A security protocol that allows users to protect sensitive data by encrypting and 
+optionally moving it to secure storage (e.g., external devices).
 
 ### Folder Syncing
 Keeps selected folders synchronized across multiple devices with automatic updates.
@@ -45,11 +51,15 @@ Keeps selected folders synchronized across multiple devices with automatic updat
 ## Architecture Overview
 Follows Two-Layered architecture
 ### Application Level:
-Every instance of application (A particular device running this application) will talk directly to the main server and which internally communicates with a database. Users generally don't interfere directly with this level of server, they just send requests at a specific nodes.
+Every instance of application (A particular device running this application) will talk directly to 
+the main server and which internally communicates with a database. Users generally don't interfere 
+directly with this level of server, they just send requests at a specific nodes.
 
 ### User Level:
-This level is for commuication among devices that user have opted in for access. The network of devices formed will communicate with each other through their own light-weight server and client modules, after all the required setup has been done.
-![UserLevelViz](assets/images/user_level_viz.png)
+This level is for commuication among devices that user have opted in for access. The network of 
+devices formed will communicate with each other through their own light-weight server and client 
+modules, after all the required setup has been done.
+![UserLevelViz](docs/assets/images/user_level_viz.png)
 
 ### Workflow
 ```
@@ -93,7 +103,8 @@ Target Device
 > Setup instructions will be added as the project evolves.
 
 ## Use Cases
-MDCS is designed for users who want to improve productivity by managing and automating tasks across multiple devices.
+MDCS is designed for users who want to improve productivity by managing and automating tasks across 
+multiple devices.
 - Control multiple personal devices from one interface
 - Execute commands remotely
 - Enable device-to-device communication system

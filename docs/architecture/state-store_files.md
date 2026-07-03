@@ -1,7 +1,9 @@
 # Application Data Store
 
 ## Overview
-This directory contains all locally persisted application data, including user information, device metadata, configuration settings, and application properties. It is used during the bootstrap process to restore application state and determine runtime behavior.
+This directory contains all locally persisted application data, including user information, device 
+metadata, configuration settings, and application properties. It is used during the bootstrap 
+process to restore application state and determine runtime behavior.
 
 ## Directory Locations
 - Microsoft Windows:

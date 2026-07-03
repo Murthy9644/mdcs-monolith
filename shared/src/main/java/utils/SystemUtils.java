@@ -28,7 +28,7 @@ public class SystemUtils {
 
             case "LINUX":
                 String home_path = System.getenv("XDG_CONFIG_HOME");
-                String base = (home_path != null && !home_path.isEmpty)
+                String base = (home_path != null && !home_path.isEmpty())
                     ? home_path
                     : System.getProperty("user.home") + "./config";
 

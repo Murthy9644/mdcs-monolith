@@ -6,9 +6,11 @@ mdcs-monolith/
         cli/
             pom.xml
             src/main/
+                resources/
+                    application.properties
+                    versions.properties
+
                 java/cli/
-                    helpers/
-                        BootstrapTerminal.java
                     utils/
                         command_utils/
                             AuthPipe.java
@@ -20,9 +22,6 @@ mdcs-monolith/
                         CLIHandler.java
                     Main.java # (Console app entry point)
                     App.java
-                resources/
-                    application.properties
-                    versions.properties
                     
         server/
             api/
