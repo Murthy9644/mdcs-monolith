@@ -1,7 +1,7 @@
 # MDCS Folder Structure
 `Changes are possible as the project evolves`
 ```
-mdcs-monolith/
+mdcs-desktop/
     apps/
         cli/
             pom.xml
