@@ -50,6 +50,7 @@ MDCS is designed for users who want to improve productivity by managing and auto
 ### System Design
 - [App Bootstrap](docs/system-design/app-bootstrap.md)
 - [Authentication System](docs/system-design/auth-system.md)
+- [State Storage](docs/system-design/state-store.md)
 
 ### Development
 - [Build Commands](docs/development/build-commands.md)

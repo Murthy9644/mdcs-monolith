@@ -1,5 +1,34 @@
 # MDCS Folder Structure
-`Changes are possible as the project evolves`
+> Changes are possible as the project evolves
+
+---
+
+```
+mdcs-desktop/
+├── apps/
+│   ├── manager/
+│   ├── core/
+│   ├── cli/
+│   └── gui/
+│
+├── services/
+│   ├── host/
+│   └── client/
+│
+├── plugins/
+│
+├── shared/
+│
+├── server/
+|
+├── docs/
+|
+└── assets/
+```
+
+---
+
+`@deprecated`
 ```
 mdcs-desktop/
 ├── apps/
@@ -127,7 +156,6 @@ mdcs-desktop/
 │   │   ├── design.md
 │   │   ├── folder-structure.md
 │   │   ├── overview.md
-│   │   └── state-store_files.md
 │   ├── development/
 │   │   └── build-commands.md
 │   ├── modules/
@@ -139,6 +167,7 @@ mdcs-desktop/
 │   ├── system_design/
 │   │   ├── app-bootstrap.md
 │   │   └── auth-system.md
+│   │   └── state-store.md
 │   └── tests/
 │       └── bootstrap.md
 │

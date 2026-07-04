@@ -9,7 +9,6 @@ project evolves.
 # Goals
 
 ## Primary Goals
-
 * Synchronize data between user devices.
 * Run in the background without requiring an open UI.
 * Support both CLI and GUI frontends.
@@ -51,11 +50,9 @@ Plugins communicate with Host/Client through the command router.
 ## Manager
 
 ### Purpose
-
 Responsible for application lifecycle.
 
 ### Responsibilities
-
 * Start automatically with the operating system.
 * Launch required modules.
 * Receive status reports from Core.
@@ -64,7 +61,6 @@ Responsible for application lifecycle.
 * Gracefully terminate all modules.
 
 ### Does NOT
-
 * Authenticate users.
 * Handle networking.
 * Process business logic.
@@ -74,11 +70,9 @@ Responsible for application lifecycle.
 ## Core
 
 ### Purpose
-
 Prepare the application for execution.
 
 ### Responsibilities
-
 * Bootstrap.
 * Authentication.
 * User state recovery.
@@ -86,7 +80,6 @@ Prepare the application for execution.
 * Return startup status to Manager.
 
 ### Possible Results
-
 * SUCCESS
 * AUTH_REQUIRED
 * TERMINATE
@@ -97,11 +90,9 @@ Prepare the application for execution.
 ## Service Host
 
 ### Purpose
-
 Acts as the local service responsible for accepting requests from plugins and other modules.
 
 ### Responsibilities
-
 * Accept commands.
 * Broadcast updates.
 * Coordinate synchronization.
@@ -112,11 +103,9 @@ Acts as the local service responsible for accepting requests from plugins and ot
 ## Service Client
 
 ### Purpose
-
 Communicates with remote devices.
 
 ### Responsibilities
-
 * Receive synchronized data.
 * Send local updates.
 * Maintain network communication.
@@ -126,11 +115,9 @@ Communicates with remote devices.
 ## Command Router
 
 ### Purpose
-
 Routes commands between modules without tight coupling.
 
 ### Responsibilities
-
 * Register handlers.
 * Dispatch commands.
 * Decouple modules.
@@ -140,11 +127,9 @@ Routes commands between modules without tight coupling.
 ## CLI
 
 ### Purpose
-
 Terminal interface.
 
 ### Responsibilities
-
 * Receive user input.
 * Display responses.
 * Invoke Core workflows when required.
@@ -154,11 +139,9 @@ Terminal interface.
 ## GUI
 
 ### Purpose
-
 Graphical interface.
 
 ### Responsibilities
-
 * Display application state.
 * Collect user input.
 * Trigger workflows.
@@ -168,11 +151,9 @@ Graphical interface.
 ## Plugins
 
 ### Purpose
-
 Extend MDCS functionality.
 
 ### Responsibilities
-
 * Produce events.
 * Consume services exposed by Host.
 
@@ -218,7 +199,6 @@ Runtime Ready
 ---
 
 # Communication Rules
-
 * Manager controls module lifecycle.
 * Core reports status only.
 * UI never launches services directly.
@@ -228,7 +208,6 @@ Runtime Ready
 ---
 
 # Design Principles
-
 * One responsibility per module.
 * Prefer composition over coupling.
 * Separate lifecycle management from business logic.
@@ -241,7 +220,6 @@ Runtime Ready
 # Future Improvements
 
 ## Planned
-
 * Plugin sandbox.
 * Automatic updates.
 * Multi-account support.
@@ -249,7 +227,6 @@ Runtime Ready
 * IPC improvements.
 
 ## Under Investigation
-
 * Process isolation.
 * Distributed command routing.
 * Cross-platform service manager.
@@ -257,7 +234,6 @@ Runtime Ready
 ---
 
 # Open Questions
-
 * Should Host and Client remain separate processes?
 * How should plugins authenticate?
 * Should command routing be centralized?
