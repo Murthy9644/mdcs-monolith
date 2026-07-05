@@ -1,22 +1,29 @@
 # MDCS (Multi Device Connectivity System)
 
-> A system that enables seamless communication between multiple user devices, allowing remote 
-command execution and coordination.
+> A system for connecting multiple personal devices over a local network. It enables secure
+communication, remote command execution, and coordinated workflows between devices through a modular
+architecture.
 
 ---
 
-## Tech Stack (Planned)
-- Languages:
-    - C &rarr; Low-level system operations / performance-critical modules
-    - Python &rarr; Prototyping, automation logic
-    - Java &rarr; Business logic (+ GUI later)
-    - Go &rarr; Networking services
+## Tech Stack
 
-- Networking:
-    - Sockets &rarr; Internal modular communication
-    - HTTP &rarr; Device level communications
+### Languages
 
-- Tools: Git
+#### Currently Used
+- Java
+- Go
+- Python
+
+#### Planned
+- C/C++
+
+### Networking:
+- Sockets &rarr; Internal modular communication
+- HTTP &rarr; Device level communications
+
+### Tools:
+- Git
 
 ## Getting Started
 > Setup instructions will be added as the project evolves.
@@ -26,8 +33,8 @@ command execution and coordination.
 - Core system under active development
 
 ## Use Cases
-MDCS is designed for users who want to improve productivity by managing and automating tasks across multiple devices.
-
+MDCS is designed for users who want to improve productivity by managing and automating tasks across
+multiple devices.
 - Control multiple personal devices from one interface
 - Execute commands remotely
 - Enable device-to-device communication system
@@ -45,7 +52,6 @@ MDCS is designed for users who want to improve productivity by managing and auto
 ### Modules
 - [Internal Modules](docs/modules/internal.md)
 - [Feature Modules](docs/modules/feature-modules.md)
-- [Protocols](docs/modules/protocols.md)
 
 ### System Design
 - [App Bootstrap](docs/system-design/app-bootstrap.md)
