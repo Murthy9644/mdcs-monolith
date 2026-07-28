@@ -1,20 +1,20 @@
 package com.mdcs.core.bootstrap;
 
-import java.io.IOException;
 import java.util.Properties;
 
-import com.mdcs.shared.logger.Log;
-import com.mdcs.shared.models.postals.Report;
-import com.mdcs.shared.models.postals.Report.AppState;
+import com.mdcs.core.Stream;
+import com.mdcs.core.Stream.Type;
+import com.mdcs.shared.models.Report;
+import com.mdcs.shared.models.Report.AppState;
 import com.mdcs.shared.network.ProtoMet;
 
 // Initializes and prepares the application before starting
 
 /*
 Phases in bootstrap:
-        - Schema validation
-        - Version validation / Update check
-        - User state resolution
+    - Schema validation
+    - Version validation / Update check
+    - User state resolution
 
 It may be noted that user state resolution phase is executed after the remaining phases of
 bootstrap. It is called independently by the master and not as a parallel worker.
@@ -32,18 +32,16 @@ public class Supervise implements Runnable{
 
     private ProtoMet server;
     private Properties vers;
-    private Log logger;
+    private Stream stream;
     private Report report;
 
     @Override
     public void run(){
-        logger.info("bootstrap", "Starting application bootstrap");
-
-        Schema schema = new Schema(this.report, logger);
+        Schema schema = new Schema(this.stream, this.report);
         Thread sch_worker = new Thread(schema);
         sch_worker.setDaemon(true);
 
-        Version version = new Version(this.report, logger, this.server, this.vers);
+        Version version = new Version(this.stream, this.server, this.vers, this.report);
         Thread ver_worker = new Thread(version);
         ver_worker.setDaemon(true);
 
@@ -56,44 +54,21 @@ public class Supervise implements Runnable{
         try { ver_worker.join(); } 
         catch (InterruptedException e) { ver_worker.interrupt(); }
 
-        if (this.report.app_state == AppState.CONTINUE){
-            logger.info(
-                "bootstrap", 
-                "Application bootstrap reported with no severity"
-            );
+        if (this.report.getAppState() == AppState.CONTINUE)
+            this.stream.write(Type.LOG, "Application bootstrap reported with no severity.\n");
 
-            this.report.summary = "Application bootstrap reported with no severity";
-        }
+        else if (this.report.getAppState() == AppState.BLOCK)
+            this.stream.write(Type.LOG, "Application startup blocked after bootstrap.\n");
 
-        else if (this.report.app_state == AppState.BLOCK){
-            logger.info(
-                "bootstrap", 
-                "Application startup blocked"
-            );
-
-            this.report.summary = "Application startup blocked";
-        }
-
-        else if (this.report.app_state == AppState.TERMINATE){
-            logger.error(
-                "bootstrap", 
-                "Application startup aborted"
-            );
-
-            this.report.summary = "Application startup aborted";
-        }
-
-        logger.info("bootstrap", "Application bootstrap completed");
-
-        try { logger.flush(); } 
-        catch (IOException e) { }
+        else if (this.report.getAppState() == AppState.TERMINATE)
+            this.stream.write(Type.LOG, "Application startup aborted after bootstrap.\n");
     }
 
-    public Supervise(ProtoMet server, Properties vers, Report report){
+    public Supervise(ProtoMet server, Properties vers, Stream stream){
         this.server = server;
         this.vers = vers;
-        this.report = report;
-
-        this.logger = new Log();
+        this.stream = stream;
+        
+        this.report = new Report();
     }
 }

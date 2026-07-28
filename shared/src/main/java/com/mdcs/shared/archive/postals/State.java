@@ -1,6 +1,6 @@
-package com.mdcs.shared.models.auth;
+package com.mdcs.shared.archive.postals;
 
-import com.mdcs.shared.models.postals.Report.Job;
+import com.mdcs.shared.archive.postals.Report.Job;
 
 public class State extends Job{
 

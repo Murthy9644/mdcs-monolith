@@ -1,4 +1,13 @@
-package com.mdcs.shared.models.postals;
+/*
+Legacy implementation of worker -> master communication.
+
+Kept temporarily for future reference while the new model is under development or changes are
+being done.
+
+DO NOT use in new code.
+*/
+
+package com.mdcs.shared.archive.postals;
 
 import java.util.concurrent.CountDownLatch;
 

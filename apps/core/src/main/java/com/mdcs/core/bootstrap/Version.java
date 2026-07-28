@@ -6,15 +6,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import com.mdcs.shared.logger.Log;
-import com.mdcs.shared.models.bootstrap.Jobs;
+import com.mdcs.shared.models.Report;
+import com.mdcs.shared.models.Report.AppState;
 import com.mdcs.shared.models.bootstrap.Network;
 import com.mdcs.shared.models.bootstrap.Network.UpdReq;
 import com.mdcs.shared.models.bootstrap.Network.UpdRes;
-import com.mdcs.shared.models.postals.Report;
-import com.mdcs.shared.models.postals.Report.AppState;
-import com.mdcs.shared.models.postals.Report.JobType;
 import com.mdcs.shared.network.ProtoMet;
+import com.mdcs.core.Stream;
+import com.mdcs.core.Stream.Type;
 import com.mdcs.shared.fileio.DataClasses;
 import com.mdcs.shared.fileio.FileIO;
 
@@ -30,9 +29,8 @@ application aswell.
 */
 
 public class Version implements Runnable{
+    private Stream stream;
     private Report report;
-    private Jobs.Version job;
-    private Log logger;
     private ProtoMet server;
     private Properties ver;
     private Network.UpdRes ver_meta;
@@ -47,13 +45,6 @@ public class Version implements Runnable{
         cases, respective plugin is marked incompatible and its existence is neglected.
         */
 
-        this.logger.info(
-            "bootstrap", 
-            "Checking for plugins updates and compatibility"
-        );
-
-        this.job.logs.add("info<>Checking for plugins updates and compatibility");
-
         Map<String, UpdRes.Plugin> plugins = this.ver_meta.body.plugins;
 
         for (String name : plugins.keySet()){
@@ -67,23 +58,14 @@ public class Version implements Runnable{
             if (plugin.update_req){
                 // Pass plugin name, currnt version, available version and continue to application
 
-                this.logger.info(
-                    "bootstrap", 
-                    "Plugin update available [" + name + "|" + curr_ver + "|" + avail_ver + "]"
+                this.stream.write(
+                    Type.LOG,
+                    "Plugin update available [name=" + name
+                        + " current=" + curr_ver
+                        + " available=" + avail_ver + "]\n"
                 );
 
-                Jobs.Version.Update update = new Jobs.Version.Update();
-
-                update.type = Jobs.Version.UpdateTypes.PLUGIN;
-
-                update.name = name;
-
-                update.curr_ver = this.ver_meta.body.plugins.get(name).curr_ver;
-                update.avail_ver = this.ver_meta.body.plugins.get(name).avail_ver;
-
-                update.changes = this.ver_meta.body.changes;
-                
-                this.job.updates.add(update);
+                this.stream.write(Type.PLUGIN_UPDATE, name + " " + curr_ver + " " + avail_ver);
             }
         }
         
@@ -94,33 +76,27 @@ public class Version implements Runnable{
             When can't write the plugin compatibility back to file, can't say if that plugin is
             valid or not further in application. So, treating all the plugins incompatible. But
             wait, what is even the purpose of the application alone when don't have any plugins
-            => Terminate application startup.
+            => Terminate application startup. May change this later...
             */
 
-            this.logger.error(
-                "bootstrap", 
-                "Failed to persist plugin compatibility"
-            );
-
-            this.job.logs.add("critical<>Failed to persist plugin compatibiliy");
+            this.stream.write(Type.LOG, "Failed to persist plugin compatibility\n");
+            this.report.setAppState(AppState.TERMINATE);
         }
     }
     
     private void appUpdate(){
         /*
         From the metadata we get from the server, will decide if app update is available or not.
+
         An app update is classified into:
-                - Critical update
-                - Minor update
-                - Patch update
+            - Critical update
+            - Minor update
+            - Patch update
     
         In case of critical update, will block the main app execution (May include modular block
         in future updates).
         In any other cases, will continue to app after noticing the user about the update.
         */
-       
-        this.logger.info("bootstrap", "Checking for app updates");
-        this.job.logs.add("info<>Checking for app updates");
 
         String curr_ver = this.ver_meta.body.app.cur_ver;
         String avail_ver = this.ver_meta.body.app.avail_ver;
@@ -129,24 +105,12 @@ public class Version implements Runnable{
         if (this.ver_meta.body.app.critical_update){
             // Block the app startup and inform user
 
-            this.logger.info(
-                "bootstrap", 
-                "New (critical) update available for installation"
+            this.stream.write(
+                Type.LOG,
+                "Critical update required. Startup cannot continue.\n"
             );
 
-            Jobs.Version.Update update = new Jobs.Version.Update();
-
-            update.type = Jobs.Version.UpdateTypes.CRITICAL;
-
-            update.name = "Application";
-
-            update.curr_ver = this.ver_meta.body.app.cur_ver;
-            update.avail_ver = this.ver_meta.body.app.avail_ver;
-
-            update.changes = this.ver_meta.body.changes;
-            
-            this.job.updates.add(update);
-
+            this.stream.write(Type.CRITICAL_UPDATE, curr_ver + " " + avail_ver);
             this.report.setAppState(AppState.BLOCK);
 
             return;
@@ -163,26 +127,8 @@ public class Version implements Runnable{
         ){
             // New update available => Notify user and continue app execution
 
-            this.logger.info(
-                "bootstrap", 
-                "New update available for installation"
-            );
-
-            Jobs.Version.Update update = new Jobs.Version.Update();
-
-            // Optional and patch updates are combined to optional. Because I don't see any great
-            // difference between them
-
-            update.type = Jobs.Version.UpdateTypes.OPTIONAL;
-
-            update.name = "Application";
-
-            update.curr_ver = this.ver_meta.body.app.cur_ver;
-            update.avail_ver = this.ver_meta.body.app.avail_ver;
-
-            update.changes = this.ver_meta.body.changes;
-            
-            this.job.updates.add(update);
+            this.stream.write(Type.LOG, "Optional application update available.\n");
+            this.stream.write(Type.MINOR_UPDATE,  curr_ver + " " + avail_ver);
         }
     }
 
@@ -194,16 +140,13 @@ public class Version implements Runnable{
         manager which will require another kind of metadata. Thus, there is no need to persist
         this out of this class.
         */
-
-        this.logger.network("bootstrap", "Getting version metadata");
         
         try{
             // Data as written by local plugins available on user device
             this.plugins = FileIO.fileRead(DataClasses.Plugins.class);
             Map<String, DataClasses.Plugin> plg_data;
 
-            if ((plg_data = this.plugins.plugins) == null)
-                plg_data = new HashMap<>();
+            if ((plg_data = this.plugins.plugins) == null) plg_data = new HashMap<>();
 
             // Final object to send to server
             UpdReq message = new UpdReq();
@@ -218,10 +161,8 @@ public class Version implements Runnable{
                 );
 
             HttpResponse<String> res = server.post(message);
-            
-            this.logger.network("bootstrap", "Version metadata received");
 
-            // Handle internal errors
+            // Need implementation to handle internal errors
             
             this.ver_meta = FileIO.toObject(res.body(), Network.UpdRes.class);
         } catch (IOException e){
@@ -230,13 +171,8 @@ public class Version implements Runnable{
             can't reliably move forward with plugins update checks, but can check for application
             updates.
             */
-           
-            this.logger.error(
-                "bootstrap", 
-                "Failed to persist plugin compatibility"
-            );
 
-            this.job.logs.add("error<>Failed to persist plugin compatibility");
+            this.stream.write(Type.LOG, "Failed to persist plugin compatibility.\n");
 
             throw new RuntimeException();
 
@@ -246,12 +182,7 @@ public class Version implements Runnable{
             to application without update check
             */
 
-            this.logger.network(
-                "bootstrap", 
-                "Server request for version meta was interrupted"
-            );
-
-            this.job.logs.add("error<>Server request for version meta was interrupted");
+            this.stream.write(Type.LOG, "Failed to fetch version metadata.\n");
 
             Thread.currentThread().interrupt();
 
@@ -261,14 +192,12 @@ public class Version implements Runnable{
             application is terminated because, this may cause unexpected behaviors
             */
 
-            this.report.setAppState(AppState.TERMINATE);
-
-            this.logger.error(
-                "bootstrap", 
-                "Reflection error @ DataClasses.plugins" + " | " + e.getMessage()
+            this.stream.write(
+                Type.LOG, 
+                "Failed to fetch version metadate due to some internal error.\n"
             );
 
-            this.job.logs.add("critical<>" + e.getMessage());
+            this.report.setAppState(AppState.TERMINATE);
         }
     }
 
@@ -284,14 +213,10 @@ public class Version implements Runnable{
 
             if (!version.matches("^[0-9]+\\.[0-9]+\\.[0-9]$")) {
                 // The version of this module is not in the valid form.
-
-                this.logger.error(
-                    "bootstrap", 
-                    "Invalid version format | " + key + "=" + version
-                );
-
-                this.job.logs.add(
-                    "critical<>Invalid version format | " + key +"=" + version
+                
+                this.stream.write(
+                    Type.LOG,
+                    "Invalid version string for '" + key + "' {" + version + "}\n"
                 );
 
                 return false;
@@ -303,35 +228,26 @@ public class Version implements Runnable{
 
     @Override
     public void run(){
-        this.logger.info("bootstrap", "Started version and update check");
+        this.stream.write(
+            Type.LOG,
+            "Verifying installed version and checking for updates...\n"
+        );
 
         if (!this.format()){
             // Stop application startup
             
-            this.logger.error(
-                "bootstrap", 
-                "Application startup terminated because of invalid version format"
-            );
-
-            this.job.logs.add(
-                "error<>Application startup terminated because of invalid version format"
-            );
+            this.report.setAppState(AppState.TERMINATE);
         }
 
         this.metadata();
         this.appUpdate();
         this.pluginUpate();
-
-        this.report.jobs.add(this.job);
     }
     
-    protected Version(Report report, Log logger, ProtoMet server, Properties ver){
-        this.report = report;
-        this.logger = logger;
+    protected Version(Stream stream, ProtoMet server, Properties ver, Report report){
+        this.stream = stream;
         this.server = server;
         this.ver = ver;
-
-        this.job = new Jobs.Version();
-        this.job.type = JobType.VERSION;
+        this.report = report;
     }
 }
