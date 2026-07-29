@@ -3,27 +3,28 @@ package com.mdcs.core.bootstrap;
 import java.io.IOException;
 
 import com.mdcs.shared.fileio.FileIO;
+import com.mdcs.core.Stream;
+import com.mdcs.core.Stream.Type;
 import com.mdcs.shared.fileio.DataClasses.Accounts;
-import com.mdcs.shared.logger.Log;
 
 /*
 Determines the user state: 
-        - logged in
-        - logged out & auth required
-        - logged out & auth not required
+    - logged in
+    - logged out & auth required
+    - logged out & auth not required
 
 This is done based on status of Accounts.json file and the auth, refresh tokens availability or
 correctness.
-        - File exists & auth / refresh tokens are valid => logged in
-        - File exists & auth & refresh tokens not valid => logged out
-        - File doesn't exist => logged out
-        - Manually logged out => logged out (implemented in future versions)
+    - File exists & auth / refresh tokens are valid => logged in
+    - File exists & auth & refresh tokens not valid => logged out
+    - File doesn't exist => logged out
+    - Manually logged out => logged out (implemented in future versions)
 */
 
 public class UserState {
     // This phase of bootstrap is executed independent of other phases, not in parallel with them.
 
-    private Log logger;
+    private Stream stream;
 
     private Accounts read(){
         /*
@@ -71,15 +72,12 @@ public class UserState {
     public String resolve(){
         String usr_state = this.state();
 
-        this.logger.info("bootstrap", "User state resolved to " + usr_state);
-
-        try { this.logger.flush(); }
-        catch (IOException e) { }
+        this.stream.write(Type.LOG, "Resolved user state to " + usr_state + ".\n");
         
         return usr_state;
     }
     
-    public UserState(){
-        this.logger = new Log();
+    public UserState(Stream stream){
+        this.stream = stream;
     }
 }
