@@ -176,10 +176,14 @@ public class Stream {
      * This method is best for Fire-And-Forget kind of payloads. Best use cases are Logs, Updates,
      * and Notifications.
      */
-    public void send(Type type, String payload)
-    throws InterruptedException{
+    public void send(Type type, String payload){
         int id = this.id_count.incrementAndGet();
-        this.oque.put(new Message(id, type.toString(), payload));
+
+        try {
+            this.oque.put(new Message(id, type.toString(), payload));
+        } catch (InterruptedException e) {
+            // Will decide what to do here later
+        }
     }
 
     /**
