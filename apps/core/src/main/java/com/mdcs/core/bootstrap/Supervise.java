@@ -55,13 +55,19 @@ public class Supervise implements Runnable{
         catch (InterruptedException e) { ver_worker.interrupt(); }
 
         if (this.report.getAppState() == AppState.CONTINUE)
-            this.stream.write(Type.LOG, "Application bootstrap reported with no severity.\n");
+            this.stream.send(
+                Type.LOG, "Application bootstrap reported with no severity.\n"
+            );
 
         else if (this.report.getAppState() == AppState.BLOCK)
-            this.stream.write(Type.LOG, "Application startup blocked after bootstrap.\n");
+            this.stream.send(
+                Type.LOG, "Application startup blocked after bootstrap.\n"
+            );
 
         else if (this.report.getAppState() == AppState.TERMINATE)
-            this.stream.write(Type.LOG, "Application startup aborted after bootstrap.\n");
+            this.stream.send(
+                Type.LOG, "Application startup aborted after bootstrap.\n"
+            );
     }
 
     public Supervise(ProtoMet server, Properties vers, Stream stream){

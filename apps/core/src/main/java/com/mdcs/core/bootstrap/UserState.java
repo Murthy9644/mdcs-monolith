@@ -72,7 +72,7 @@ public class UserState {
     public String resolve(){
         String usr_state = this.state();
 
-        this.stream.write(Type.LOG, "Resolved user state to " + usr_state + ".\n");
+        this.stream.send(Type.LOG, "Resolved user state to " + usr_state + ".\n");
         
         return usr_state;
     }

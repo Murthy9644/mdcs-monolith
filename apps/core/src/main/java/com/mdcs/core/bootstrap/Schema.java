@@ -90,7 +90,7 @@ public class Schema implements Runnable{
                 ObjectNode node = (ObjectNode) raw;
 
                 if (!this.validSchema(template, node)){
-                    this.stream.write(Type.LOG, "Invalid file schema for " + tem_name + "\n");
+                    this.stream.send(Type.LOG, "Invalid file schema for " + tem_name + "\n");
 
                     try{
                         // node would be updated if schema is invalid. So we need to write those
@@ -98,14 +98,14 @@ public class Schema implements Runnable{
 
                         FileIO.writeJsonNode(template, node);
                         
-                        this.stream.write(
+                        this.stream.send(
                             Type.LOG, 
                             "Defaulted invalid file content for " + tem_name + "\n"
                         );
                     } catch (Exception e){
                         // Failed to write file. Stop application startup
 
-                        this.stream.write(
+                        this.stream.send(
                             Type.LOG, 
                             "Failed to default invalid file, " + tem_name + "\n"
                         );
@@ -120,7 +120,7 @@ public class Schema implements Runnable{
                 // This could be caused due to user tinkering files or corrupted file write.
                 // Try backup restore first and then default file write if it fails
 
-                this.stream.write(Type.LOG, "Invalid file format for " + tem_name + "\n");
+                this.stream.send(Type.LOG, "Invalid file format for " + tem_name + "\n");
 
                 if (!recover(template)){
                     // Recovery failed. Create default files
@@ -128,14 +128,14 @@ public class Schema implements Runnable{
                     try{
                         FileIO.createAndWrite(template);
 
-                        this.stream.write(
+                        this.stream.send(
                             Type.LOG,
                             "Created default " + tem_name + " after recovery failed.\n"
                         );
                     } catch (Exception f){
                         // Failed to write defaults. Stop application startup
 
-                        this.stream.write(
+                        this.stream.send(
                             Type.LOG,
                             "Failed to recover/create " + tem_name + ".\n"
                         );
@@ -146,7 +146,7 @@ public class Schema implements Runnable{
                     }
                 } else{
                     // Backups recovered
-                    this.stream.write(Type.LOG, "Recovered " + tem_name + " from backups.\n");
+                    this.stream.send(Type.LOG, "Recovered " + tem_name + " from backups.\n");
                 }
             }
         }
@@ -196,7 +196,7 @@ public class Schema implements Runnable{
     
     @Override
     public void run(){
-        this.stream.write(Type.LOG, "Validating file system schema and format...\n");
+        this.stream.send(Type.LOG, "Validating file system schema and format...\n");
         
         // Makes sure directories exist already
         FileIO.createAppFileDirs();
@@ -211,7 +211,7 @@ public class Schema implements Runnable{
             environment. Chances of reaching this are low but never zero !!!
             */
 
-            this.stream.write(
+            this.stream.send(
                 Type.LOG,
                 "Expected data field doesn't exist or can't be accessed in UNKNOWN file.\n"
             );
