@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.net.http.HttpResponse;
 
 import com.mdcs.shared.archive.postals.Report;
-import com.mdcs.shared.archive.postals.State;
-import com.mdcs.shared.archive.postals.State.AuthState;
 import com.mdcs.shared.fileio.FileIO;
 import com.mdcs.shared.fileio.DataClasses.Accounts;
 import com.mdcs.shared.fileio.DataClasses.Device;
 import com.mdcs.shared.logger.Log;
+import com.mdcs.shared.models.State;
+import com.mdcs.shared.models.State.AuthState;
 import com.mdcs.shared.models.auth.Provider;
 import com.mdcs.shared.models.auth.Network.LoginReq;
 import com.mdcs.shared.models.auth.Network.LoginRes;

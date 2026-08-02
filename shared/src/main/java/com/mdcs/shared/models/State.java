@@ -1,8 +1,6 @@
-package com.mdcs.shared.archive.postals;
+package com.mdcs.shared.models;
 
-import com.mdcs.shared.archive.postals.Report.Job;
-
-public class State extends Job{
+public class State{
 
     public enum AuthState{
         SUCCESS,
