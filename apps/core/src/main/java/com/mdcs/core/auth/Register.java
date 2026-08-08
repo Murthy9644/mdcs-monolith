@@ -3,18 +3,18 @@ package com.mdcs.core.auth;
 import java.io.IOException;
 import java.net.http.HttpResponse;
 
+import com.mdcs.shared.archive.postals.Report;
+import com.mdcs.shared.archive.postals.State;
+import com.mdcs.shared.archive.postals.State.AuthState;
 import com.mdcs.shared.fileio.FileIO;
 import com.mdcs.shared.fileio.DataClasses.Accounts;
 import com.mdcs.shared.fileio.DataClasses.Device;
 import com.mdcs.shared.logger.Log;
 import com.mdcs.shared.models.auth.Provider;
-import com.mdcs.shared.models.auth.State;
 import com.mdcs.shared.models.auth.Network.CreateUsrReq;
 import com.mdcs.shared.models.auth.Network.CreateUsrRes;
 import com.mdcs.shared.models.auth.Network.ValidateUsrReq;
 import com.mdcs.shared.models.auth.Network.ValidateUsrRes;
-import com.mdcs.shared.models.auth.State.AuthState;
-import com.mdcs.shared.models.postals.Report;
 import com.mdcs.shared.network.ProtoMet;
 import com.mdcs.shared.security.TokCipher;
 import com.mdcs.shared.utils.NetErrors;
@@ -68,9 +68,6 @@ public class Register implements Runnable{
     /**
      * Validate user account with OTP and set the user as verified after successful validation.
      * Assumes account has been created previously (ofcourse bro)
-     * 
-     * @throws IOException
-     * @throws InterruptedException
      */
     public void validateUsr()
     throws IOException, InterruptedException{
@@ -282,8 +279,6 @@ public class Register implements Runnable{
         } finally{
             
             try {
-                // Write the user and device details into the file
-
                 FileIO.fileWrite(this.user);
                 FileIO.fileWrite(this.device);
 
@@ -304,11 +299,9 @@ public class Register implements Runnable{
                 this.job.set(AuthState.RECOVER);
             }
 
-            // Flush the logs
             try { this.logger.flush(); }
             catch (IOException e) { }
 
-            // Add the job
             this.report.jobs.add(this.job);
         }
     }

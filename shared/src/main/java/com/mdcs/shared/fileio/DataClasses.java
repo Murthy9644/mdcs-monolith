@@ -23,14 +23,11 @@ public class DataClasses{
         }
     }
 
-    public interface HasPath{
-        String getPath();
-    }
+    public interface HasPath{ String getPath(); }
 
     // Template for Accounts.json file
     public static class Accounts implements HasPath{   
 
-        // File location
         private static final String path = Paths.get(
             SystemUtils.getAppDataDirectory(), 
             "entities", "Accounts.json"
@@ -50,22 +47,20 @@ public class DataClasses{
 
         // When data is sent
         public Accounts(String details[]){
-            this.user_id        = details[0];
-            this.username       = details[1];
-            this.email          = details[2];
-            this.auth_token     = details[3];
-            this.refresh_token  = details[4];
-            this.logged_in   = details[5] == "true";
+            this.user_id = details[0];
+            this.username = details[1];
+            this.email = details[2];
+            this.auth_token = details[3];
+            this.refresh_token = details[4];
+            this.logged_in = details[5] == "true";
         }
 
-        // When data is null
-        public Accounts(){ }
+        public Accounts(){}
     }
 
     // Template for Device.json
     public static class Device implements HasPath{
 
-        // File location
         private static final String path = Paths.get(
             SystemUtils.getAppDataDirectory(), 
             "entities", "Device.json"
@@ -82,20 +77,18 @@ public class DataClasses{
 
         // When data is sent
         public Device(String details[]){
-            this.device_id      = details[0];
-            this.device_name    = details[1];
-            this.workspace_id   = details[2];
+            this.device_id = details[0];
+            this.device_name = details[1];
+            this.workspace_id = details[2];
             this.workspace_name = details[3];
         }
 
-        // When data is null
-        public Device(){ }
+        public Device(){}
     }
 
     // Template for Configs.json
     public static class Configs implements HasPath{
 
-        // File location
         private static final String path = Paths.get(
             SystemUtils.getAppDataDirectory(), 
             "application", "Configs.json"
@@ -104,13 +97,13 @@ public class DataClasses{
         @JsonIgnore
         public String getPath(){ return path; }
 
+        // Just a place holder, this will be update during UI modules
         public String temp_field;
     }
 
     // Template for ModulePaths.json
     public static class ModulePaths implements HasPath{
 
-        // File location
         private static final String path = Paths.get(
             SystemUtils.getAppDataDirectory(), 
             "application", "ModulePaths.json"
@@ -132,25 +125,23 @@ public class DataClasses{
 
         // When data is sent
         public ModulePaths(String details[]){
-            this.clipboard          = details[0];
-            this.file_share         = details[1];
-            this.folder_sync        = details[2];
-            this.protocols          = details[3];
-            this.application_acess  = details[4];
-            this.scheduler          = details[5];
-            this.host               = details[6];
-            this.client             = details[7];
-            this.mesh               = details[8];
+            this.clipboard = details[0];
+            this.file_share = details[1];
+            this.folder_sync = details[2];
+            this.protocols = details[3];
+            this.application_acess = details[4];
+            this.scheduler = details[5];
+            this.host = details[6];
+            this.client = details[7];
+            this.mesh = details[8];
         }
 
-        // When data is null
-        public ModulePaths(){ }
+        public ModulePaths(){}
     }
 
     // Template for Data.json
     public static class Data implements HasPath{
 
-        // File location
         private static final String path = Paths.get(
             SystemUtils.getAppDataDirectory(), 
             "application", "Data.json"
@@ -159,6 +150,7 @@ public class DataClasses{
         @JsonIgnore
         public String getPath(){ return path; }
 
+        // Just a place holder, this will be update during later modules/services/plugins
         public String temp_field;
     }
 
@@ -172,7 +164,6 @@ public class DataClasses{
     // Template for Plugins.json
     public static class Plugins implements HasPath{
 
-        // File location
         private static final String path = Paths.get(
             SystemUtils.getAppDataDirectory(), 
             "plugins", "Plugin.json"
@@ -181,13 +172,13 @@ public class DataClasses{
         @JsonIgnore
         public String getPath(){ return path; }
 
-        public Map<String, Plugin> plugins = new HashMap<>(); // plugin name -> Plugin
+        // plugin name -> Plugin
+        public Map<String, Plugin> plugins = new HashMap<>();
     }
 
     // Template for Cikey.key
     public class Cikey implements HasPath{
 
-        // File location
         private static final String path = Paths.get(
             SystemUtils.getAppDataDirectory(), 
             "secrets", "Cikey.key"

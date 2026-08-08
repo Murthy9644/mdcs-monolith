@@ -10,14 +10,13 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
+import com.mdcs.core.Stream;
+import com.mdcs.core.Stream.LogAct;
+import com.mdcs.core.Stream.Message;
 import com.mdcs.shared.fileio.FileIO;
 import com.mdcs.shared.fileio.DataClasses.*;
-import com.mdcs.shared.logger.Log;
-import com.mdcs.shared.models.bootstrap.Jobs;
-import com.mdcs.shared.models.postals.Report;
-import com.mdcs.shared.models.postals.Report.AppState;
-import com.mdcs.shared.models.postals.Report.JobType;
+import com.mdcs.shared.models.Report;
+import com.mdcs.shared.models.Report.AppState;
 
 /*
 Validates schema and format of the application files, tries recovery or attempts backup or creates
@@ -25,9 +24,8 @@ default files in case of failure
 */
 
 public class Schema implements Runnable{
+    private Stream stream;
     private Report report;
-    private Jobs.Schema job;
-    private Log logger;
     private Map<Class<? extends HasPath>, List<FieldRules>> rules;
 
     private <Template extends HasPath> boolean recover(Class<Template> template){
@@ -45,12 +43,13 @@ public class Schema implements Runnable{
         for (FieldRules rule : this.rules.get(template)){
             JsonNode field = node.get(rule.name);
 
-            switch (rule.type) {
+            switch (rule.type){
                 case "int":
                     if (field == null || field.isNull() || !field.isInt()){
                         node.put(rule.name, 0);
                         valid = false;
                     }
+
                     break;
             
                 case "string":
@@ -58,6 +57,7 @@ public class Schema implements Runnable{
                         node.put(rule.name, "");
                         valid = false;
                     }
+
                     break;
             
                 case "boolean":
@@ -74,7 +74,7 @@ public class Schema implements Runnable{
     private void validate()
     throws Exception{
         /*
-        A file's schema is said to be invalid if data in a field is not of expected type. Example,
+        A file's schema is said to be invalid if data in a field is not of expected Service. Example,
         {"username": 123}
 
         And a file's format is invalid if it can't be parsed into the template DTO (invalid JSON)
@@ -91,31 +91,39 @@ public class Schema implements Runnable{
                 ObjectNode node = (ObjectNode) raw;
 
                 if (!this.validSchema(template, node)){
-                    this.logger.error("bootstrap", "Invalid file schema: " + tem_name);
-                    this.job.logs.add("error<>Invalid file schema: " + tem_name);
+                    this.stream.send(
+                        new Message(
+                            LogAct.ERROR, 
+                            null, 
+                            "Invalid file schema for " + tem_name + "\n"
+                        )
+                    );
 
                     try{
-                        // 'node' would be updated if schema is invalid. So we need to write those
+                        // node would be updated if schema is invalid. So we need to write those
                         // updates back into the file
 
                         FileIO.writeJsonNode(template, node);
                         
-                        this.logger.info(
-                            "bootstrap", 
-                            "Defaulted invalid data: " + tem_name
+                        this.stream.send(
+                            new Message(
+                                LogAct.ERROR, 
+                                null, 
+                                "Defaulted invalid file content for " + tem_name + "\n"
+                            )
                         );
-
-                        this.job.logs.add("info<>Defaulted invalid data: " + tem_name);
                     } catch (Exception e){
                         // Failed to write file. Stop application startup
 
-                        this.logger.error(
-                            "bootstrap", 
-                            "Failed to write file: " + tem_name
+                        this.stream.send(
+                            new Message(
+                                LogAct.ERROR, 
+                                null, 
+                                "Failed to default invalid file, " + tem_name + "\n"
+                            )
                         );
 
                         this.report.setAppState(AppState.TERMINATE);
-                        this.job.logs.add("error<>Failed to write file: " + tem_name);
 
                         return;
                     }
@@ -125,44 +133,51 @@ public class Schema implements Runnable{
                 // This could be caused due to user tinkering files or corrupted file write.
                 // Try backup restore first and then default file write if it fails
 
-                this.logger.error("bootstrap", "Invalid file format: " + tem_name);
-                this.job.logs.add("error<>Invalid file format: " + tem_name);
+                this.stream.send(
+                    new Message(
+                        LogAct.ERROR, 
+                        null, 
+                        "Invalid file format for " + tem_name + "\n"
+                    )
+                );
 
                 if (!recover(template)){
                     // Recovery failed. Create default files
-
-                    this.logger.error(
-                        "bootstrap",
-                        "Failed to restore backup file: " + tem_name
-                    );
-
-                    this.job.logs.add("error<>Failed to restore backup file: " + tem_name);
                     
                     try{
                         FileIO.createAndWrite(template);
 
-                        this.logger.info("bootstrap", "Created default file: " + tem_name);
-                        this.job.logs.add("info<>Default file created: " + tem_name);
+                        this.stream.send(
+                            new Message(
+                                LogAct.INFO, 
+                                null, 
+                                "Created default file for " + tem_name + "\n"
+                            )
+                        );
                     } catch (Exception f){
                         // Failed to write defaults. Stop application startup
 
-                        this.logger.error(
-                            "bootstrap", 
-                            "Failed to create file: " + tem_name
+                        this.stream.send(
+                            new Message(
+                                LogAct.ERROR,
+                                null,
+                                "Failed to recover/create " + tem_name + ".\n"
+                            )
                         );
 
                         this.report.setAppState(AppState.TERMINATE);
-                        this.job.logs.add(
-                            "error<>Application startup aborted after recovery attempt failed"
-                        );
 
                         return;
                     }
                 } else{
                     // Backups recovered
-
-                    this.logger.info("bootstrap", "Backup file restored: " + tem_name);
-                    this.job.logs.add("info<>Backup fule restored: " + tem_name);
+                    this.stream.send(
+                        new Message(
+                            LogAct.INFO, 
+                            null, 
+                            "Recovered " + tem_name + " from backups.\n"
+                        )
+                    );
                 }
             }
         }
@@ -173,7 +188,7 @@ public class Schema implements Runnable{
         Initially, we will get the classes which implement HasPath interface, that means, the
         classes which are file templates.
 
-        For each such class, we create field rules object skipping static fields (which doesn't
+        For each such class, we create field rules object, skipping static fields (which doesn't
         include 'path')
         */
         
@@ -201,8 +216,10 @@ public class Schema implements Runnable{
                 if (Modifier.isStatic(field.getModifiers())) continue;
 
                 this.rules.get(template).add(
-                    new FieldRules(field.getName(),
-                    field.getType().getSimpleName().toLowerCase())
+                    new FieldRules(
+                        field.getName(),
+                        field.getType().getSimpleName().toLowerCase()
+                    )
                 );
             }
         }
@@ -210,9 +227,15 @@ public class Schema implements Runnable{
     
     @Override
     public void run(){
-        this.logger.info("bootstrap", "Started schema format validation");
+        this.stream.send(
+            new Message(
+                LogAct.INFO, 
+                null, 
+                "Validating file system schema and format...\n"
+            )
+        );
         
-        // Make sure directories exist already
+        // Makes sure directories exist already
         FileIO.createAppFileDirs();
 
         // Set field rules for each file template
@@ -225,26 +248,24 @@ public class Schema implements Runnable{
             environment. Chances of reaching this are low but never zero !!!
             */
 
-            this.logger.error(
-                "bootstrap", 
-                "Expected data field doesn't exist or can't be accessed"
+            this.stream.send(
+                new Message(
+                    LogAct.CRITICAL, 
+                    null, 
+                    "Expected data field doesn't exist or can't be accessed in UNKNOWN file.\n"
+                )
             );
 
             this.report.setAppState(AppState.TERMINATE);
-            this.job.logs.add("error<>File parse issue: Unknown file"); // oops :)
         }
 
-        this.report.jobs.add(this.job);
         this.rules.clear();
     }
 
-    protected Schema(Report report, Log logger){
+    protected Schema(Stream stream, Report report){
+        this.stream = stream;
         this.report = report;
-        this.logger = logger;
 
         this.rules = new HashMap<>();
-
-        this.job = new Jobs.Schema();
-        this.job.type = JobType.SCHEMA;
     }
 }

@@ -1,9 +1,9 @@
-package com.mdcs.shared.models.bootstrap;
+package com.mdcs.shared.archive.postals;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mdcs.shared.models.postals.Report.Job;
+import com.mdcs.shared.archive.postals.Report.Job;
 
 public class Jobs {
     
