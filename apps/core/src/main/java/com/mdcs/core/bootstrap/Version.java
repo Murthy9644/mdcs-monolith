@@ -13,7 +13,9 @@ import com.mdcs.shared.models.bootstrap.Network.UpdReq;
 import com.mdcs.shared.models.bootstrap.Network.UpdRes;
 import com.mdcs.shared.network.ProtoMet;
 import com.mdcs.core.Stream;
-import com.mdcs.core.Stream.Type;
+import com.mdcs.core.Stream.LogAct;
+import com.mdcs.core.Stream.Message;
+import com.mdcs.core.Stream.UpdateAct;
 import com.mdcs.shared.fileio.DataClasses;
 import com.mdcs.shared.fileio.FileIO;
 
@@ -58,14 +60,23 @@ public class Version implements Runnable{
             if (plugin.update_req){
                 // Pass plugin name, currnt version, available version and continue to application
 
-                this.stream.write(
-                    Type.LOG,
-                    "Plugin update available [name=" + name
-                        + " current=" + curr_ver
-                        + " available=" + avail_ver + "]\n"
+                this.stream.send(
+                    new Message(
+                        LogAct.INFO,
+                        null,
+                        "Plugin update available [name=" + name
+                            + " current=" + curr_ver
+                            + " available=" + avail_ver + "]\n"
+                    )
                 );
 
-                this.stream.write(Type.PLUGIN_UPDATE, name + " " + curr_ver + " " + avail_ver);
+                this.stream.send(
+                    new Message(
+                        UpdateAct.PLUGIN,
+                        null,
+                        name + " " + curr_ver + " " + avail_ver
+                    )
+                );
             }
         }
         
@@ -79,7 +90,13 @@ public class Version implements Runnable{
             => Terminate application startup. May change this later...
             */
 
-            this.stream.write(Type.LOG, "Failed to persist plugin compatibility\n");
+            this.stream.send(
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Failed to persist plugin compatibility\n"
+                )
+            );
             this.report.setAppState(AppState.TERMINATE);
         }
     }
@@ -105,12 +122,21 @@ public class Version implements Runnable{
         if (this.ver_meta.body.app.critical_update){
             // Block the app startup and inform user
 
-            this.stream.write(
-                Type.LOG,
-                "Critical update required. Startup cannot continue.\n"
+            this.stream.send(
+                new Message(
+                    LogAct.CRITICAL, 
+                    null, 
+                    "Critical update required. Startup cannot continue.\n"
+                )
             );
 
-            this.stream.write(Type.CRITICAL_UPDATE, curr_ver + " " + avail_ver);
+            this.stream.send(
+                new Message(
+                    UpdateAct.CRITICAL, 
+                    null, 
+                    curr_ver + " " + avail_ver
+                )
+            );
             this.report.setAppState(AppState.BLOCK);
 
             return;
@@ -127,8 +153,20 @@ public class Version implements Runnable{
         ){
             // New update available => Notify user and continue app execution
 
-            this.stream.write(Type.LOG, "Optional application update available.\n");
-            this.stream.write(Type.MINOR_UPDATE,  curr_ver + " " + avail_ver);
+            this.stream.send(
+                new Message(
+                    LogAct.INFO, 
+                    null, 
+                    "Optional application update available.\n"
+                )
+            );
+            this.stream.send(
+                new Message(
+                    UpdateAct.OPTIONAL, 
+                    null, 
+                    curr_ver + " " + avail_ver
+                )
+            );
         }
     }
 
@@ -172,7 +210,13 @@ public class Version implements Runnable{
             updates.
             */
 
-            this.stream.write(Type.LOG, "Failed to persist plugin compatibility.\n");
+            this.stream.send(
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Failed to persist plugin compatibility\n"
+                )
+            );
 
             throw new RuntimeException();
 
@@ -182,7 +226,13 @@ public class Version implements Runnable{
             to application without update check
             */
 
-            this.stream.write(Type.LOG, "Failed to fetch version metadata.\n");
+            this.stream.send(
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Failed to fetch version metadata.\n"
+                )
+            );
 
             Thread.currentThread().interrupt();
 
@@ -192,9 +242,12 @@ public class Version implements Runnable{
             application is terminated because, this may cause unexpected behaviors
             */
 
-            this.stream.write(
-                Type.LOG, 
-                "Failed to fetch version metadate due to some internal error.\n"
+            this.stream.send(
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Failed to fetch version metadata due to some internal error.\n"
+                )
             );
 
             this.report.setAppState(AppState.TERMINATE);
@@ -214,9 +267,12 @@ public class Version implements Runnable{
             if (!version.matches("^[0-9]+\\.[0-9]+\\.[0-9]$")) {
                 // The version of this module is not in the valid form.
                 
-                this.stream.write(
-                    Type.LOG,
-                    "Invalid version string for '" + key + "' {" + version + "}\n"
+                this.stream.send(
+                    new Message(
+                        LogAct.ERROR,
+                        null,
+                        "Invalid version string for '" + key + "' {" + version + "}\n"
+                    )
                 );
 
                 return false;
@@ -228,9 +284,12 @@ public class Version implements Runnable{
 
     @Override
     public void run(){
-        this.stream.write(
-            Type.LOG,
-            "Verifying installed version and checking for updates...\n"
+        this.stream.send(
+            new Message(
+                LogAct.INFO, 
+                null, 
+                "Verifying installed version and checking for updates...\n"
+            )
         );
 
         if (!this.format()){

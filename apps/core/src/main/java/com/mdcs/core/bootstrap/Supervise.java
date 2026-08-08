@@ -3,7 +3,8 @@ package com.mdcs.core.bootstrap;
 import java.util.Properties;
 
 import com.mdcs.core.Stream;
-import com.mdcs.core.Stream.Type;
+import com.mdcs.core.Stream.LogAct;
+import com.mdcs.core.Stream.Message;
 import com.mdcs.shared.models.Report;
 import com.mdcs.shared.models.Report.AppState;
 import com.mdcs.shared.network.ProtoMet;
@@ -55,13 +56,31 @@ public class Supervise implements Runnable{
         catch (InterruptedException e) { ver_worker.interrupt(); }
 
         if (this.report.getAppState() == AppState.CONTINUE)
-            this.stream.write(Type.LOG, "Application bootstrap reported with no severity.\n");
+            this.stream.send(
+                new Message(
+                    LogAct.INFO, 
+                    null, 
+                    "Application bootstrap reported with no severity.\n"
+                )
+            );
 
         else if (this.report.getAppState() == AppState.BLOCK)
-            this.stream.write(Type.LOG, "Application startup blocked after bootstrap.\n");
+            this.stream.send(
+                new Message(
+                    LogAct.CRITICAL, 
+                    null, 
+                    "Application startup blocked after bootstrap.\n"
+                )
+            );
 
         else if (this.report.getAppState() == AppState.TERMINATE)
-            this.stream.write(Type.LOG, "Application startup aborted after bootstrap.\n");
+            this.stream.send(
+                new Message(
+                    LogAct.CRITICAL, 
+                    null, 
+                    "Application startup aborted after bootstrap.\n"
+                )
+            );
     }
 
     public Supervise(ProtoMet server, Properties vers, Stream stream){

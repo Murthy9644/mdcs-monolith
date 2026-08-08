@@ -7,7 +7,8 @@ import com.mdcs.shared.models.Report;
 import com.mdcs.shared.models.State;
 import com.mdcs.shared.models.State.AuthState;
 import com.mdcs.core.Stream;
-import com.mdcs.core.Stream.Type;
+import com.mdcs.core.Stream.LogAct;
+import com.mdcs.core.Stream.Message;
 import com.mdcs.shared.fileio.FileIO;
 import com.mdcs.shared.fileio.DataClasses.Accounts;
 import com.mdcs.shared.fileio.DataClasses.Device;
@@ -71,7 +72,13 @@ public class Register implements Runnable{
      */
     public void validateUsr()
     throws IOException, InterruptedException{
-        this.stream.send(Type.LOG, "Initializing user account validation flow...\n");
+        this.stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Initializing user account validation flow...\n"
+            )
+        );
 
         String otp = this.callbacks.otp();
 
@@ -90,8 +97,11 @@ public class Register implements Runnable{
             // recover from Unverified state
 
             this.stream.send(
-                Type.LOG,
-                "Account validation failed due to an internal server error\n"
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Account validation failed due to an internal server error\n"
+                )
             );
 
             this.state.set(AuthState.RECOVER);
@@ -113,10 +123,13 @@ public class Register implements Runnable{
             // Auth failed due to some user / environment related issue
 
             this.stream.send(
-                Type.LOG, 
-                "Account validation failed due to user/environment issue {"
-                    + NetErrors.err.get(payload.error)
-                    + "}\n"
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Account validation failed due to user/environment issue {"
+                        + NetErrors.err.get(payload.error)
+                        + "}\n"
+                )
             );
             
             this.state.set(AuthState.RECOVER);
@@ -125,7 +138,13 @@ public class Register implements Runnable{
         this.user.auth_token = TokCipher.encrypt(payload.body.auth_tok);
         this.user.refresh_token = TokCipher.encrypt(payload.body.refresh_tok);
         
-        this.stream.send(Type.LOG, "Account validation completed with no issues.\n");
+        this.stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Account validation completed with no issues.\n"
+            )
+        );
     }
 
     /**
@@ -140,7 +159,13 @@ public class Register implements Runnable{
      */
     private void createUsr()
     throws IOException, InterruptedException{
-        this.stream.send(Type.LOG, "Initializing user account creation flow...\n");
+        this.stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Initializing user account creation flow...\n"
+            )
+        );
 
         this.user.username = this.callbacks.username();
         this.user.email = this.callbacks.email();
@@ -171,8 +196,11 @@ public class Register implements Runnable{
             */
 
             this.stream.send(
-                Type.LOG,
-                "Account creation failed due to an internal server error\n"
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Account creation failed due to an internal server error\n"
+                )
             );
 
             this.state.set(AuthState.TERMINATE);
@@ -192,10 +220,13 @@ public class Register implements Runnable{
             */
 
             this.stream.send(
-                Type.LOG, 
-                "Account creation failed due to user/environment issue {"
-                    + NetErrors.err.get(payload.error)
-                    + "}\n"
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Account creation failed due to user/environment issue {"
+                        + NetErrors.err.get(payload.error)
+                        + "}\n"
+                )
             );
 
             this.state.set(AuthState.RETRY);
@@ -203,12 +234,24 @@ public class Register implements Runnable{
 
         this.user.user_id = payload.body.user_id;
         
-        this.stream.send(Type.LOG, "Account creation completed with no issues.\n");
+        this.stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Account creation completed with no issues.\n"
+            )
+        );
     }
 
     @Override
     public void run(){
-        this.stream.send(Type.LOG, "Initializing registration workflow...\n");
+        this.stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Initializing registration workflow...\n"
+            )
+        );
         
         try{
             Enroll enroll = new Enroll(this.server, this.state, this.callbacks);
@@ -238,7 +281,13 @@ public class Register implements Runnable{
             In such cases, prompt user and send the termination code.
             */
 
-            this.stream.send(Type.LOG, "Failed to contact the server <" + e.getMessage() + ">\n");
+            this.stream.send(
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Failed to contact the server <" + e.getMessage() + ">\n"
+                )
+            );
             
             this.state.set(AuthState.TERMINATE);
         } catch (InterruptedException e){
@@ -249,8 +298,11 @@ public class Register implements Runnable{
             */
 
             this.stream.send(
-                Type.LOG, 
-                "Thread was interrupted while performing user registration.\n"
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Thread was interrupted while performing user registration\n"
+                )
             );
 
             this.state.set(AuthState.TERMINATE);
@@ -270,8 +322,11 @@ public class Register implements Runnable{
                 this.state.set(AuthState.RECOVER);
 
                 this.stream.send(
-                    Type.LOG, 
-                    "User set to {Logout} after failure to persist user/device data.\n"
+                    new Message(
+                        LogAct.ERROR,
+                        null,
+                        "User set to {Logout} after failure to persist user/device data.\n"
+                    )
                 );
             }
         }
