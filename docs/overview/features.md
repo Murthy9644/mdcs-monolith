@@ -5,12 +5,12 @@ Synchronizes clipboard content across all connected devices in real-time, allowi
 copy-paste between devices.
 
 ## File Sharing
-Enables fast and secure transfer of files between connected devices without relying on 
-third-party services.
+Enables fast and secure transfer of files between connected devices without relying on third-party
+services.
 
 ## Open / Schedule Open Applications
-Allows users to remotely open applications on connected devices instantly or schedule them for 
-later execution.
+Allows users to remotely open applications on connected devices instantly or schedule them for later
+execution.
 
 ## Process Scheduling
 Provides the ability to schedule (periodically) the execution of tasks across devices in a 

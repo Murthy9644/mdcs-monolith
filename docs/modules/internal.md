@@ -3,7 +3,11 @@
 These modules will be automatically downloaded when user installs the application. These are
 vitals for operation of the application.
 
-## Bootstrap
+## Manager
+Orchastrates all the modules and services, maintains and watches application life-cycle.
+
+## Core
+### Bootstrap
 Manage app launch protocols, Decides the next state of the application based on
 - File system check
 - Update check
@@ -11,7 +15,7 @@ Manage app launch protocols, Decides the next state of the application based on
 
 Finalizes the user state based on the checks and continues to next iternal library (auth).
 
-## Auth
+### Auth
 Control user registration, user login, device enrollment and access tokens validity. 
 
 Finalizes the user state based on the auth status and state resolution.

@@ -19,8 +19,8 @@ architecture.
 - C/C++
 
 ### Networking:
-- Sockets &rarr; Internal modular communication
-- HTTP &rarr; Device level communications
+- Sockets &rarr; Device level communication
+- HTTP &rarr; User level communications
 
 ### Tools:
 - Git
@@ -51,7 +51,7 @@ multiple devices.
 
 ### Modules
 - [Internal Modules](docs/modules/internal.md)
-- [Feature Modules](docs/modules/feature-modules.md)
+- [Feature Modules](docs/modules/feature.md)
 
 ### System Design
 - [App Bootstrap](docs/system-design/app-bootstrap.md)
@@ -65,24 +65,22 @@ multiple devices.
 Will be updated as needed as project evolves
 
 ### Phase 1
-- Basic CLI
-- Device-to-device communication (sockets)
+Core module (bootstrap, auth and inter-process communication)
 
 ### Phase 2
-- Command execution across devices
+Services (Host, Client)
 
 ### Phase 3
-- File sharing OR clipboard sync (first feature)
+Manager (Application life cycle management and orchestration)
 
 ### Phase 4
-- Device discovery (mesh formation)
+Device discovery (mesh formation)
 
 ### Phase 5
-- Other micro-services
+Plugins (Features development)
 
 ## Future Plans
 - Improve performance and optimize system efficiency
 - Strengthen security mechanisms
-- Transition to a microservices-based architecture
 
 ---
