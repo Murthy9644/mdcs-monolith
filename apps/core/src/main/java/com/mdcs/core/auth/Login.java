@@ -2,36 +2,25 @@ package com.mdcs.core.auth;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
-
-import com.mdcs.shared.archive.postals.Report;
+import com.mdcs.core.Stream;
+import com.mdcs.core.Stream.LogAct;
+import com.mdcs.core.Stream.Message;
 import com.mdcs.shared.fileio.FileIO;
 import com.mdcs.shared.fileio.DataClasses.Accounts;
 import com.mdcs.shared.fileio.DataClasses.Device;
-import com.mdcs.shared.logger.Log;
 import com.mdcs.shared.models.State;
 import com.mdcs.shared.models.State.AuthState;
-import com.mdcs.shared.models.auth.Provider;
 import com.mdcs.shared.models.auth.Network.LoginReq;
 import com.mdcs.shared.models.auth.Network.LoginRes;
 import com.mdcs.shared.network.ProtoMet;
-import com.mdcs.shared.utils.NetErrors;
 
 public class Login implements Runnable{
     private ProtoMet server;
-    private Provider callbacks;
-    private Report report;
-    private Log logger;
-    private State job;
+    private Stream stream;
+    private Callbacks callbacks;
+    private State state;
     private Accounts user;
     private Device device;
-
-    private void conclude(){
-        //
-    }
-
-    // private void deviceAuth(){
-    //     //
-    // }
 
     private void usrAuth()
     throws IOException, InterruptedException{
@@ -57,16 +46,15 @@ public class Login implements Runnable{
             to return early.
             */
 
-            this.logger.network(
-                "auth.usrAuth", 
-                "Internal server error has occured"
+            this.stream.send(
+                new Message(
+                    LogAct.CRITICAL,
+                    null,
+                    "Login failed due to an internal server error.\n"
+                )
             );
 
-            this.job.logs.add(
-                "critical<>An internal server error occurred. Please try again later."
-            );
-
-            this.job.set(AuthState.TERMINATE);
+            this.state.set(AuthState.TERMINATE);
 
             return;
         }
@@ -79,13 +67,15 @@ public class Login implements Runnable{
             such cases, show the error message and prompt user to try again.
             */
 
-            this.logger.network(
-                "auth.usrAuth", 
-                "Login failed due to user or environment issue"
+            this.stream.send(
+                new Message(
+                    LogAct.CRITICAL,
+                    null,
+                    "Login failed due to user or environment issue.\n"
+                )
             );
 
-            this.job.logs.add("error<>" + NetErrors.err.get(payload.error));
-            this.job.set(AuthState.RETRY);
+            this.state.set(AuthState.RETRY);
         }
 
         /*
@@ -114,14 +104,11 @@ public class Login implements Runnable{
         //
     }
     
-    public Login(ProtoMet server, Report report, Provider callbacks){
+    public Login(ProtoMet server, Stream stream, State state, Callbacks callbacks){
         this.server = server;
+        this.stream = stream;
+        this.state = state;
         this.callbacks = callbacks;
-        this.report = report;
-
-        this.logger = new Log();
-
-        this.job = new State();
 
         /*
         User data is overwritten in absolutely every scenario of login. Because, we can't say

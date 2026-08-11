@@ -2,18 +2,19 @@ package com.mdcs.core.auth;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
-
-import com.mdcs.shared.models.Report;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import com.mdcs.shared.models.State;
 import com.mdcs.shared.models.State.AuthState;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.mdcs.core.Stream;
+import com.mdcs.core.Stream.AuthAct;
 import com.mdcs.core.Stream.LogAct;
 import com.mdcs.core.Stream.Message;
+import com.mdcs.core.Stream.Response;
 import com.mdcs.shared.fileio.FileIO;
 import com.mdcs.shared.fileio.DataClasses.Accounts;
 import com.mdcs.shared.fileio.DataClasses.Device;
-import com.mdcs.shared.logger.Log;
-import com.mdcs.shared.models.auth.Provider;
 import com.mdcs.shared.models.auth.Network.CreateUsrReq;
 import com.mdcs.shared.models.auth.Network.CreateUsrRes;
 import com.mdcs.shared.models.auth.Network.ValidateUsrReq;
@@ -65,13 +66,14 @@ public class Register implements Runnable{
     private State state;
     private Accounts user;
     private Device device;
+    private Callbacks callbacks;
 
     /**
      * Validate user account with OTP and set the user as verified after successful validation.
      * Assumes account has been created previously (ofcourse bro)
      */
     public void validateUsr()
-    throws IOException, InterruptedException{
+    throws IOException, InterruptedException, ExecutionException{
         this.stream.send(
             new Message(
                 LogAct.INFO,
@@ -80,7 +82,9 @@ public class Register implements Runnable{
             )
         );
 
-        String otp = this.callbacks.otp();
+        String otp = this.stream.request(
+            new Message(AuthAct.OTP, null, "")
+        ).get().getPayload();
 
         ValidateUsrReq message = new ValidateUsrReq();
 
@@ -172,11 +176,6 @@ public class Register implements Runnable{
 
         String password = this.callbacks.pswd();
 
-        while (!password.equals(this.callbacks.confirmPswd())){
-            this.callbacks.pswdsMismatch();
-            password = this.callbacks.pswd();
-        }
-
         CreateUsrReq message = new CreateUsrReq(); 
 
         message.body = new CreateUsrReq.Body(
@@ -243,6 +242,40 @@ public class Register implements Runnable{
         );
     }
 
+    private void getCallbacks(){
+        this.stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Requesting account & device information for registration workflow...\n"
+            )
+        );
+
+        CompletableFuture<Response> promise;
+
+        try {
+            promise = this.stream.request(
+                new Message(AuthAct.REGISTER, null, "")
+            );
+
+            this.callbacks = FileIO.toObject(promise.get().getPayload(), Callbacks.class);
+
+            this.stream.send(
+                new Message(
+                    LogAct.INFO,
+                    null,
+                    "Received account & device information successfully.\n"
+                )
+            );
+        } catch (InterruptedException e) {
+            // Will decide what to do later
+        } catch (JsonProcessingException e) {
+            // Will decide what to do later
+        } catch (ExecutionException e) {
+            // Will decide what to do later
+        }
+    }
+
     @Override
     public void run(){
         this.stream.send(
@@ -252,6 +285,8 @@ public class Register implements Runnable{
                 "Initializing registration workflow...\n"
             )
         );
+
+        this.getCallbacks();
         
         try{
             Enroll enroll = new Enroll(this.server, this.state, this.callbacks);
@@ -262,7 +297,7 @@ public class Register implements Runnable{
                 this.validateUsr();
 
             if (this.state.get() == AuthState.SUCCESS)
-                enroll.firstDevice(this.device, this.logger);
+                enroll.firstDevice(this.device, this.stream);
 
             if (this.state.get() == AuthState.RECOVER)
                 this.user.logged_in = false;
@@ -306,6 +341,21 @@ public class Register implements Runnable{
             );
 
             this.state.set(AuthState.TERMINATE);
+        } catch (ExecutionException e) {
+            /**
+             * Happens when there was an exception with promise. In this case, we can't proceed
+             * with registration workflow. So, terminate the workflow and prompt user to try again.
+             */
+
+            this.stream.send(
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Failed to get account/device information for registration workflow\n"
+                )
+            );
+
+            this.state.set(AuthState.TERMINATE);
         } finally{
             
             try {
@@ -338,7 +388,8 @@ public class Register implements Runnable{
     not worry about creating objects locally (-_-)
     */
     
-    public Register(ProtoMet server, Stream stream, State state){
+    public Register(ProtoMet server, Stream stream, State state) throws
+    InterruptedException, JsonProcessingException, ExecutionException{
         this.server = server;
         this.stream = stream;
         this.state = state;

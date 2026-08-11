@@ -98,8 +98,9 @@ public class Stream {
 
     public enum AuthAct implements Action{
         LOGIN,
-        SIGNIN,
-        REFRESH;
+        REGISTER,
+        OTP,
+        RETRY;
 
         @Override
         public Service service(){ return Service.AUTH; }
