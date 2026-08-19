@@ -20,7 +20,7 @@ import com.mdcs.shared.network.ProtoMet;
 public class Enroll{
     private ProtoMet server;
     private State state;
-    private Callbacks callbacks;
+    private Callbacks.Register callbacks;
 
     /*
     First device enrollment process is not being implemented as a new worker now because, later
@@ -102,7 +102,7 @@ public class Enroll{
         );
     }
     
-    public Enroll(ProtoMet server, State state, Callbacks callbacks){
+    public Enroll(ProtoMet server, State state, Callbacks.Register callbacks){
         this.server = server;
         this.state = state;
         this.callbacks = callbacks;

@@ -66,7 +66,7 @@ public class Register implements Runnable{
     private State state;
     private Accounts user;
     private Device device;
-    private Callbacks callbacks;
+    private Callbacks.Register callbacks;
 
     /**
      * Validate user account with OTP and set the user as verified after successful validation.
@@ -114,7 +114,7 @@ public class Register implements Runnable{
         }
 
         ValidateUsrRes payload = FileIO.toObject(
-            res.body().toString(), 
+            res.body().toString(),
             ValidateUsrRes.class
         );
 
@@ -173,7 +173,6 @@ public class Register implements Runnable{
 
         this.user.username = this.callbacks.username();
         this.user.email = this.callbacks.email();
-
         String password = this.callbacks.pswd();
 
         CreateUsrReq message = new CreateUsrReq(); 
@@ -190,6 +189,7 @@ public class Register implements Runnable{
             /*
             Some sort of internal server error has occured. User must be notified that this action
             cannot be performed now or till server has recovered.
+
             In this case, the response message from server doesn't conatin the payload. So, need
             to return early.
             */
@@ -207,10 +207,7 @@ public class Register implements Runnable{
             return;
         }
 
-        CreateUsrRes payload = FileIO.toObject(
-            res.body().toString(), 
-            CreateUsrRes.class
-        );
+        CreateUsrRes payload = FileIO.toObject(res.body().toString(), CreateUsrRes.class);
 
         if (!payload.status){
             /*
@@ -258,7 +255,10 @@ public class Register implements Runnable{
                 new Message(AuthAct.REGISTER, null, "")
             );
 
-            this.callbacks = FileIO.toObject(promise.get().getPayload(), Callbacks.class);
+            this.callbacks = FileIO.toObject(
+                promise.get().getPayload(),
+                Callbacks.Register.class
+            );
 
             this.stream.send(
                 new Message(
@@ -313,7 +313,7 @@ public class Register implements Runnable{
                 DNS lookup failed
                 etc.
 
-            In such cases, prompt user and send the termination code.
+            In such cases, send the termination code.
             */
 
             this.stream.send(
@@ -396,5 +396,19 @@ public class Register implements Runnable{
 
         this.user = new Accounts();
         this.device = new Device();
+    }
+
+    public Register(
+        ProtoMet server,
+        Stream stream,
+        State state,
+        Accounts user,
+        Device device
+    ) throws InterruptedException, JsonProcessingException, ExecutionException{
+        this.server = server;
+        this.stream = stream;
+        this.state = state;
+        this.user = user;
+        this.device = device;
     }
 }
