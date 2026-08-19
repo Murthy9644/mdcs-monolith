@@ -137,6 +137,8 @@ public class Register implements Runnable{
             );
             
             this.state.set(AuthState.RECOVER);
+
+            return;
         }
 
         this.user.auth_token = TokCipher.encrypt(payload.body.auth_tok);
@@ -226,6 +228,8 @@ public class Register implements Runnable{
             );
 
             this.state.set(AuthState.RETRY);
+
+            return;
         }
 
         this.user.user_id = payload.body.user_id;
@@ -244,7 +248,7 @@ public class Register implements Runnable{
             new Message(
                 LogAct.INFO,
                 null,
-                "Requesting account & device information for registration workflow...\n"
+                "Requesting account information for registration workflow...\n"
             )
         );
 
@@ -264,7 +268,7 @@ public class Register implements Runnable{
                 new Message(
                     LogAct.INFO,
                     null,
-                    "Received account & device information successfully.\n"
+                    "Received account information successfully.\n"
                 )
             );
         } catch (InterruptedException e) {
@@ -289,7 +293,7 @@ public class Register implements Runnable{
         this.getCallbacks();
         
         try{
-            Enroll enroll = new Enroll(this.server, this.state, this.callbacks);
+            Enroll enroll = new Enroll(this.server, this.state, this.stream);
 
             this.createUsr();
 
@@ -297,7 +301,7 @@ public class Register implements Runnable{
                 this.validateUsr();
 
             if (this.state.get() == AuthState.SUCCESS)
-                enroll.firstDevice(this.device, this.stream);
+                this.device = enroll.firstEnroll();
 
             if (this.state.get() == AuthState.RECOVER)
                 this.user.logged_in = false;
@@ -364,18 +368,16 @@ public class Register implements Runnable{
             } catch (Exception e) {
                 /*
                 User is signed in but we can't persist the data for the next time. In such cases,
-                treat user as signed out but account creation is suucessful and ask for log in using
-                email and password.
+                treat user as logged in temporarily and ask for log in again next time.
                 */
 
                 this.user.logged_in = false;
-                this.state.set(AuthState.RECOVER);
 
                 this.stream.send(
                     new Message(
                         LogAct.ERROR,
                         null,
-                        "User set to {Logout} after failure to persist user/device data.\n"
+                        "User logged in temporarily after failure to persist user/device data.\n"
                     )
                 );
             }

@@ -124,6 +124,8 @@ public class Login implements Runnable{
             );
 
             this.state.set(AuthState.RETRY);
+
+            return;
         }
 
         /*
@@ -178,7 +180,15 @@ public class Login implements Runnable{
                 )
             );
 
-            // WIP
+            Enroll enroll = new Enroll(
+                this.server,
+                this.state,
+                this.stream
+            );
+
+            this.device = enroll.firstEnroll();
+
+            if (this.state.get() != AuthState.SUCCESS) return;
         }
         
         /*
@@ -218,6 +228,27 @@ public class Login implements Runnable{
             // Will decide what to do later
         } catch (ExecutionException e) {
             // Will decide what to do later
+        } finally{
+            
+            try {
+                FileIO.fileWrite(this.user);
+                FileIO.fileWrite(this.device);
+            } catch (Exception e) {
+                /*
+                User is signed in but we can't persist the data for the next time. In such cases,
+                treat user as signed in temporarily and ask for log in next time.
+                */
+
+                this.user.logged_in = false;
+
+                this.stream.send(
+                    new Message(
+                        LogAct.ERROR,
+                        null,
+                        "User logged in temporarily after failure to persist user/device data.\n"
+                    )
+                );
+            }
         }
     }
     

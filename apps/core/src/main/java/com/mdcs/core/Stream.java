@@ -99,6 +99,7 @@ public class Stream {
     public enum AuthAct implements Action{
         LOGIN,
         REGISTER,
+        ENROLL,
         OTP,
         RETRY;
 
