@@ -62,7 +62,7 @@ public class Network {
         }
     }
 
-    public static class EnrollDeviceReq extends Request<EnrollDeviceReq.Body>{
+    public static class EnrollReq extends Request<EnrollReq.Body>{
 
         public static class Body{
             public String device_name;
@@ -74,13 +74,13 @@ public class Network {
             }
         }
 
-        public EnrollDeviceReq(){
+        public EnrollReq(){
             this.endpoint = "/auth/device/enroll";
             this.addHeader("Content-type", "application/json");
         }
     }
 
-    public static class EnrollDeviceRes extends Response<EnrollDeviceRes.Body>{
+    public static class EnrollRes extends Response<EnrollRes.Body>{
 
         public static class Body{
             public String device_id;

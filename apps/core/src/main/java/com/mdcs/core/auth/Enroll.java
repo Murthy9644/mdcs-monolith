@@ -2,17 +2,22 @@ package com.mdcs.core.auth;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
-import com.mdcs.shared.archive.postals.State;
-import com.mdcs.shared.archive.postals.State.AuthState;
 import com.mdcs.shared.fileio.FileIO;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.mdcs.core.Stream;
+import com.mdcs.core.Stream.AuthAct;
+import com.mdcs.core.Stream.LogAct;
+import com.mdcs.core.Stream.Message;
+import com.mdcs.core.Stream.Response;
 import com.mdcs.shared.fileio.DataClasses.Device;
-import com.mdcs.shared.logger.Log;
-import com.mdcs.shared.models.auth.Provider;
-import com.mdcs.shared.models.auth.Network.EnrollDeviceReq;
-import com.mdcs.shared.models.auth.Network.EnrollDeviceRes;
+import com.mdcs.shared.models.State;
+import com.mdcs.shared.models.State.AuthState;
+import com.mdcs.shared.models.auth.Network.EnrollReq;
+import com.mdcs.shared.models.auth.Network.EnrollRes;
 import com.mdcs.shared.network.ProtoMet;
-import com.mdcs.shared.utils.NetErrors;
 
 /**
  * Manages device enrollment, first device enrollment, device trusting, primary device tagging
@@ -20,8 +25,47 @@ import com.mdcs.shared.utils.NetErrors;
 
 public class Enroll{
     private ProtoMet server;
-    private State job;
-    private Provider callbacks;
+    private Device device;
+    private State state;
+    private Stream stream;
+    private Callbacks.Enroll callbacks;
+
+    public void getCallbacks(){
+        this.stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Requesting device & workspace information for enrollment workflow...\n"
+            )
+        );
+
+        CompletableFuture<Response> promise;
+
+        try {
+            promise = this.stream.request(
+                new Message(AuthAct.ENROLL, null, "")
+            );
+
+            this.callbacks = FileIO.toObject(
+                promise.get().getPayload(),
+                Callbacks.Enroll.class
+            );
+
+            this.stream.send(
+                new Message(
+                    LogAct.INFO,
+                    null,
+                    "Received device & workspace information successfully.\n"
+                )
+            );
+        } catch (InterruptedException e) {
+            // Will decide what to do later
+        } catch (JsonProcessingException e) {
+            // Will decide what to do later
+        } catch (ExecutionException e) {
+            // Will decide what to do later
+        }
+    }
 
     /*
     First device enrollment process is not being implemented as a new worker now because, later
@@ -35,26 +79,25 @@ public class Enroll{
      * 
      * Populates the supplied Device instance with the enrolled device details.
      */
-    public void firstDevice(Device device, Log logger)
+    public Device firstEnroll()
     throws IOException, InterruptedException{
-        logger.info("auth.firstDevice", "Starting first device enrollment");
-
-        device.device_name = this.callbacks.deviceName();
-        device.workspace_name = this.callbacks.workspaceName();
-
-        EnrollDeviceReq msg = new EnrollDeviceReq();
-
-        msg.body = new EnrollDeviceReq.Body(
-            device.device_name, 
-            device.workspace_name
+        stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Initiating first device enrollment...\n"
+            )
         );
+
+        this.getCallbacks();
+
+        this.device.device_name = this.callbacks.deviceName();
+        this.device.workspace_name = this.callbacks.workspaceName();
+
+        EnrollReq msg = new EnrollReq();
+        msg.body = new EnrollReq.Body(this.device.device_name, this.device.workspace_name);
 
         HttpResponse<String> res = this.server.post(msg);
-
-        logger.network(
-            "auth.firstDevice", 
-            "Request has been sent to the server"
-        );
 
         if (res.statusCode() >= 500){
             /*
@@ -62,49 +105,59 @@ public class Enroll{
             So return RECOVER code so that login is triggered.
             */
 
-            logger.network(
-                "auth.firstDevice", 
-                "Internal server error has occured"
+            stream.send(
+                new Message(
+                    LogAct.CRITICAL,
+                    null,
+                    "Device enrollment failed due to an internal server error.\n"
+                )
             );
 
-            this.job.logs.add(
-                "critical<>An internal server error occurred. Please try again later."
-            );
+            this.state.set(AuthState.RECOVER);
 
-            this.job.set(AuthState.RECOVER);
-
-            return;
+            return device;
         }
 
-        EnrollDeviceRes payload = FileIO.toObject(
+        EnrollRes payload = FileIO.toObject(
             res.body().toString(), 
-            EnrollDeviceRes.class
+            EnrollRes.class
         );
 
         if (!payload.status){
             // Device enrollment failed due to user / environment related issue
 
-            logger.network(
-                "auth.firstDevice", 
-                "Device enrollment failed due to user or environment issue"
+            stream.send(
+                new Message(
+                    LogAct.CRITICAL,
+                    null,
+                    "Device enrollment failed due to user or environment issue.\n"
+                )
             );
+            
+            this.state.set(AuthState.RETRY);
 
-            this.job.logs.add("error<>" + NetErrors.err.get(payload.error));
-            this.job.set(AuthState.RETRY);
+            return this.device;
         }
 
-        device.device_id = payload.body.device_id;
-        device.workspace_id = payload.body.workspace_id;
+        this.device.device_id = payload.body.device_id;
+        this.device.workspace_id = payload.body.workspace_id;
 
-        logger.info(
-            "auth.firstDevice", 
-            "Device enrolled successfully and marked as primary"
+        stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Device enrolled successfully and marked as primary.\n"
+            )
         );
+
+        return this.device;
     }
     
-    public Enroll(ProtoMet server, State job, Provider callbacks){
+    public Enroll(ProtoMet server, State state, Stream stream){
         this.server = server;
-        this.job = job;
-        this.callbacks = callbacks;
+        this.state = state;
+        this.stream = stream;
+
+        this.device = new Device();
     }
 }

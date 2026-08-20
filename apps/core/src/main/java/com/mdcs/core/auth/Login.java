@@ -2,39 +2,75 @@ package com.mdcs.core.auth;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
-import com.mdcs.shared.archive.postals.Report;
-import com.mdcs.shared.archive.postals.State;
-import com.mdcs.shared.archive.postals.State.AuthState;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.mdcs.core.Stream;
+import com.mdcs.core.Stream.AuthAct;
+import com.mdcs.core.Stream.LogAct;
+import com.mdcs.core.Stream.Message;
+import com.mdcs.core.Stream.Response;
 import com.mdcs.shared.fileio.FileIO;
 import com.mdcs.shared.fileio.DataClasses.Accounts;
 import com.mdcs.shared.fileio.DataClasses.Device;
-import com.mdcs.shared.logger.Log;
-import com.mdcs.shared.models.auth.Provider;
+import com.mdcs.shared.models.State;
+import com.mdcs.shared.models.State.AuthState;
 import com.mdcs.shared.models.auth.Network.LoginReq;
 import com.mdcs.shared.models.auth.Network.LoginRes;
 import com.mdcs.shared.network.ProtoMet;
-import com.mdcs.shared.utils.NetErrors;
 
 public class Login implements Runnable{
     private ProtoMet server;
-    private Provider callbacks;
-    private Report report;
-    private Log logger;
-    private State job;
+    private Stream stream;
+    private Callbacks.Login callbacks;
+    private State state;
     private Accounts user;
     private Device device;
 
-    private void conclude(){
-        //
+    /**
+     * Get the login specific information from source and store the data in required format. The
+     * workflow waits synchronously for the information.
+     */
+    private void getCallbacks(){
+        this.stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Requesting account information for login workflow...\n"
+            )
+        );
+
+        CompletableFuture<Response> promise;
+
+        try {
+            promise = this.stream.request(
+                new Message(AuthAct.LOGIN, null, "")
+            );
+
+            this.callbacks = FileIO.toObject(
+                promise.get().getPayload(),
+                Callbacks.Login.class
+            );
+
+            this.stream.send(
+                new Message(
+                    LogAct.INFO,
+                    null,
+                    "Received account information successfully.\n"
+                )
+            );
+        } catch (InterruptedException e) {
+            // Will decide what to do later
+        } catch (JsonProcessingException e) {
+            // Will decide what to do later
+        } catch (ExecutionException e) {
+            // Will decide what to do later
+        }
     }
 
-    // private void deviceAuth(){
-    //     //
-    // }
-
     private void usrAuth()
-    throws IOException, InterruptedException{
+    throws IOException, InterruptedException, ExecutionException{
         this.user.email = this.callbacks.email();
         String pswd = this.callbacks.pswd();
 
@@ -53,20 +89,20 @@ public class Login implements Runnable{
             /*
             Some sort of internal server error has occured. User must be notified that this action
             cannot be performed now or till server has recovered.
+
             In this case, the response message from server doesn't conatin the payload. So, need
             to return early.
             */
 
-            this.logger.network(
-                "auth.usrAuth", 
-                "Internal server error has occured"
+            this.stream.send(
+                new Message(
+                    LogAct.CRITICAL,
+                    null,
+                    "Login failed due to an internal server error.\n"
+                )
             );
 
-            this.job.logs.add(
-                "critical<>An internal server error occurred. Please try again later."
-            );
-
-            this.job.set(AuthState.TERMINATE);
+            this.state.set(AuthState.TERMINATE);
 
             return;
         }
@@ -75,17 +111,21 @@ public class Login implements Runnable{
 
         if (!payload.status){
             /*
-            Means, login was failed due to some user or environment related error. In
-            such cases, show the error message and prompt user to try again.
+            Means, login was failed due to some user or environment related error. In such cases,
+            show the error message and prompt user to try again.
             */
 
-            this.logger.network(
-                "auth.usrAuth", 
-                "Login failed due to user or environment issue"
+            this.stream.send(
+                new Message(
+                    LogAct.CRITICAL,
+                    null,
+                    "Login failed due to user or environment issue.\n"
+                )
             );
 
-            this.job.logs.add("error<>" + NetErrors.err.get(payload.error));
-            this.job.set(AuthState.RETRY);
+            this.state.set(AuthState.RETRY);
+
+            return;
         }
 
         /*
@@ -96,32 +136,127 @@ public class Login implements Runnable{
         this.user.user_id = payload.body.user_id;
         this.user.username = payload.body.username;
 
-        if (payload.body.phase == "UNVERIFIED"){
-            //
+        if (payload.body.phase.equals("UNVERIFIED")){
+            /**
+             * This means, user account has been created but their email was not verified. So, we
+             * should trigger validate user workflow.
+             * 
+             * This can be an internal continuous process, we don't need to acknowledge the host
+             * process about it, because they don't care bro.
+             */
+
+            this.stream.send(
+                new Message(
+                    LogAct.INFO,
+                    null,
+                    "User account is unverified. Triggering validate user workflow...\n"
+                )
+            );
+
+            Register reg = new Register(
+                this.server,
+                this.stream,
+                this.state,
+                this.user,
+                this.device
+            );
+
+            reg.validateUsr();
+
+            return;
         }
 
-        // this.user.auth_token = payload.body.auth_tok;
-        // this.user.refresh_token = payload.body.refresh_tok;
+        if (payload.body.phase.equals("VERIFIED")){
+            /**
+             * This means, user account has been created and their email was verified. So, we
+             * should trigger device enrollment workflow.
+             */
+
+            this.stream.send(
+                new Message(
+                    LogAct.INFO,
+                    null,
+                    "User account is verified. Triggering device enrollment workflow...\n"
+                )
+            );
+
+            Enroll enroll = new Enroll(
+                this.server,
+                this.state,
+                this.stream
+            );
+
+            this.device = enroll.firstEnroll();
+
+            if (this.state.get() != AuthState.SUCCESS) return;
+        }
         
         /*
-        But the device and workspace details are not required to write again. Because, if the
-        details were not available, the device enrollment would be triggered.
-        */
+         * But the device and workspace details are not required to write again. Because, if the
+         * details were not available, the device enrollment would be triggered.
+         */
+
+        this.user.auth_token = payload.body.auth_tok;
+        this.user.refresh_token = payload.body.refresh_tok;
+
+        this.stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Login workflow completed with no issues.\n"
+            )
+        );
     }
 
     @Override
     public void run(){
-        //
+        this.stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Initiating login workflow...\n"
+            )
+        );
+
+        this.getCallbacks();
+
+        try { this.usrAuth(); }
+        
+        catch (IOException e) {
+            // Will decide what to do later
+        } catch (InterruptedException e) {
+            // Will decide what to do later
+        } catch (ExecutionException e) {
+            // Will decide what to do later
+        } finally{
+            
+            try {
+                FileIO.fileWrite(this.user);
+                FileIO.fileWrite(this.device);
+            } catch (Exception e) {
+                /*
+                User is signed in but we can't persist the data for the next time. In such cases,
+                treat user as signed in temporarily and ask for log in next time.
+                */
+
+                this.user.logged_in = false;
+
+                this.stream.send(
+                    new Message(
+                        LogAct.ERROR,
+                        null,
+                        "User logged in temporarily after failure to persist user/device data.\n"
+                    )
+                );
+            }
+        }
     }
     
-    public Login(ProtoMet server, Report report, Provider callbacks){
+    public Login(ProtoMet server, Stream stream, State state, Callbacks.Login callbacks){
         this.server = server;
+        this.stream = stream;
+        this.state = state;
         this.callbacks = callbacks;
-        this.report = report;
-
-        this.logger = new Log();
-
-        this.job = new State();
 
         /*
         User data is overwritten in absolutely every scenario of login. Because, we can't say

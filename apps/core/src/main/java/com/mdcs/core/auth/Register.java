@@ -2,15 +2,19 @@ package com.mdcs.core.auth;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
-
-import com.mdcs.shared.archive.postals.Report;
-import com.mdcs.shared.archive.postals.State;
-import com.mdcs.shared.archive.postals.State.AuthState;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import com.mdcs.shared.models.State;
+import com.mdcs.shared.models.State.AuthState;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.mdcs.core.Stream;
+import com.mdcs.core.Stream.AuthAct;
+import com.mdcs.core.Stream.LogAct;
+import com.mdcs.core.Stream.Message;
+import com.mdcs.core.Stream.Response;
 import com.mdcs.shared.fileio.FileIO;
 import com.mdcs.shared.fileio.DataClasses.Accounts;
 import com.mdcs.shared.fileio.DataClasses.Device;
-import com.mdcs.shared.logger.Log;
-import com.mdcs.shared.models.auth.Provider;
 import com.mdcs.shared.models.auth.Network.CreateUsrReq;
 import com.mdcs.shared.models.auth.Network.CreateUsrRes;
 import com.mdcs.shared.models.auth.Network.ValidateUsrReq;
@@ -34,15 +38,15 @@ import com.mdcs.shared.utils.NetErrors;
 public class Register implements Runnable{
 
     /*
-    What if user creation and validation succeeded but first device enrollment failed? User
-    won't be able to register the device during signup.
+    What if user creation and validation succeeded but first device enrollment failed? User won't
+    be able to register the device during signup.
 
     In such cases, we have two ideas.
         1. Immediately trigger the login state and let user sign in to trust their device.
         2. Mark user as VERIFIED and let them manually enroll the device later.
 
-    2nd one is good as it gives full control of which device to make primary to user. It will
-    be implemented in future versions.
+    2nd one is good as it gives full control of which device to make primary to user. It will be
+    implemented in future versions.
 
     For now, we maintain 3 states for a user account.
         UNVERIFIED -> After user creation
@@ -58,22 +62,29 @@ public class Register implements Runnable{
     */
 
     private ProtoMet server;
-    private Provider callbacks;
-    private Report report;
-    private State job;
-    private Log logger;
+    private Stream stream;
+    private State state;
     private Accounts user;
     private Device device;
+    private Callbacks.Register callbacks;
 
     /**
      * Validate user account with OTP and set the user as verified after successful validation.
      * Assumes account has been created previously (ofcourse bro)
      */
     public void validateUsr()
-    throws IOException, InterruptedException{
-        this.logger.info("auth.validateUsr", "Starting user account validation");
+    throws IOException, InterruptedException, ExecutionException{
+        this.stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Initializing user account validation flow...\n"
+            )
+        );
 
-        String otp = this.callbacks.otp();
+        String otp = this.stream.request(
+            new Message(AuthAct.OTP, null, "")
+        ).get().getPayload();
 
         ValidateUsrReq message = new ValidateUsrReq();
 
@@ -85,31 +96,25 @@ public class Register implements Runnable{
 
         HttpResponse<String> res = this.server.post(message);
 
-        this.logger.network(
-            "auth.validateUsr", 
-            "Request has been sent to the server"
-        );
-
         if (res.statusCode() >= 500){
             // Some internal server error has occured. Return recovery code because, need to
             // recover from Unverified state
 
-            this.logger.network(
-                "auth.validateUsr", 
-                "Internal server error has occured"
+            this.stream.send(
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Account validation failed due to an internal server error\n"
+                )
             );
 
-            this.job.logs.add(
-                "critical<>An internal server error occurred. Please try again later."
-            );
-
-            this.job.set(AuthState.RECOVER);
+            this.state.set(AuthState.RECOVER);
 
             return;
         }
 
         ValidateUsrRes payload = FileIO.toObject(
-            res.body().toString(), 
+            res.body().toString(),
             ValidateUsrRes.class
         );
 
@@ -121,21 +126,30 @@ public class Register implements Runnable{
         if (!payload.status){
             // Auth failed due to some user / environment related issue
 
-            this.logger.network(
-                "auth.validateUsr", 
-                "User validation failed due to user or environment issue"
+            this.stream.send(
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Account validation failed due to user/environment issue {"
+                        + NetErrors.err.get(payload.error)
+                        + "}\n"
+                )
             );
+            
+            this.state.set(AuthState.RECOVER);
 
-            this.job.logs.add("error<>" + NetErrors.err.get(payload.error));
-            this.job.set(AuthState.RECOVER);
+            return;
         }
 
         this.user.auth_token = TokCipher.encrypt(payload.body.auth_tok);
         this.user.refresh_token = TokCipher.encrypt(payload.body.refresh_tok);
-
-        this.logger.info(
-            "auth.validateUsr",
-            "User account verified successfully | User validated"
+        
+        this.stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Account validation completed with no issues.\n"
+            )
         );
     }
 
@@ -151,17 +165,17 @@ public class Register implements Runnable{
      */
     private void createUsr()
     throws IOException, InterruptedException{
-        this.logger.info("auth.createUsr", "Creating user account");
+        this.stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Initializing user account creation flow...\n"
+            )
+        );
 
         this.user.username = this.callbacks.username();
         this.user.email = this.callbacks.email();
-
         String password = this.callbacks.pswd();
-
-        while (!password.equals(this.callbacks.confirmPswd())){
-            this.callbacks.pswdsMismatch();
-            password = this.callbacks.pswd();
-        }
 
         CreateUsrReq message = new CreateUsrReq(); 
 
@@ -173,37 +187,29 @@ public class Register implements Runnable{
 
         HttpResponse<String> res = this.server.post(message);
 
-        this.logger.network(
-            "auth.createUsr", 
-            "Request has been sent to the server"
-        );
-
         if (res.statusCode() >= 500){
             /*
             Some sort of internal server error has occured. User must be notified that this action
             cannot be performed now or till server has recovered.
+
             In this case, the response message from server doesn't conatin the payload. So, need
             to return early.
             */
 
-            this.logger.network(
-                "auth.createUsr", 
-                "Internal server error has occured"
+            this.stream.send(
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Account creation failed due to an internal server error\n"
+                )
             );
 
-            this.job.logs.add(
-                "critical<>An internal server error occurred. Please try again later."
-            );
-
-            this.job.set(AuthState.TERMINATE);
+            this.state.set(AuthState.TERMINATE);
 
             return;
         }
 
-        CreateUsrRes payload = FileIO.toObject(
-            res.body().toString(), 
-            CreateUsrRes.class
-        );
+        CreateUsrRes payload = FileIO.toObject(res.body().toString(), CreateUsrRes.class);
 
         if (!payload.status){
             /*
@@ -211,38 +217,93 @@ public class Register implements Runnable{
             such cases, show the error message and prompt user to try again.
             */
 
-            this.logger.network(
-                "auth.createUsr", 
-                "User creation failed due to user or environment issue"
+            this.stream.send(
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Account creation failed due to user/environment issue {"
+                        + NetErrors.err.get(payload.error)
+                        + "}\n"
+                )
             );
 
-            this.job.logs.add("error<>" + NetErrors.err.get(payload.error));
-            this.job.set(AuthState.RETRY);
+            this.state.set(AuthState.RETRY);
+
+            return;
         }
 
         this.user.user_id = payload.body.user_id;
+        
+        this.stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Account creation completed with no issues.\n"
+            )
+        );
+    }
 
-        this.logger.info("auth.createusr", "User account created successfully");
+    private void getCallbacks(){
+        this.stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Requesting account information for registration workflow...\n"
+            )
+        );
+
+        CompletableFuture<Response> promise;
+
+        try {
+            promise = this.stream.request(
+                new Message(AuthAct.REGISTER, null, "")
+            );
+
+            this.callbacks = FileIO.toObject(
+                promise.get().getPayload(),
+                Callbacks.Register.class
+            );
+
+            this.stream.send(
+                new Message(
+                    LogAct.INFO,
+                    null,
+                    "Received account information successfully.\n"
+                )
+            );
+        } catch (InterruptedException e) {
+            // Will decide what to do later
+        } catch (JsonProcessingException e) {
+            // Will decide what to do later
+        } catch (ExecutionException e) {
+            // Will decide what to do later
+        }
     }
 
     @Override
     public void run(){
-        this.logger.info("auth", "Starting user registration");
+        this.stream.send(
+            new Message(
+                LogAct.INFO,
+                null,
+                "Initializing registration workflow...\n"
+            )
+        );
 
-        this.job.type = Report.JobType.AUTH;
+        this.getCallbacks();
         
         try{
-            Enroll enroll = new Enroll(this.server, this.job, this.callbacks);
+            Enroll enroll = new Enroll(this.server, this.state, this.stream);
 
             this.createUsr();
 
-            if (this.job.get() == AuthState.SUCCESS)
+            if (this.state.get() == AuthState.SUCCESS)
                 this.validateUsr();
 
-            if (this.job.get() == AuthState.SUCCESS)
-                enroll.firstDevice(this.device, this.logger);
+            if (this.state.get() == AuthState.SUCCESS)
+                this.device = enroll.firstEnroll();
 
-            if (this.job.get() == AuthState.RECOVER)
+            if (this.state.get() == AuthState.RECOVER)
                 this.user.logged_in = false;
 
             else
@@ -256,16 +317,18 @@ public class Register implements Runnable{
                 DNS lookup failed
                 etc.
 
-            In such cases, prompt user and send the termination code.
+            In such cases, send the termination code.
             */
 
-            this.logger.network(
-                "auth", 
-                "Unable to contact the server | " + e.getMessage()
+            this.stream.send(
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Failed to contact the server <" + e.getMessage() + ">\n"
+                )
             );
-
-            this.job.logs.add("critical<>Unable to contact the server. Please try again later");
-            this.job.set(AuthState.TERMINATE);
+            
+            this.state.set(AuthState.TERMINATE);
         } catch (InterruptedException e){
             /*
             This is more of an internal / system event. No need to prompt user about it. Because,
@@ -273,55 +336,81 @@ public class Register implements Runnable{
             is being shut down).
             */
 
-            this.logger.error("auth", "Thread was interrupted");
+            this.stream.send(
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Thread was interrupted while performing user registration\n"
+                )
+            );
 
-            this.job.set(AuthState.TERMINATE);
+            this.state.set(AuthState.TERMINATE);
+        } catch (ExecutionException e) {
+            /**
+             * Happens when there was an exception with promise. In this case, we can't proceed
+             * with registration workflow. So, terminate the workflow and prompt user to try again.
+             */
+
+            this.stream.send(
+                new Message(
+                    LogAct.ERROR,
+                    null,
+                    "Failed to get account/device information for registration workflow\n"
+                )
+            );
+
+            this.state.set(AuthState.TERMINATE);
         } finally{
             
             try {
                 FileIO.fileWrite(this.user);
                 FileIO.fileWrite(this.device);
-
-                this.logger.info("auth", "User and device data persisted");
             } catch (Exception e) {
                 /*
                 User is signed in but we can't persist the data for the next time. In such cases,
-                treat user as signed out but account creation is suucessful and ask for log in using
-                email and password.
+                treat user as logged in temporarily and ask for log in again next time.
                 */
 
-                this.logger.error(
-                    "auth", 
-                    "Failed to persist user and device data"
-                );
-
                 this.user.logged_in = false;
-                this.job.set(AuthState.RECOVER);
+
+                this.stream.send(
+                    new Message(
+                        LogAct.ERROR,
+                        null,
+                        "User logged in temporarily after failure to persist user/device data.\n"
+                    )
+                );
             }
-
-            try { this.logger.flush(); }
-            catch (IOException e) { }
-
-            this.report.jobs.add(this.job);
         }
     }
 
     /*
     As this is a worker (thread), i mean, run() can't take parameters or return values right, so
-    we will get the State object from caller and fill it with state. This will also allow us
-    to not worry about creating objects locally (-_-)
+    we will get the State object from caller and fill it with state. This will also allow us to
+    not worry about creating objects locally (-_-)
     */
     
-    public Register(ProtoMet server, Report report, Provider callbacks){
+    public Register(ProtoMet server, Stream stream, State state) throws
+    InterruptedException, JsonProcessingException, ExecutionException{
         this.server = server;
-        this.callbacks = callbacks;
-        this.report = report;
-
-        this.logger = new Log();
-
-        this.job = new State();
+        this.stream = stream;
+        this.state = state;
 
         this.user = new Accounts();
         this.device = new Device();
+    }
+
+    public Register(
+        ProtoMet server,
+        Stream stream,
+        State state,
+        Accounts user,
+        Device device
+    ) throws InterruptedException, JsonProcessingException, ExecutionException{
+        this.server = server;
+        this.stream = stream;
+        this.state = state;
+        this.user = user;
+        this.device = device;
     }
 }
