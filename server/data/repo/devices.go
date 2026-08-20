@@ -22,14 +22,14 @@ func DeviceByName(wid, dname string) (models.DeviceAttrs, error) {
 	return models.DeviceAttrs{}, errors.New("DEVICE_NOT_FOUND")
 }
 
-func DeviceById(wid, did string) (models.DeviceAttrs, error) {
+func DeviceById(wid, did string) (error, models.DeviceAttrs) {
 
 	for _, device := range data.Store.Devices[wid] {
 
 		if device.DId == did {
-			return device, nil
+			return nil, device
 		}
 	}
 
-	return models.DeviceAttrs{}, errors.New("DEVICE_NOT_FOUND")
+	return errors.New("DEVICE_NOT_FOUND"), models.DeviceAttrs{}
 }

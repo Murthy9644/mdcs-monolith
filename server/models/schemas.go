@@ -42,7 +42,7 @@ type UserAttrs struct {
 	Password   string    `json:"password"`
 	Otp        OTP       `json:"verification"`
 	RefreshTok AuthToken `json:"refresh_token"`
-	Status     string    `json:"status"`
+	Phase      string    `json:"status"`
 }
 
 // string(user_id) -> user attributes
