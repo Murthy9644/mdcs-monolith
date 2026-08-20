@@ -2,7 +2,6 @@ package auth
 
 import (
 	"encoding/json"
-	"mdcs-server/data/repo"
 	"mdcs-server/modules/shared"
 	"mdcs-server/tools/auth"
 	"net/http"
@@ -110,38 +109,40 @@ func handleFirstEnroll(res http.ResponseWriter, req *http.Request) {
 }
 
 func login(res http.ResponseWriter, req *http.Request) {
+	// Needs a rewrite. Separate concerns between services and this controller.
+	// This shouldn't access repo implementations and shouldn't know how service is
+	// implementing them.
+
+	// WIP
+
 	data := req.Context().Value(LoginDataKey).(LoginReq)
 
 	var respld shared.Response
 
-	err := checkPswd(data)
+	err, user_id, usr, device, workspace, phase := loginVer(data)
 
 	if err != nil {
 		shared.ProcessErr(respld, err, res)
 		return
 	}
 
-	user_id, usr, _ := repo.UsrByEmail(data.Email)
-
-	status := repo.GetStatus(user_id)
-
-	if status != "ONBOARDED" {
+	if phase != "ONBOARDED" {
 		respld.Status = true
 
 		respld.Body = map[string]string{
 			"user_id":  user_id,
 			"username": usr.Username,
-			"phase":    status,
+			"phase":    phase,
 		}
 
 		respld.Error = ""
 		respld.Message = "Login defered"
 
-		if status == "UNVERIFIED" {
+		if phase == "UNVERIFIED" {
 			auth.SendOtp(user_id, usr.Email)
 		}
 
-		if status == "VERIFIED" {
+		if phase == "VERIFIED" {
 			// Nothing to do, client will request for device enrollment.
 		}
 
@@ -172,9 +173,6 @@ func login(res http.ResponseWriter, req *http.Request) {
 		// This is not error, it will be automatically rectified in next user login
 		// Also, user should be prompted for login next time instead of continuing
 	}
-
-	device, _ := repo.DeviceById(data.WorkspaceId, data.DeviceId)
-	workspace, _ := repo.WorkspaceById(user_id, data.WorkspaceId)
 
 	respld.Status = true
 

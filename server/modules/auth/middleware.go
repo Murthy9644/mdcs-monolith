@@ -8,17 +8,18 @@ import (
 	"regexp"
 )
 
-// check for strenght of password.
 /*
+Checks for strenght of password, email structure: example@email.com.
+
 conditions for password strength:
 password must contain atleast one
-	- uppercase
-	- lowercase
-	- digit
-	- sp. char
+  - uppercase
+  - lowercase
+  - digit
+  - sp. char
+
 password must be atleast 6 chars long
 */
-// Check for email structure: example@email.com
 func validateCreds(next http.HandlerFunc) http.HandlerFunc {
 	var tests = map[*regexp.Regexp]string{
 		regexp.MustCompile(`[A-Z]+`):       "MISSING_UPPERCASE",

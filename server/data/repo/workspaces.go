@@ -28,27 +28,27 @@ func DeleteWorkspace(uid, wid string) error {
 	return nil
 }
 
-func WorkspaceByName(uid, wname string) (models.WorkspaceAttrs, error) {
+func WorkspaceByName(uid, wname string) (error, models.WorkspaceAttrs) {
 
 	for _, ws := range data.Store.Workspaces[uid] {
 
 		if ws.WName == wname {
-			return ws, nil
+			return nil, ws
 		}
 	}
 
-	return models.WorkspaceAttrs{}, errors.New("WORKSPACE_NOT_FOUND")
+	return errors.New("WORKSPACE_NOT_FOUND"), models.WorkspaceAttrs{}
 }
 
-func WorkspaceById(uid, wid string) (models.WorkspaceAttrs, error) {
+func WorkspaceById(uid, wid string) (error, models.WorkspaceAttrs) {
 	workspaces := data.Store.Workspaces[uid]
 
 	for _, workspace := range workspaces {
 
 		if workspace.WId == wid {
-			return workspace, nil
+			return nil, workspace
 		}
 	}
 
-	return models.WorkspaceAttrs{}, errors.New("WORKSPACE_NOT_FOUND")
+	return errors.New("WORKSPACE_NOT_FOUND"), models.WorkspaceAttrs{}
 }

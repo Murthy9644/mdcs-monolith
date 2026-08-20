@@ -43,7 +43,7 @@ func createUsr(data CreateUsrReq) (string, error) {
 		Username: data.Username,
 		Email:    data.Email,
 		Password: string(hashed),
-		Status:   "UNVERIFIED",
+		Phase:    "UNVERIFIED",
 	}
 
 	if _, _, err := repo.UsrByEmail(data.Email); err == nil {
@@ -87,7 +87,7 @@ func verifyOtp(data ValidateUsrReq) error {
 		return errors.New("INCORRECT_OTP")
 	}
 
-	return repo.SetStatus(data.UserId, "VERIFIED")
+	return repo.SetPhase(data.UserId, "VERIFIED")
 }
 
 func firstEnroll(data EnrollDeviceReq) (string, string, error) {
@@ -106,14 +106,14 @@ func firstEnroll(data EnrollDeviceReq) (string, string, error) {
 	}
 
 	// Check if user exists and is verified.
-	if status := repo.GetStatus(data.UserId); status == "NO_SUCH_USER" {
+	if status := repo.GetPhase(data.UserId); status == "NO_SUCH_USER" {
 		return "", "", errors.New(status)
 	} else if status != "VERIFIED" {
 		return "", "", errors.New("FORBIDDEN_ACCESS")
 	}
 
 	// Check if workspace with same name is available
-	if _, err := repo.WorkspaceByName(data.UserId, data.WorkspaceName); err == nil {
+	if err, _ := repo.WorkspaceByName(data.UserId, data.WorkspaceName); err == nil {
 		return "", "", errors.New("DUPLICATE_WORKSPACE")
 	}
 
@@ -132,25 +132,64 @@ func firstEnroll(data EnrollDeviceReq) (string, string, error) {
 	}
 
 	repo.AddDevice(wid, device)
-	repo.SetStatus(data.UserId, "ONBORADED")
+	repo.SetPhase(data.UserId, "ONBORADED")
 
 	return wid, did, nil
 }
 
-func checkPswd(data LoginReq) error {
-	_, usr, err := repo.UsrByEmail(data.Email)
+func loginVer(data LoginReq) (
+	error,
+	string,
+	models.UserAttrs,
+	models.DeviceAttrs,
+	models.WorkspaceAttrs,
+	string,
+) {
+	usr_id, usr, err := repo.UsrByEmail(data.Email)
 
 	if err != nil {
-		return errors.New("INVALID_CREDS")
+		return errors.New("INVALID_CREDS"),
+			"",
+			models.UserAttrs{},
+			models.DeviceAttrs{},
+			models.WorkspaceAttrs{},
+			""
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(usr.Password), []byte(data.Password))
 
 	if err != nil {
-		return errors.New("INVALID_CREDS")
+		return errors.New("INVALID_CREDS"),
+			"",
+			models.UserAttrs{},
+			models.DeviceAttrs{},
+			models.WorkspaceAttrs{},
+			""
 	}
 
-	return nil
+	err, device := repo.DeviceById(data.WorkspaceId, data.DeviceId)
+
+	if err != nil {
+		return errors.New("DEVICE_NOT_FOUND"),
+			"",
+			models.UserAttrs{},
+			models.DeviceAttrs{},
+			models.WorkspaceAttrs{},
+			""
+	}
+
+	err, workspace := repo.WorkspaceById(usr_id, data.WorkspaceId)
+
+	if err != nil {
+		return errors.New("WORKSPACE_NOT_FOUND"),
+			"",
+			models.UserAttrs{},
+			models.DeviceAttrs{},
+			models.WorkspaceAttrs{},
+			""
+	}
+
+	return nil, usr_id, usr, device, workspace, repo.GetPhase(usr_id)
 }
 
 func workspaceDeviceMapUsr(
@@ -162,11 +201,11 @@ func workspaceDeviceMapUsr(
 		return errors.New("USER_NOT_FOUND")
 	}
 
-	if _, err := repo.WorkspaceById(user_id, workspace_id); err != nil {
+	if err, _ := repo.WorkspaceById(user_id, workspace_id); err != nil {
 		return err
 	}
 
-	if _, err := repo.DeviceById(workspace_id, device_id); err != nil {
+	if err, _ := repo.DeviceById(workspace_id, device_id); err != nil {
 		return err
 	}
 
