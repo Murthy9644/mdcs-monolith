@@ -44,19 +44,27 @@ public class Callbacks {
     }
 
     public static class Enroll{
+        private String choice;
         private final String device_name;
         private final String workspace_name;
+        private final String pairing_key;
 
+        public String choice(){ return this.choice; }
         public String deviceName(){ return this.device_name; }
         public String workspaceName(){ return this.workspace_name; }
+        public String pairingKey(){ return this.pairing_key; }
 
         @JsonCreator
         public Enroll(
+            @JsonProperty("choice") String choice,
             @JsonProperty("device_name") String device_name,
-            @JsonProperty("workspace_name") String workspace_name
+            @JsonProperty("workspace_name") String workspace_name,
+            @JsonProperty("pairing_key") String pairing_key
         ){
+            this.choice = choice;
             this.device_name = device_name;
             this.workspace_name = workspace_name;
+            this.pairing_key = pairing_key;
         }
     }
 }

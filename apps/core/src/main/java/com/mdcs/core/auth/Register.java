@@ -76,8 +76,7 @@ public class Register implements Runnable{
     throws IOException, InterruptedException, ExecutionException{
         this.stream.send(
             new Message(
-                LogAct.INFO,
-                null,
+                LogAct.INFO, null,
                 "Initializing user account validation flow...\n"
             )
         );
@@ -102,8 +101,7 @@ public class Register implements Runnable{
 
             this.stream.send(
                 new Message(
-                    LogAct.ERROR,
-                    null,
+                    LogAct.ERROR, null,
                     "Account validation failed due to an internal server error\n"
                 )
             );
@@ -128,8 +126,7 @@ public class Register implements Runnable{
 
             this.stream.send(
                 new Message(
-                    LogAct.ERROR,
-                    null,
+                    LogAct.ERROR, null,
                     "Account validation failed due to user/environment issue {"
                         + NetErrors.err.get(payload.error)
                         + "}\n"
@@ -146,8 +143,7 @@ public class Register implements Runnable{
         
         this.stream.send(
             new Message(
-                LogAct.INFO,
-                null,
+                LogAct.INFO, null,
                 "Account validation completed with no issues.\n"
             )
         );
@@ -167,8 +163,7 @@ public class Register implements Runnable{
     throws IOException, InterruptedException{
         this.stream.send(
             new Message(
-                LogAct.INFO,
-                null,
+                LogAct.INFO, null,
                 "Initializing user account creation flow...\n"
             )
         );
@@ -198,8 +193,7 @@ public class Register implements Runnable{
 
             this.stream.send(
                 new Message(
-                    LogAct.ERROR,
-                    null,
+                    LogAct.ERROR, null,
                     "Account creation failed due to an internal server error\n"
                 )
             );
@@ -219,8 +213,7 @@ public class Register implements Runnable{
 
             this.stream.send(
                 new Message(
-                    LogAct.ERROR,
-                    null,
+                    LogAct.ERROR, null,
                     "Account creation failed due to user/environment issue {"
                         + NetErrors.err.get(payload.error)
                         + "}\n"
@@ -236,8 +229,7 @@ public class Register implements Runnable{
         
         this.stream.send(
             new Message(
-                LogAct.INFO,
-                null,
+                LogAct.INFO, null,
                 "Account creation completed with no issues.\n"
             )
         );
@@ -246,8 +238,7 @@ public class Register implements Runnable{
     private void getCallbacks(){
         this.stream.send(
             new Message(
-                LogAct.INFO,
-                null,
+                LogAct.INFO, null,
                 "Requesting account information for registration workflow...\n"
             )
         );
@@ -266,8 +257,7 @@ public class Register implements Runnable{
 
             this.stream.send(
                 new Message(
-                    LogAct.INFO,
-                    null,
+                    LogAct.INFO, null,
                     "Received account information successfully.\n"
                 )
             );
@@ -284,9 +274,7 @@ public class Register implements Runnable{
     public void run(){
         this.stream.send(
             new Message(
-                LogAct.INFO,
-                null,
-                "Initializing registration workflow...\n"
+                LogAct.INFO, null, "Initializing registration workflow...\n"
             )
         );
 
@@ -301,7 +289,7 @@ public class Register implements Runnable{
                 this.validateUsr();
 
             if (this.state.get() == AuthState.SUCCESS)
-                this.device = enroll.firstEnroll();
+                this.device = enroll.first();
 
             if (this.state.get() == AuthState.RECOVER)
                 this.user.logged_in = false;
@@ -322,8 +310,7 @@ public class Register implements Runnable{
 
             this.stream.send(
                 new Message(
-                    LogAct.ERROR,
-                    null,
+                    LogAct.ERROR, null,
                     "Failed to contact the server <" + e.getMessage() + ">\n"
                 )
             );
@@ -338,8 +325,7 @@ public class Register implements Runnable{
 
             this.stream.send(
                 new Message(
-                    LogAct.ERROR,
-                    null,
+                    LogAct.ERROR, null,
                     "Thread was interrupted while performing user registration\n"
                 )
             );
@@ -353,8 +339,7 @@ public class Register implements Runnable{
 
             this.stream.send(
                 new Message(
-                    LogAct.ERROR,
-                    null,
+                    LogAct.ERROR, null,
                     "Failed to get account/device information for registration workflow\n"
                 )
             );
@@ -375,8 +360,7 @@ public class Register implements Runnable{
 
                 this.stream.send(
                     new Message(
-                        LogAct.ERROR,
-                        null,
+                        LogAct.ERROR, null,
                         "User logged in temporarily after failure to persist user/device data.\n"
                     )
                 );

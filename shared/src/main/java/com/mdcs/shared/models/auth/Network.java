@@ -62,7 +62,7 @@ public class Network {
         }
     }
 
-    public static class EnrollReq extends Request<EnrollReq.Body>{
+    public static class EnrollFirReq extends Request<EnrollFirReq.Body>{
 
         public static class Body{
             public String device_name;
@@ -74,8 +74,28 @@ public class Network {
             }
         }
 
-        public EnrollReq(){
-            this.endpoint = "/auth/device/enroll";
+        public EnrollFirReq(){
+            this.endpoint = "/auth/device/first-enroll";
+            this.addHeader("Content-type", "application/json");
+        }
+    }
+
+    public static class EnrollAddReq extends Request<EnrollAddReq.Body>{
+
+        public static class Body{
+            public String device_name;
+            public String workspace_name;
+            public String pairing_key;
+
+            public Body(String dname, String wname, String pkey){
+                this.device_name = dname;
+                this.workspace_name = wname;
+                this.pairing_key = pkey;
+            }
+        }
+
+        public EnrollAddReq(){
+            this.endpoint = "/auth/device/additional-enroll";
             this.addHeader("Content-type", "application/json");
         }
     }

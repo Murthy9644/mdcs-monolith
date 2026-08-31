@@ -15,8 +15,10 @@ import com.mdcs.core.Stream.Response;
 import com.mdcs.shared.fileio.DataClasses.Device;
 import com.mdcs.shared.models.State;
 import com.mdcs.shared.models.State.AuthState;
-import com.mdcs.shared.models.auth.Network.EnrollReq;
+import com.mdcs.shared.models.auth.Network.EnrollFirReq;
+import com.mdcs.shared.models.auth.Network.EnrollAddReq;
 import com.mdcs.shared.models.auth.Network.EnrollRes;
+import com.mdcs.shared.models.network.Http.Request;
 import com.mdcs.shared.network.ProtoMet;
 
 /**
@@ -33,8 +35,7 @@ public class Enroll{
     public void getCallbacks(){
         this.stream.send(
             new Message(
-                LogAct.INFO,
-                null,
+                LogAct.INFO, null,
                 "Requesting device & workspace information for enrollment workflow...\n"
             )
         );
@@ -42,9 +43,7 @@ public class Enroll{
         CompletableFuture<Response> promise;
 
         try {
-            promise = this.stream.request(
-                new Message(AuthAct.ENROLL, null, "")
-            );
+            promise = this.stream.request(new Message(AuthAct.ENROLL, null, ""));
 
             this.callbacks = FileIO.toObject(
                 promise.get().getPayload(),
@@ -53,8 +52,7 @@ public class Enroll{
 
             this.stream.send(
                 new Message(
-                    LogAct.INFO,
-                    null,
+                    LogAct.INFO, null,
                     "Received device & workspace information successfully.\n"
                 )
             );
@@ -67,48 +65,19 @@ public class Enroll{
         }
     }
 
-    /*
-    First device enrollment process is not being implemented as a new worker now because, later
-    when general enrollment process differs in the process from this, we may need to split the
-    classes or keep as separate method as required.
-    */
-
-    /**
-     * If this method has been provoked, it is assumed that user has been already created and
-     * validated.
-     * 
-     * Populates the supplied Device instance with the enrolled device details.
-     */
-    public Device firstEnroll()
+    private Device handle(Request<?> msg, String log)
     throws IOException, InterruptedException{
-        stream.send(
-            new Message(
-                LogAct.INFO,
-                null,
-                "Initiating first device enrollment...\n"
-            )
-        );
-
-        this.getCallbacks();
-
-        this.device.device_name = this.callbacks.deviceName();
-        this.device.workspace_name = this.callbacks.workspaceName();
-
-        EnrollReq msg = new EnrollReq();
-        msg.body = new EnrollReq.Body(this.device.device_name, this.device.workspace_name);
-
         HttpResponse<String> res = this.server.post(msg);
 
         if (res.statusCode() >= 500){
             /*
-            Internal server error has occured. Account is created but device is not enrolled.
-            So return RECOVER code so that login is triggered.
+            Internal server error has occured. Device is not enrolled. Return RECOVER code so
+            that login is triggered.
             */
 
-            stream.send(
+            this.stream.send(
                 new Message(
-                    LogAct.CRITICAL,
-                    null,
+                    LogAct.CRITICAL, null,
                     "Device enrollment failed due to an internal server error.\n"
                 )
             );
@@ -118,18 +87,14 @@ public class Enroll{
             return device;
         }
 
-        EnrollRes payload = FileIO.toObject(
-            res.body().toString(), 
-            EnrollRes.class
-        );
+        EnrollRes payload = FileIO.toObject(res.body().toString(), EnrollRes.class);
 
         if (!payload.status){
             // Device enrollment failed due to user / environment related issue
 
-            stream.send(
+            this.stream.send(
                 new Message(
-                    LogAct.CRITICAL,
-                    null,
+                    LogAct.CRITICAL, null,
                     "Device enrollment failed due to user or environment issue.\n"
                 )
             );
@@ -142,13 +107,70 @@ public class Enroll{
         this.device.device_id = payload.body.device_id;
         this.device.workspace_id = payload.body.workspace_id;
 
-        stream.send(
+        this.stream.send(new Message(LogAct.INFO, null, log));
+        
+        return this.device;
+    }
+
+    /**
+     * First device enrollment process is not being implemented as a new worker now because, later
+     * when general enrollment process differs in the process from this, we may need to split the
+     * classes or keep as separate method as required.
+     * 
+     * If this method has been provoked, it is assumed that user has been already created and
+     * validated.
+     * 
+     * Populates the supplied Device instance with the enrolled device details.
+     */
+    public Device first()
+    throws IOException, InterruptedException{
+        this.stream.send(
             new Message(
-                LogAct.INFO,
-                null,
-                "Device enrolled successfully and marked as primary.\n"
+                LogAct.INFO, null,
+                "Initiating first device enrollment...\n"
             )
         );
+
+        this.getCallbacks();
+
+        this.device.device_name = this.callbacks.deviceName();
+        this.device.workspace_name = this.callbacks.workspaceName();
+
+        EnrollFirReq msg = new EnrollFirReq();
+        msg.body = new EnrollFirReq.Body(this.device.device_name, this.device.workspace_name);
+
+        return this.handle(msg, "Device enrolled successfully and marked as primary.\n");
+    }
+
+    public Device additional()
+    throws IOException, InterruptedException{
+        this.stream.send(
+            new Message(
+                LogAct.INFO, null,
+                "Initiating additional device enrollment...\n"
+            )
+        );
+
+        this.getCallbacks();
+
+        this.device.device_name = this.callbacks.deviceName();
+        this.device.workspace_name = this.callbacks.workspaceName();
+
+        EnrollAddReq msg = new EnrollAddReq();
+        msg.body = new EnrollAddReq.Body(
+            this.device.device_name, 
+            this.device.workspace_name,
+            this.callbacks.pairingKey()
+        );
+        
+        return this.handle(msg, "Device enrolled successfully under the workspace.\n");
+    }
+
+    /**
+     * process() expalins the entire process of user choice (join workspace or first enroll).
+     * i.e., it is used to give choice of enrollment to user.
+     */
+    public Device process(){
 
         return this.device;
     }

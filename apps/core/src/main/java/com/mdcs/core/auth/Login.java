@@ -28,15 +28,10 @@ public class Login implements Runnable{
     private Accounts user;
     private Device device;
 
-    /**
-     * Get the login specific information from source and store the data in required format. The
-     * workflow waits synchronously for the information.
-     */
     private void getCallbacks(){
         this.stream.send(
             new Message(
-                LogAct.INFO,
-                null,
+                LogAct.INFO, null,
                 "Requesting account information for login workflow...\n"
             )
         );
@@ -55,8 +50,7 @@ public class Login implements Runnable{
 
             this.stream.send(
                 new Message(
-                    LogAct.INFO,
-                    null,
+                    LogAct.INFO, null,
                     "Received account information successfully.\n"
                 )
             );
@@ -89,15 +83,11 @@ public class Login implements Runnable{
             /*
             Some sort of internal server error has occured. User must be notified that this action
             cannot be performed now or till server has recovered.
-
-            In this case, the response message from server doesn't conatin the payload. So, need
-            to return early.
             */
 
             this.stream.send(
                 new Message(
-                    LogAct.CRITICAL,
-                    null,
+                    LogAct.CRITICAL, null,
                     "Login failed due to an internal server error.\n"
                 )
             );
@@ -117,8 +107,7 @@ public class Login implements Runnable{
 
             this.stream.send(
                 new Message(
-                    LogAct.CRITICAL,
-                    null,
+                    LogAct.CRITICAL, null,
                     "Login failed due to user or environment issue.\n"
                 )
             );
@@ -128,11 +117,6 @@ public class Login implements Runnable{
             return;
         }
 
-        /*
-        Some details might already be available in user but, it is better to write all of them
-        again. Because, in some cases when user is logging in on a new device, file may not have
-        all the data.
-        */
         this.user.user_id = payload.body.user_id;
         this.user.username = payload.body.username;
 
@@ -142,14 +126,13 @@ public class Login implements Runnable{
              * should trigger validate user workflow.
              * 
              * This can be an internal continuous process, we don't need to acknowledge the host
-             * process about it, because they don't care bro.
+             * process about it.
              */
 
             this.stream.send(
                 new Message(
-                    LogAct.INFO,
-                    null,
-                    "User account is unverified. Triggering validate user workflow...\n"
+                    LogAct.INFO, null,
+                    "User account is unverified. Triggering validation workflow...\n"
                 )
             );
 
@@ -174,35 +157,22 @@ public class Login implements Runnable{
 
             this.stream.send(
                 new Message(
-                    LogAct.INFO,
-                    null,
+                    LogAct.INFO, null,
                     "User account is verified. Triggering device enrollment workflow...\n"
                 )
             );
 
-            Enroll enroll = new Enroll(
-                this.server,
-                this.state,
-                this.stream
-            );
-
-            this.device = enroll.firstEnroll();
+            new Enroll(this.server, this.state, this.stream).process();
 
             if (this.state.get() != AuthState.SUCCESS) return;
         }
-        
-        /*
-         * But the device and workspace details are not required to write again. Because, if the
-         * details were not available, the device enrollment would be triggered.
-         */
 
         this.user.auth_token = payload.body.auth_tok;
         this.user.refresh_token = payload.body.refresh_tok;
 
         this.stream.send(
             new Message(
-                LogAct.INFO,
-                null,
+                LogAct.INFO, null,
                 "Login workflow completed with no issues.\n"
             )
         );
@@ -211,17 +181,12 @@ public class Login implements Runnable{
     @Override
     public void run(){
         this.stream.send(
-            new Message(
-                LogAct.INFO,
-                null,
-                "Initiating login workflow...\n"
-            )
+            new Message(LogAct.INFO, null, "Initiating login workflow...\n")
         );
 
         this.getCallbacks();
 
         try { this.usrAuth(); }
-        
         catch (IOException e) {
             // Will decide what to do later
         } catch (InterruptedException e) {
@@ -243,8 +208,7 @@ public class Login implements Runnable{
 
                 this.stream.send(
                     new Message(
-                        LogAct.ERROR,
-                        null,
+                        LogAct.ERROR, null,
                         "User logged in temporarily after failure to persist user/device data.\n"
                     )
                 );
@@ -265,13 +229,13 @@ public class Login implements Runnable{
         */
         this.user = new Accounts();
 
-        /*
-        For device data, read the file first and if the file doesn't exist or throwing some error
-        (which ususally don't happen because of bootstrap process) then default the objects.
-
-        This helps us in two cases. If device is enrolled for the account user is trying to log
-        into, we can skip device enrollment and if device id is absent or is not associated with
-        the account, we will trigger the enrollment process.
+        /**
+         * For device data, read the file first and if the file doesn't exist or throwing some error
+         * (which ususally don't happen because of bootstrap process) then default the objects.
+         * 
+         * This helps us in two cases. If device is enrolled for the account user is trying to log
+         * into, we can skip device enrollment and if device id is absent or is not associated with
+         * the account, we will trigger the enrollment process.
         */
         try{
             this.device = FileIO.fileRead(Device.class);
