@@ -72,7 +72,7 @@ public class Register implements Runnable{
      * Validate user account with OTP and set the user as verified after successful validation.
      * Assumes account has been created previously (ofcourse bro)
      */
-    public void validateUsr()
+    protected void validateUsr()
     throws IOException, InterruptedException, ExecutionException{
         this.stream.send(
             new Message(

@@ -32,7 +32,7 @@ public class Enroll{
     private Stream stream;
     private Callbacks.Enroll callbacks;
 
-    public void getCallbacks(){
+    private void getCallbacks(AuthAct action){
         this.stream.send(
             new Message(
                 LogAct.INFO, null,
@@ -43,7 +43,7 @@ public class Enroll{
         CompletableFuture<Response> promise;
 
         try {
-            promise = this.stream.request(new Message(AuthAct.ENROLL, null, ""));
+            promise = this.stream.request(new Message(action, null, ""));
 
             this.callbacks = FileIO.toObject(
                 promise.get().getPayload(),
@@ -65,7 +65,7 @@ public class Enroll{
         }
     }
 
-    private Device handle(Request<?> msg, String log)
+    private Device enroll(Request<?> msg, String log)
     throws IOException, InterruptedException{
         HttpResponse<String> res = this.server.post(msg);
 
@@ -113,16 +113,12 @@ public class Enroll{
     }
 
     /**
-     * First device enrollment process is not being implemented as a new worker now because, later
-     * when general enrollment process differs in the process from this, we may need to split the
-     * classes or keep as separate method as required.
-     * 
      * If this method has been provoked, it is assumed that user has been already created and
      * validated.
      * 
      * Populates the supplied Device instance with the enrolled device details.
      */
-    public Device first()
+    protected Device first()
     throws IOException, InterruptedException{
         this.stream.send(
             new Message(
@@ -131,7 +127,7 @@ public class Enroll{
             )
         );
 
-        this.getCallbacks();
+        this.getCallbacks(AuthAct.FIR_ENROLL);
 
         this.device.device_name = this.callbacks.deviceName();
         this.device.workspace_name = this.callbacks.workspaceName();
@@ -139,10 +135,16 @@ public class Enroll{
         EnrollFirReq msg = new EnrollFirReq();
         msg.body = new EnrollFirReq.Body(this.device.device_name, this.device.workspace_name);
 
-        return this.handle(msg, "Device enrolled successfully and marked as primary.\n");
+        return this.enroll(msg, "Device enrolled successfully and marked as primary.\n");
     }
 
-    public Device additional()
+    /**
+     * This methods is usually paired with login workflows or so, when user account has already
+     * been created and user is trying to enroll an additional device under the same workspace.
+     * 
+     * Generally process() will provoke this.
+     */
+    protected Device additional()
     throws IOException, InterruptedException{
         this.stream.send(
             new Message(
@@ -151,7 +153,7 @@ public class Enroll{
             )
         );
 
-        this.getCallbacks();
+        this.getCallbacks(AuthAct.ADD_ENROLL);
 
         this.device.device_name = this.callbacks.deviceName();
         this.device.workspace_name = this.callbacks.workspaceName();
@@ -163,16 +165,20 @@ public class Enroll{
             this.callbacks.pairingKey()
         );
         
-        return this.handle(msg, "Device enrolled successfully under the workspace.\n");
+        return this.enroll(msg, "Device enrolled successfully under the workspace.\n");
     }
 
-    /**
-     * process() expalins the entire process of user choice (join workspace or first enroll).
-     * i.e., it is used to give choice of enrollment to user.
-     */
-    public Device process(){
+    protected Device process()
+    throws IOException, InterruptedException, IllegalStateException{
+        this.getCallbacks(AuthAct.CHOICE_ENROLL);
 
-        return this.device;
+        switch (this.callbacks.choice()){
+            case "FIRST": return this.first();
+                
+            case "ADDITIONAL": return this.additional();
+            
+            default: throw new IllegalStateException("Invalid enrollment choice.");
+        }
     }
     
     public Enroll(ProtoMet server, State state, Stream stream){

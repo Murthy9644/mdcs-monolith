@@ -5,17 +5,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Callbacks {
 
-    public static class Register{
+    protected static class Register{
         private final String username;
         private final String email;
         private final String pswd;
 
-        public String username(){ return this.username; }
-        public String email(){ return this.email; }
-        public String pswd(){ return this.pswd; }
+        protected String username(){ return this.username; }
+        protected String email(){ return this.email; }
+        protected String pswd(){ return this.pswd; }
 
         @JsonCreator
-        public Register(
+        protected Register(
             @JsonProperty("username") String username,
             @JsonProperty("email") String email,
             @JsonProperty("pswd") String pswd
@@ -26,15 +26,15 @@ public class Callbacks {
         }
     }
 
-    public static class Login{
+    protected static class Login{
         private final String email;
         private final String pswd;
 
-        public String email(){ return this.email; }
-        public String pswd(){ return this.pswd; }
+        protected String email(){ return this.email; }
+        protected String pswd(){ return this.pswd; }
 
         @JsonCreator
-        public Login(
+        protected Login(
             @JsonProperty("email") String email,
             @JsonProperty("pswd") String pswd
         ){
@@ -43,19 +43,19 @@ public class Callbacks {
         }
     }
 
-    public static class Enroll{
+    protected static class Enroll{
         private String choice;
         private final String device_name;
         private final String workspace_name;
         private final String pairing_key;
 
-        public String choice(){ return this.choice; }
-        public String deviceName(){ return this.device_name; }
-        public String workspaceName(){ return this.workspace_name; }
-        public String pairingKey(){ return this.pairing_key; }
+        protected String choice(){ return this.choice; }
+        protected String deviceName(){ return this.device_name; }
+        protected String workspaceName(){ return this.workspace_name; }
+        protected String pairingKey(){ return this.pairing_key; }
 
         @JsonCreator
-        public Enroll(
+        protected Enroll(
             @JsonProperty("choice") String choice,
             @JsonProperty("device_name") String device_name,
             @JsonProperty("workspace_name") String workspace_name,
