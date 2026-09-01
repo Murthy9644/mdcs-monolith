@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"mdcs-server/modules/shared"
 	"net/http"
 	"regexp"
@@ -154,22 +155,18 @@ func requireOtp(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func enrollDetails(next http.HandlerFunc) http.HandlerFunc {
+func enrollDetails(
+	next http.HandlerFunc,
+	decode func(*http.Request) (any, error),
+) http.HandlerFunc {
 
 	return func(res http.ResponseWriter, req *http.Request) {
-		var data EnrollDeviceReq
-
-		err := json.NewDecoder(req.Body).Decode(&data)
-
 		defer req.Body.Close()
 
-		switch {
-		case err != nil,
-			data.DeviceName == "",
-			data.WorkspaceName == "",
-			data.UserId == "":
+		data, err := decode(req)
 
-			payload, err := json.Marshal(
+		if err != nil {
+			payload, _ := json.Marshal(
 				shared.Response{
 					Status:  false,
 					Body:    nil,
@@ -178,22 +175,57 @@ func enrollDetails(next http.HandlerFunc) http.HandlerFunc {
 				},
 			)
 
-			if err != nil {
-				http.Error(res, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
 			res.Write(payload)
 			return
 		}
 
 		con := context.WithValue(
 			req.Context(),
-			EnrollDeviceDataKey, data,
+			EnrollDeviceDataKey,
+			data,
 		)
 
 		next(res, req.WithContext(con))
 	}
+}
+
+func firEnrollDetails(next http.HandlerFunc) http.HandlerFunc {
+
+	return enrollDetails(next, func(req *http.Request) (any, error) {
+		var data EnrollFirReq
+
+		if err := json.NewDecoder(req.Body).Decode(&data); err != nil {
+			return nil, err
+		}
+
+		if data.UserId == "" ||
+			data.DeviceName == "" ||
+			data.WorkspaceName == "" {
+			return nil, errors.New("hi")
+		}
+
+		return data, nil
+	})
+}
+
+func addEnrollDetails(next http.HandlerFunc) http.HandlerFunc {
+
+	return enrollDetails(next, func(req *http.Request) (any, error) {
+		var data EnrollAddReq
+
+		if err := json.NewDecoder(req.Body).Decode(&data); err != nil {
+			return nil, err
+		}
+
+		if data.UserId == "" ||
+			data.DeviceName == "" ||
+			data.WorkspaceName == "" ||
+			data.PairingKey == "" {
+			return nil, errors.New("hello")
+		}
+
+		return data, nil
+	})
 }
 
 func loginCreds(next http.HandlerFunc) http.HandlerFunc {

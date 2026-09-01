@@ -75,8 +75,8 @@ func verifyUsr(res http.ResponseWriter, req *http.Request) {
 	res.Write(payload)
 }
 
-func handleFirstEnroll(res http.ResponseWriter, req *http.Request) {
-	data := req.Context().Value(EnrollDeviceDataKey).(EnrollDeviceReq)
+func firEnroll(res http.ResponseWriter, req *http.Request) {
+	data := req.Context().Value(EnrollDeviceDataKey).(EnrollFirReq)
 
 	var respld shared.Response
 
@@ -106,6 +106,10 @@ func handleFirstEnroll(res http.ResponseWriter, req *http.Request) {
 	}
 
 	res.Write(payload)
+}
+
+func addEnroll(res http.ResponseWriter, req *http.Request) {
+	//
 }
 
 func login(res http.ResponseWriter, req *http.Request) {

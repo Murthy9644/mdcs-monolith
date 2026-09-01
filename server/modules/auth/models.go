@@ -12,10 +12,15 @@ type ValidateUsrReq struct {
 	OTP    string `json:"otp"`
 }
 
-type EnrollDeviceReq struct {
+type EnrollFirReq struct {
 	UserId        string `json:"user_id"`
 	DeviceName    string `json:"device_name"`
 	WorkspaceName string `json:"workspace_name"`
+}
+
+type EnrollAddReq struct {
+	EnrollFirReq
+	PairingKey string `json:"pairing_key"`
 }
 
 type LoginReq struct {
