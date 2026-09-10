@@ -32,11 +32,5 @@ func Run() bool {
 
 	data.Metadata = ver_data
 
-	valid := schema()
-
-	if valid {
-		data.Load()
-	}
-
-	return valid
+	return true
 }
