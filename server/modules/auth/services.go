@@ -90,7 +90,7 @@ func verifyOtp(data ValidateUsrReq) error {
 	return repo.SetPhase(data.UserId, "VERIFIED")
 }
 
-func firstEnroll(data EnrollReq) (string, string, error) {
+func firstEnroll(data EnrollFirReq) (string, string, error) {
 	wid := uuid.NewString()
 	did := uuid.NewString()
 

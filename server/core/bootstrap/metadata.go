@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"mdcs-server/models"
 	"net/http"
 	"os"
@@ -40,6 +41,8 @@ func metadata() (*models.VerData, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	log.Print(string(data))
 
 	var metadata models.VerData
 	err = json.Unmarshal(data, &metadata)

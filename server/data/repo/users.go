@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"errors"
 	"mdcs-server/data"
 	"mdcs-server/models"
@@ -9,15 +10,25 @@ import (
 	"github.com/google/uuid"
 )
 
-/*
-Create new user entry in the users.json
-Returns the user id if entry written or returns error
-
-Right now, there are no possible errors to return but, kept "just in case"
-*/
 func CreateUsr(usr models.UserAttrs) (string, error) {
 	usr_id := uuid.NewString()
-	data.Store.Users[usr_id] = usr
+
+	_, err := data.Pool.Exec(
+		context.Background(),
+		`
+		INSERT INTO users
+			(id, email, password, phase)			
+		VALUES ($1, $2, $3, $4)
+		`,
+		usr_id,
+		usr.Email,
+		usr.Password,
+		usr.Phase,
+	)
+
+	if err != nil {
+		return "", err
+	}
 
 	return usr_id, nil
 }

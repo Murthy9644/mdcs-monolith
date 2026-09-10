@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"mdcs-server/core/bootstrap"
 	"mdcs-server/data"
 	"mdcs-server/modules"
@@ -17,6 +18,16 @@ func main() {
 	if !bootstrap.Run() {
 		return
 	}
+
+	db, err := data.Connect()
+
+	if err != nil {
+		log.Fatal("Failed to connect to database:", err)
+	}
+
+	defer db.Close()
+
+	log.Println("Connected to database successfully.")
 
 	mux := http.NewServeMux()
 	modules.Router(mux)
