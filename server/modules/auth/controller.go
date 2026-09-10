@@ -113,17 +113,11 @@ func addEnroll(res http.ResponseWriter, req *http.Request) {
 }
 
 func login(res http.ResponseWriter, req *http.Request) {
-	// Needs a rewrite. Separate concerns between services and this controller.
-	// This shouldn't access repo implementations and shouldn't know how service is
-	// implementing them.
-
-	// WIP
-
 	data := req.Context().Value(LoginDataKey).(LoginReq)
 
 	var respld shared.Response
 
-	err, user_id, usr, device, workspace, phase := loginVer(data)
+	err, user_id, username, email, phase := loginVer(data)
 
 	if err != nil {
 		shared.ProcessErr(respld, err, res)
@@ -135,7 +129,7 @@ func login(res http.ResponseWriter, req *http.Request) {
 
 		respld.Body = map[string]string{
 			"user_id":  user_id,
-			"username": usr.Username,
+			"username": username,
 			"phase":    phase,
 		}
 
@@ -143,7 +137,7 @@ func login(res http.ResponseWriter, req *http.Request) {
 		respld.Message = "Login defered"
 
 		if phase == "UNVERIFIED" {
-			auth.SendOtp(user_id, usr.Email)
+			auth.SendOtp(user_id, email)
 		}
 
 		if phase == "VERIFIED" {
@@ -160,17 +154,6 @@ func login(res http.ResponseWriter, req *http.Request) {
 		res.Write(payload)
 	}
 
-	err = workspaceDeviceMapUsr(
-		data.Email,
-		data.WorkspaceId,
-		data.DeviceId,
-	)
-
-	if err != nil {
-		shared.ProcessErr(respld, err, res)
-		return
-	}
-
 	auth_tok, refresh_tok, err := getAccessTokens(user_id)
 
 	if err != nil {
@@ -181,15 +164,11 @@ func login(res http.ResponseWriter, req *http.Request) {
 	respld.Status = true
 
 	respld.Body = map[string]string{
-		"user_id":        user_id,
-		"username":       usr.Username,
-		"workspace_id":   data.WorkspaceId,
-		"device_id":      data.DeviceId,
-		"workspace_name": workspace.WName,
-		"device_name":    device.DName,
-		"auth_tok":       auth_tok,
-		"refresh_tok":    refresh_tok,
-		"phase":          "ONBOARDED",
+		"user_id":     user_id,
+		"username":    username,
+		"auth_tok":    auth_tok,
+		"refresh_tok": refresh_tok,
+		"phase":       "ONBOARDED",
 	}
 
 	respld.Error = ""

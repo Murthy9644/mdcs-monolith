@@ -143,10 +143,6 @@ public class Network {
             public String phase;
             public String user_id;
             public String username;
-            public String workspace_id;
-            public String device_id;
-            public String workpsace_name;
-            public String device_name;
             public String auth_tok;
             public String refresh_tok;
         }

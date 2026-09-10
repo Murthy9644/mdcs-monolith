@@ -23,14 +23,12 @@ func Run() bool {
 		return false
 	}
 
-	ver_data, err := metadata()
+	err = data.GetMetadata()
 
 	if err != nil {
 		fmt.Println("fatal: Could not load version metadata")
 		return false
 	}
-
-	data.Metadata = ver_data
 
 	return true
 }

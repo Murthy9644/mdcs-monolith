@@ -1,16 +1,18 @@
 package auth
 
 import (
+	"context"
 	"errors"
-	"mdcs-server/models"
+	"mdcs-server/data"
 	"mdcs-server/tools/auth"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Generate and store auth tokens
 func getAccessTokens(uid string) (string, string, error) {
 	auth_tok, err := auth.GenAuthTok(uid)
 
@@ -27,10 +29,9 @@ func getAccessTokens(uid string) (string, string, error) {
 	return auth_tok, refresh_tok, nil
 }
 
-// Create a new user after validating uniqueness and hashing password.
-func createUsr(data CreateUsrReq) (string, error) {
+func createUsr(usr CreateUsrReq) (string, error) {
 	hashed, err := bcrypt.GenerateFromPassword(
-		[]byte(data.Password),
+		[]byte(usr.Password),
 		bcrypt.DefaultCost,
 	)
 
@@ -38,24 +39,36 @@ func createUsr(data CreateUsrReq) (string, error) {
 		return "", errors.New("PASSWORD_HASH_ERROR")
 	}
 
-	var usr = models.UserAttrs{
-		Username: data.Username,
-		Email:    data.Email,
-		Password: string(hashed),
-		Phase:    "UNVERIFIED",
-	}
+	usr.Password = string(hashed)
+	usr_id := uuid.NewString()
 
-	if _, _, err := repo.UsrByEmail(data.Email); err == nil {
-		return "", errors.New("DUPLICATE_USR")
-	}
-
-	usr_id, err := repo.CreateUsr(usr)
+	_, err = data.Pool.Exec(
+		context.Background(),
+		`
+		INSERT INTO users
+			(user_id, username, email, password)
+			
+		VALUES
+			($1, $2, $3, $4)
+		`,
+		usr_id,
+		usr.Username,
+		usr.Email,
+		usr.Password,
+	)
 
 	if err != nil {
-		return "", errors.New("REGISTRATION_FAILED")
+		var pg_err *pgconn.PgError
+
+		if errors.As(err, &pg_err) {
+
+			if pg_err.Code == "23505" {
+				return "", errors.New("DUPLICATE_USER")
+			}
+		}
 	}
 
-	err = auth.SendOtp(usr_id, data.Email)
+	err = auth.SendOtp(usr_id, usr.Email)
 
 	if err != nil {
 		return "", errors.New("OTP_VER_FAIL")
@@ -67,11 +80,33 @@ func createUsr(data CreateUsrReq) (string, error) {
 /*
 Need to implement the tries. A max of 5 tries are allowed before the OTP is erased.
 */
-func verifyOtp(data ValidateUsrReq) error {
-	otp_hash, err := repo.GetOtp(data.UserId)
+func verifyOtp(usr ValidateUsrReq) error {
+	row, err := data.Pool.Query(
+		context.Background(),
+		`
+		SELECT
+			otp,
+			sent_at
+		FROM otp
+
+		WHERE user_id = $1
+		`,
+		usr.UserId,
+	)
 
 	if err != nil {
 		return err
+	}
+
+	var otp_hash struct {
+		OTP  string
+		Sent time.Time
+	}
+
+	err = row.Scan(&otp_hash.OTP, &otp_hash.Sent)
+
+	if err != nil {
+		return errors.New("OTP_NOT_FOUND")
 	}
 
 	dur := time.Since(otp_hash.Sent)
@@ -80,133 +115,181 @@ func verifyOtp(data ValidateUsrReq) error {
 		return errors.New("OTP_EXPIRED")
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(otp_hash.OTP), []byte(data.OTP))
+	err = bcrypt.CompareHashAndPassword([]byte(otp_hash.OTP), []byte(usr.OTP))
 
 	if err != nil {
 		return errors.New("INCORRECT_OTP")
 	}
 
-	return repo.SetPhase(data.UserId, "VERIFIED")
+	_, err = data.Pool.Exec(
+		context.Background(),
+		`
+		DELETE FROM otp
+		WHERE user_id = $1
+		`,
+		usr.UserId,
+	)
+
+	_, err = data.Pool.Exec(
+		context.Background(),
+		`
+		UPDATE users
+		SET phase = 'VERIFIED'
+		
+		WHERE user_id = $1
+		`,
+		usr.UserId,
+	)
+
+	if err != nil {
+		return errors.New("DB_ERROR")
+	}
+
+	return nil
 }
 
-func firstEnroll(data EnrollFirReq) (string, string, error) {
-	wid := uuid.NewString()
-	did := uuid.NewString()
+func firstEnroll(enr EnrollFirReq) (string, string, error) {
+	transac, err := data.Pool.Begin(context.Background())
 
-	var workspace = models.WorkspaceAttrs{
-		WId:        wid,
-		WName:      data.WorkspaceName,
-		MainDevice: did,
+	if err != nil {
+		return "", "", errors.New("DB_ERROR")
 	}
 
-	var device = models.DeviceAttrs{
-		DId:   did,
-		DName: data.DeviceName,
+	defer transac.Rollback(context.Background())
+
+	var phase string
+
+	err = transac.QueryRow(
+		context.Background(),
+		`
+		SELECT phase
+		FROM users
+		
+		WHERE user_id = $1
+		`,
+		enr.UserId,
+	).Scan(&phase)
+
+	if err != nil {
+
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", "", errors.New("NO_SUCH_USER")
+		}
+
+		return "", "", err
 	}
 
-	// Check if user exists and is verified.
-	if status := repo.GetPhase(data.UserId); status == "NO_SUCH_USER" {
-		return "", "", errors.New(status)
-	} else if status != "VERIFIED" {
+	if phase != "VERIFIED" {
 		return "", "", errors.New("FORBIDDEN_ACCESS")
 	}
 
-	// Check if workspace with same name is available
-	if err, _ := repo.WorkspaceByName(data.UserId, data.WorkspaceName); err == nil {
-		return "", "", errors.New("DUPLICATE_WORKSPACE")
+	wid := uuid.NewString()
+	did := uuid.NewString()
+
+	_, err = transac.Exec(
+		context.Background(),
+		`
+		INSERT INTO workspaces
+			(workspace_id, user_id, workspace_name, main_device)
+
+		VALUES
+			($1, $2, $3, $4)
+		`,
+		wid,
+		enr.UserId,
+		enr.WorkspaceName,
+		did,
+	)
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return "", "", errors.New("DUPLICATE_WORKSPACE")
+		}
+
+		return "", "", err
 	}
 
-	repo.AddWorkspace(data.UserId, workspace)
+	_, err = transac.Exec(
+		context.Background(),
+		`
+		INSERT INTO devices
+			(device_id, workspace_id, name)
 
-	// Check if device with same name is available
-	if _, err := repo.DeviceByName(wid, data.DeviceName); err == nil {
-		/*
-			First enroll is atomic. That means, if failed to add device then undo the
-			creation of workspace too.
-		*/
+		VALUES
+			($1, $2, $3)
+		`,
+		did,
+		wid,
+		enr.DeviceName,
+	)
 
-		repo.DeleteWorkspace(data.UserId, wid)
+	if err != nil {
+		var pgErr *pgconn.PgError
 
-		return "", "", errors.New("DUPLICATE_DEVICE")
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return "", "", errors.New("DUPLICATE_DEVICE")
+		}
+
+		return "", "", err
 	}
 
-	repo.AddDevice(wid, device)
-	repo.SetPhase(data.UserId, "ONBORADED")
+	_, err = transac.Exec(
+		context.Background(),
+		`
+		UPDATE users
+		SET phase = $1
+		
+		WHERE id = $2
+		`,
+		"ONBOARDED",
+		enr.UserId,
+	)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	if err := transac.Commit(context.Background()); err != nil {
+		return "", "", err
+	}
 
 	return wid, did, nil
 }
 
-func loginVer(data LoginReq) (
-	error,
-	string,
-	models.UserAttrs,
-	models.DeviceAttrs,
-	models.WorkspaceAttrs,
-	string,
-) {
-	usr_id, usr, err := repo.UsrByEmail(data.Email)
+func loginVer(lin LoginReq) (error, string, string, string, string) {
+	transac, err := data.Pool.Begin(context.Background())
 
 	if err != nil {
-		return errors.New("INVALID_CREDS"),
-			"",
-			models.UserAttrs{},
-			models.DeviceAttrs{},
-			models.WorkspaceAttrs{},
-			""
+		return errors.New("DB_ERROR"), "", "", "", ""
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(usr.Password), []byte(data.Password))
+	defer transac.Rollback(context.Background())
+
+	var usr_id, username, email, pswd, phase string
+
+	err = transac.QueryRow(
+		context.Background(),
+		`
+		SELECT
+			user_id, username, email, password, phase
+		FROM users
+
+		WHERE email = $1
+		`,
+		lin.Email,
+	).Scan(&usr_id, &username, &email, &pswd, &phase)
 
 	if err != nil {
-		return errors.New("INVALID_CREDS"),
-			"",
-			models.UserAttrs{},
-			models.DeviceAttrs{},
-			models.WorkspaceAttrs{},
-			""
+		return errors.New("DB_ERROR"), "", "", "", ""
 	}
 
-	err, device := repo.DeviceById(data.WorkspaceId, data.DeviceId)
+	err = bcrypt.CompareHashAndPassword([]byte(pswd), []byte(lin.Password))
 
 	if err != nil {
-		return errors.New("DEVICE_NOT_FOUND"),
-			"",
-			models.UserAttrs{},
-			models.DeviceAttrs{},
-			models.WorkspaceAttrs{},
-			""
+		return errors.New("INVALID_CREDS"), "", "", "", ""
 	}
 
-	err, workspace := repo.WorkspaceById(usr_id, data.WorkspaceId)
-
-	if err != nil {
-		return errors.New("WORKSPACE_NOT_FOUND"),
-			"",
-			models.UserAttrs{},
-			models.DeviceAttrs{},
-			models.WorkspaceAttrs{},
-			""
-	}
-
-	return nil, usr_id, usr, device, workspace, repo.GetPhase(usr_id)
-}
-
-func workspaceDeviceMapUsr(
-	email, workspace_id, device_id string,
-) error {
-	user_id, _, err := repo.UsrByEmail(email)
-
-	if err != nil {
-		return errors.New("USER_NOT_FOUND")
-	}
-
-	if err, _ := repo.WorkspaceById(user_id, workspace_id); err != nil {
-		return err
-	}
-
-	if err, _ := repo.DeviceById(workspace_id, device_id); err != nil {
-		return err
-	}
-
-	return nil
+	return nil, usr_id, username, email, phase
 }

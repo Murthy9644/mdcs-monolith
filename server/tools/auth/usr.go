@@ -1,16 +1,19 @@
 package auth
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"math/big"
-	"mdcs-server/models"
+	"mdcs-server/data"
 	"mdcs-server/tools"
 	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -64,12 +67,39 @@ func SendOtp(user_id, email string) error {
 		return err
 	}
 
-	err = repo.StoreOtp(
+	_, err = data.Pool.Exec(
+		context.Background(),
+		`INSERT INTO otp
+			(user_id, otp)
+			
+		VALUES
+			($1, $2)`,
 		user_id,
-		models.OTP{OTP: string(otp_hash), Sent: time.Now()},
+		string(otp_hash),
 	)
 
-	return err
+	if err != nil {
+
+		if pg_err, ok := errors.AsType[*pgconn.PgError](err); ok {
+
+			if pg_err.Code == "23505" {
+
+				_, err = data.Pool.Exec(
+					context.Background(),
+					`
+					UPDATE otp
+					SET otp = $1, sent = NOW()
+						
+					WHERE user_id = $2
+					`,
+					string(otp_hash),
+					user_id,
+				)
+			}
+		}
+	}
+
+	return nil
 }
 
 func GenAuthTok(uid string) (string, error) {
@@ -88,18 +118,28 @@ func GenRefreshTok(uid string) (string, error) {
 	key := make([]byte, 32)
 	_, err := rand.Read(key)
 
-	if err != nil {
-		// Ususally error will be null
-		return "", err
-	}
-
 	token := base64.URLEncoding.EncodeToString(key)
 	hashed, err := bcrypt.GenerateFromPassword(
 		[]byte(token),
 		bcrypt.DefaultCost,
 	)
 
-	err = repo.StoreRefreshTok(uid, string(hashed))
+	if err != nil {
+		return "", err
+	}
+
+	_, err = data.Pool.Exec(
+		context.Background(),
+		`
+		INSERT INTO auth_tokens
+			(user_id, token)
+
+		VALUES
+			($1, $2)
+		`,
+		uid,
+		string(hashed),
+	)
 
 	return token, err
 }
